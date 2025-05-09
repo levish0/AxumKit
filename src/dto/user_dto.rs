@@ -3,7 +3,7 @@ use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-#[derive(Deserialize, Validate)]
+#[derive(Deserialize, Validate, Debug)]
 pub struct CreateUserRequest {
     #[validate(length(
         min = 3,
