@@ -1,4 +1,4 @@
-use crate::config::app_config::DbConfig;
+use crate::config::db_config::DbConfig;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};

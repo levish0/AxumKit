@@ -1,8 +1,10 @@
-use serde::Deserialize;
+use axum::Json;
+use axum::response::{IntoResponse, Response};
+use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 #[derive(Deserialize, Validate)]
-pub struct CreateUser {
+pub struct CreateUserRequest {
     #[validate(length(
         min = 3,
         max = 20,
@@ -17,4 +19,16 @@ pub struct CreateUser {
     pub password: String,
     #[validate(email)]
     pub email: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct UserInfoResponse {
+    pub username: String,
+    pub email: String,
+}
+
+impl IntoResponse for UserInfoResponse {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
 }

@@ -7,7 +7,7 @@ mod service;
 mod state;
 
 use crate::api::routes::routes::api_routes;
-use crate::config::app_config::DbConfig;
+use crate::config::db_config::DbConfig;
 use crate::database::connection::establish_connection;
 use crate::state::AppState;
 use axum::Router;

@@ -8,6 +8,8 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     pub username: String,
+    pub email: String,
+    #[serde(skip_deserializing)]
     pub password: String,
 }
 
