@@ -34,7 +34,7 @@ async fn create_user(
     ValidatedJson(payload): ValidatedJson<CreateUserRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     info!("Received POST request to create user: {:?}", payload);
-    
+
     service_create_user(&state.conn, payload).await?;
 
     Ok(StatusCode::NO_CONTENT)
