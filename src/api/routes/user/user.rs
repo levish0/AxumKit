@@ -24,7 +24,9 @@ async fn get_user(
     Path(id): Path<String>,
 ) -> Result<UserInfoResponse, Errors> {
     info!("Received GET request for user with ID: {}", id);
+
     let user = service_get_user(&state.conn, id.parse().unwrap()).await?;
+
     Ok(user)
 }
 
