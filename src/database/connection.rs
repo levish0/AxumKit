@@ -4,22 +4,20 @@ use std::time::Duration;
 use tracing::{error, info};
 
 pub async fn establish_connection() -> DatabaseConnection {
-    let db_config = DbConfig::from_env();
-
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",
-        db_config.db_user,
-        db_config.db_password,
-        db_config.db_host,
-        db_config.db_port,
-        db_config.db_name
+        &DbConfig::get().db_user,
+        &DbConfig::get().db_password,
+        &DbConfig::get().db_host,
+        &DbConfig::get().db_port,
+        &DbConfig::get().db_name
     );
     info!("Attempting to connect to database: {}", database_url);
 
     let mut options = ConnectOptions::new(database_url);
     options
-        .max_connections(db_config.db_max_connection)
-        .min_connections(db_config.db_min_connection)
+        .max_connections(DbConfig::get().db_max_connection)
+        .min_connections(DbConfig::get().db_min_connection)
         .connect_timeout(Duration::from_secs(8))
         .idle_timeout(Duration::from_secs(300))
         .sqlx_logging(true);

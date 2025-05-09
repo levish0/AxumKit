@@ -16,11 +16,9 @@ use axum::Router;
 use tracing::info;
 
 pub async fn run_server() -> anyhow::Result<()> {
-    let db_config = DbConfig::from_env();
-
     let conn = establish_connection().await;
 
-    let server_url = format!("{}:{}", db_config.server_host, db_config.server_port);
+    let server_url = format!("{}:{}", &DbConfig::get().server_host, &DbConfig::get().server_port);
 
     let app = Router::new()
         .merge(api_routes())
@@ -37,6 +35,8 @@ pub async fn run_server() -> anyhow::Result<()> {
 
 #[tokio::main]
 async fn main() {
+    DbConfig::init();
+    
     #[cfg(debug_assertions)]
     {
         tracing_subscriber::fmt::init();

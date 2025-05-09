@@ -20,3 +20,4 @@ tower-http = { version = "0.6.2", features = ["cors"] }
 utoipa = { version = "5.3.1", features = ["axum_extras", "openapi_extensions", "time"]}
 utoipa-axum = { version = "0.2.0" }
 utoipa-swagger-ui = { version = "9.0.1", features = ["axum"]}
+once_cell = "1.21.3"

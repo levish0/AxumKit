@@ -1,5 +1,6 @@
 use axum::http::{HeaderName, HeaderValue};
 use dotenvy::dotenv;
+use once_cell::sync::OnceCell;
 use std::env;
 use tracing::warn;
 
@@ -13,59 +14,62 @@ pub struct DbConfig {
     pub db_max_connection: u32,
     pub db_min_connection: u32,
 
-    pub server_host: String, // 서버 host
-    pub server_port: String, // 서버 port
+    pub server_host: String,
+    pub server_port: String,
 
     pub cors_allowed_origins: Vec<HeaderValue>,
     pub cors_allowed_headers: Vec<HeaderName>,
+    pub cors_max_age: Option<u64>
 }
 
 impl DbConfig {
     pub fn from_env() -> Self {
         dotenv().ok();
 
-        let cors_origins = match env::var("CORS_ALLOWED_ORIGINS").ok() {
-            Some(origins) => {
-                let parsed: Vec<HeaderValue> = origins
-                    .split(',')
-                    .map(|s| HeaderValue::from_str(s.trim()).unwrap())
-                    .collect();
-
-                if parsed.is_empty() {
-                    warn!(
-                        "CORS_ALLOWED_ORIGINS is set but empty. Did you forget to add any origins?"
-                    );
-                }
-
-                parsed
-            }
+        let cors_origins: Vec<HeaderValue> = match env::var("CORS_ALLOWED_ORIGINS").ok() {
+            Some(origins) => origins
+                .split(',')
+                .filter_map(|s| {
+                    let trimmed_s = s.trim();
+                    if trimmed_s.is_empty() {
+                        warn!("Empty origin found in CORS_ALLOWED_ORIGINS.");
+                        None
+                    } else {
+                        HeaderValue::from_str(trimmed_s).ok().or_else(|| {
+                            warn!(
+                                "Invalid origin '{}' found in CORS_ALLOWED_ORIGINS.",
+                                trimmed_s
+                            );
+                            None
+                        })
+                    }
+                })
+                .collect(),
             None => {
-                warn!(
-                    "CORS_ALLOWED_ORIGINS is not set. Did you forget to define it in the .env file?"
-                );
                 vec![]
             }
         };
 
-        let cors_headers = match env::var("CORS_ALLOWED_HEADERS").ok() {
-            Some(headers) => {
-                let parsed: Vec<HeaderName> = headers
-                    .split(',')
-                    .map(|s| HeaderName::from_bytes(s.trim().as_bytes()).unwrap())
-                    .collect();
-
-                if parsed.is_empty() {
-                    warn!(
-                        "CORS_ALLOWED_HEADERS is set but empty. Did you forget to add any headers?"
-                    );
-                }
-
-                parsed
-            }
+        let cors_headers: Vec<HeaderName> = match env::var("CORS_ALLOWED_HEADERS").ok() {
+            Some(headers) => headers
+                .split(',')
+                .filter_map(|s| {
+                    let trimmed_s = s.trim();
+                    if trimmed_s.is_empty() {
+                        warn!("Empty header name found in CORS_ALLOWED_HEADERS.");
+                        None
+                    } else {
+                        HeaderName::from_bytes(trimmed_s.as_bytes()).ok().or_else(|| {
+                            warn!(
+                                "Invalid header name '{}' found in CORS_ALLOWED_HEADERS.",
+                                trimmed_s
+                            );
+                            None
+                        })
+                    }
+                })
+                .collect(),
             None => {
-                warn!(
-                    "CORS_ALLOWED_HEADERS is not set. Did you forget to define it in the .env file?"
-                );
                 vec![]
             }
         };
@@ -88,6 +92,20 @@ impl DbConfig {
             server_port: env::var("PORT").expect("PORT must be set in .env file"),
             cors_allowed_origins: cors_origins,
             cors_allowed_headers: cors_headers,
+            cors_max_age: env::var("CORS_MAX_AGE")
+                .ok()
+                .and_then(|v| v.parse().ok()),
+            
         }
     }
+
+    pub fn init() {
+        CONFIG.set(Self::from_env()).expect("DbConfig can only be initialized once");
+    }
+
+    pub fn get() -> &'static DbConfig {
+        CONFIG.get().expect("DbConfig is not initialized. Call DbConfig::init() first.")
+    }
 }
+
+static CONFIG: OnceCell<DbConfig> = OnceCell::new();

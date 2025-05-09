@@ -194,6 +194,7 @@ dependencies = [
  "anyhow",
  "axum",
  "dotenvy",
+ "once_cell",
  "sea-orm",
  "serde",
  "tokio",
