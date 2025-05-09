@@ -1,9 +1,10 @@
 use axum::Json;
 use axum::response::{IntoResponse, Response};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, Debug)]
+#[derive(Deserialize, Validate, Debug, ToSchema)]
 pub struct CreateUserRequest {
     #[validate(length(
         min = 3,
@@ -21,7 +22,7 @@ pub struct CreateUserRequest {
     pub email: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, ToSchema)]
 pub struct UserInfoResponse {
     pub username: String,
     pub email: String,

@@ -1,5 +1,5 @@
 use crate::config::db_config::DbConfig;
-use axum::http::{HeaderName, HeaderValue, Method};
+use axum::http::{Method};
 use tower_http::cors::{AllowOrigin, CorsLayer};
 
 pub fn cors_layer() -> CorsLayer {

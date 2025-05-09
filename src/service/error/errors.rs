@@ -7,12 +7,19 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use tracing::error;
+use utoipa::ToSchema;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
     pub status: u16,
     pub code: String,
     pub details: Option<String>,
+}
+
+impl IntoResponse for ErrorResponse {
+    fn into_response(self) -> Response {
+        Json(self).into_response()
+    }
 }
 
 pub enum Errors {

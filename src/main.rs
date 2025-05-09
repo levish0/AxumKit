@@ -7,7 +7,7 @@ mod middleware;
 mod service;
 mod state;
 
-use crate::api::routes::routes::api_routes;
+use crate::api::v0::routes::routes::api_routes;
 use crate::config::db_config::DbConfig;
 use crate::database::connection::establish_connection;
 use crate::middleware::cors::cors_layer;
