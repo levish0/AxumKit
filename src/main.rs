@@ -3,12 +3,14 @@ mod config;
 mod database;
 mod dto;
 mod entity;
+mod middleware;
 mod service;
 mod state;
 
 use crate::api::routes::routes::api_routes;
 use crate::config::db_config::DbConfig;
 use crate::database::connection::establish_connection;
+use crate::middleware::cors::cors_layer;
 use crate::state::AppState;
 use axum::Router;
 use tracing::info;
@@ -22,6 +24,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(api_routes())
+        .layer(cors_layer())
         .with_state(AppState { conn });
 
     info!("Starting server at: {}", server_url);
