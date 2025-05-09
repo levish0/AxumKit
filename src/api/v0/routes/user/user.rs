@@ -3,20 +3,18 @@ use crate::service::error::errors::Errors;
 use crate::service::user::user::{service_create_user, service_get_user};
 use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
+use axum::Router;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use axum::Router;
 use axum::routing::{get, post};
 use tracing::info;
-
 
 pub fn user_routes() -> Router<AppState> {
     Router::new()
         .route("/user/{id}", get(get_user))
         .route("/user", post(create_user))
 }
-
 
 #[utoipa::path(
     get,

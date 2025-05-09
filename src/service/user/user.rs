@@ -1,7 +1,5 @@
 use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
-use crate::entity::user::{
-    ActiveModel as UserActiveModel, Entity as UserEntity
-};
+use crate::entity::user::{ActiveModel as UserActiveModel, Entity as UserEntity};
 use crate::service::error::errors::Errors;
 use anyhow::Result;
 use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, Set};

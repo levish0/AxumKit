@@ -1,6 +1,6 @@
-use crate::service::error::errors::ErrorResponse;
-use crate::dto::user_dto::UserInfoResponse;
 use crate::dto::user_dto::CreateUserRequest;
+use crate::dto::user_dto::UserInfoResponse;
+use crate::service::error::errors::ErrorResponse;
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
