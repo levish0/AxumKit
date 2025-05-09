@@ -1,4 +1,4 @@
-# Axum + SeaORM + PostgreSQL + OpenAPI Template
+# Axum + SeaORM + PostgreSQL + JWT + OpenAPI Template
 This project is a template for quickly starting a web application using Rust, the `axum` framework, and the `sea-orm` library for interacting with a PostgreSQL database.
 
 ## Key Features
