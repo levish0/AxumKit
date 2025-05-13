@@ -1,29 +1,90 @@
-# Axum + SeaORM + PostgreSQL + JWT + RestAPI + OpenAPI Template
-This project is a template for quickly starting a web application using Rust, the `axum` framework, and the `sea-orm` library for interacting with a PostgreSQL database.
+# Axum + SeaORM + PostgreSQL + JWT + REST API + OpenAPI Template
 
-## Key Features
+[![Rust](https://img.shields.io/badge/rust-stable-blue.svg)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-* Efficient web application development with the `axum` framework
-* Easy database interaction with the `sea-orm` library
-* PostgreSQL database support
-* Modular code structure
-* Standardized error handling
-* Configuration management via environment variables
-* Database connection pooling and management
-* Automatic Swagger UI generation via OpenAPI
+A production-ready template for building high-performance web APIs with Rust, Axum, and SeaORM.
 
-## OpenAPI and Swagger UI
+## Features
 
-This template includes automatic Swagger UI documentation for your API using the `utoipa` crate. With `utoipa` and `utoipa_swagger_ui`, you can easily generate and serve the API documentation.
+- **High-performance Web Server**: Built on Axum, a fast and modular web framework
+- **Type-safe ORM**: SeaORM for database operations with compile-time guarantees
+- **PostgreSQL Support**: Robust relational database integration
+- **JWT Authentication**: Secure authentication system out of the box
+- **RESTful API**: Well-structured endpoints following best practices
+- **OpenAPI Documentation**: Auto-generated API docs with Swagger UI
+- **Modular Architecture**: Clean separation of concerns for maintainability
+- **Environment-based Configuration**: Flexible configuration management
+- **Database Connection Pooling**: Efficient connection handling
+- **Async/Await**: Fully asynchronous for maximum performance
+- **Error Handling**: Consistent error responses and logging
 
-Once the application is running, you can access the Swagger UI at the following URL:
-```http://localhost:8000/docs```
+## Getting Started
 
-The Swagger UI will display interactive API documentation for all your endpoints and allow you to make API requests directly from the UI.
+### Prerequisites
 
-### Customizing the API Documentation
+- Rust (latest stable version recommended)
+- PostgreSQL (12+)
+- Cargo (Rust's package manager)
 
-The OpenAPI specification is automatically generated from your endpoint annotations using `utoipa`. You can customize the paths, components, and tags in your API documentation by adding attributes to your route handler functions. For example:
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/axum-seaorm-postgresql-template.git
+   cd axum-seaorm-postgresql-template
+   ```
+
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   ```
+   Update the `.env` file with your database credentials and other settings.
+
+3. Install dependencies and build:
+   ```bash
+   cargo build
+   ```
+
+4. Run database migrations (requires SeaORM CLI):
+   ```bash
+   cargo install sea-orm-cli
+   sea-orm-cli migrate up
+   ```
+
+5. Start the server:
+   ```bash
+   cargo run
+   ```
+
+6. Access the API documentation:
+   ```
+   http://localhost:8000/docs
+   ```
+
+## Project Structure
+
+```
+src/
+├── api/               # API routes and handlers
+├── config/            # Application configuration
+├── database/          # Database connection and setup
+├── dto/               # Data Transfer Objects
+├── entity/            # SeaORM entities
+├── middleware/        # Axum middleware
+├── service/           # Business logic
+├── main.rs            # Application entry point
+└── state.rs           # Application state
+```
+
+## API Documentation
+
+This project uses `utoipa` to automatically generate OpenAPI documentation and serve it via Swagger UI.
+
+- **Swagger UI**: `http://localhost:8000/docs`
+- **OpenAPI JSON**: `http://localhost:8000/api-doc/openapi.json`
+
+### Example API Endpoint
 
 ```rust
 #[utoipa::path(
@@ -33,9 +94,9 @@ The OpenAPI specification is automatically generated from your endpoint annotati
         ("id" = i32, Path, description = "User ID")
     ),
     responses(
-        (status = StatusCode::OK, description = "Successfully retrieved user information", body = UserInfoResponse),
-        (status = StatusCode::NOT_FOUND, description = "User not found"),
-        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal Server Error")
+        (status = 200, description = "Successfully retrieved user", body = UserInfoResponse),
+        (status = 404, description = "User not found"),
+        (status = 500, description = "Internal server error")
     ),
     tag = "User"
 )]
@@ -43,13 +104,36 @@ pub async fn get_user(
     state: State<AppState>,
     Path(id): Path<String>,
 ) -> Result<UserInfoResponse, Errors> {
-    // handler code here
+    // Handler implementation
 }
 ```
 
-This will add detailed API documentation for the GET /user/{id} endpoint in the Swagger UI.
-## Changelog
-See [CHANGELOG.md](./CHANGELOG.md) for a list of changes and version history.
+## Architecture
+
+This project follows a layered architecture:
+
+1. **API Layer**: Handles HTTP requests/responses
+2. **Service Layer**: Contains business logic
+3. **Repository Layer**: Manages database operations
+4. **Domain Layer**: Defines entities and DTOs
+
+## Environment Variables
+
+Configure the following in your `.env` file:
+
+```env
+DATABASE_URL=postgres://username:password@localhost:5432/dbname
+JWT_SECRET=your_jwt_secret_key
+PORT=8000
+RUST_LOG=info
+```
 
 ## License
-MIT License. See [LICENSE](./LICENSE) for more details.
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+
+---
+
+<div align="center">
+  <sub>Created by <a href="https://github.com/shiueo">Levi Lim</a> | <a href="https://github.com/shiueo/axum-seaorm-postgresql-jwt-rest-openapi-template">GitHub</a></sub>
+</div>
