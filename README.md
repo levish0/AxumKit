@@ -1,3 +1,7 @@
+<div align="right">
+  <a href="./README.ko.md">한국어</a> | <strong>English</strong>
+</div>
+
 # Axum + SeaORM + PostgreSQL + JWT + REST API + OpenAPI Template
 
 [![Rust](https://img.shields.io/badge/rust-stable-blue.svg)](https://www.rust-lang.org/)
