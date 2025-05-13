@@ -76,7 +76,19 @@ Rust, Axum, SeaORM을 사용한 고성능 웹 API를 구축하기 위한 프로�
 - Docker Engine 20.10.0 이상
 - Docker Compose 2.0.0 이상
 
-### Docker로 실행하기
+### Docker로 빌드 및 실행하기
+
+#### 빌드만 하기
+
+Docker 컨테이너를 실행하지 않고 이미지만 빌드하려면:
+
+```bash
+docker-compose build
+```
+
+이 명령은 `docker-compose.yml`에 정의된 모든 서비스를 빌드합니다.
+
+#### 빌드 및 실행
 
 1. 애플리케이션 빌드 및 시작:
    ```bash

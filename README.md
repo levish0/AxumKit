@@ -76,7 +76,19 @@ This project includes Docker configuration for easy development and deployment.
 - Docker Engine 20.10.0+
 - Docker Compose 2.0.0+
 
-### Running with Docker
+### Building and Running with Docker
+
+#### Build Only
+
+If you just want to build the Docker image without running it:
+
+```bash
+docker-compose build
+```
+
+This will build all services defined in the `docker-compose.yml` file.
+
+#### Build and Run
 
 1. Build and start the application:
    ```bash
