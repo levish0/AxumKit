@@ -19,7 +19,7 @@ pub struct DbConfig {
 
     pub cors_allowed_origins: Vec<HeaderValue>,
     pub cors_allowed_headers: Vec<HeaderName>,
-    pub cors_max_age: Option<u64>
+    pub cors_max_age: Option<u64>,
 }
 
 impl DbConfig {
@@ -59,13 +59,15 @@ impl DbConfig {
                         warn!("Empty header name found in CORS_ALLOWED_HEADERS.");
                         None
                     } else {
-                        HeaderName::from_bytes(trimmed_s.as_bytes()).ok().or_else(|| {
-                            warn!(
-                                "Invalid header name '{}' found in CORS_ALLOWED_HEADERS.",
-                                trimmed_s
-                            );
-                            None
-                        })
+                        HeaderName::from_bytes(trimmed_s.as_bytes())
+                            .ok()
+                            .or_else(|| {
+                                warn!(
+                                    "Invalid header name '{}' found in CORS_ALLOWED_HEADERS.",
+                                    trimmed_s
+                                );
+                                None
+                            })
                     }
                 })
                 .collect(),
@@ -92,19 +94,20 @@ impl DbConfig {
             server_port: env::var("PORT").expect("PORT must be set in .env file"),
             cors_allowed_origins: cors_origins,
             cors_allowed_headers: cors_headers,
-            cors_max_age: env::var("CORS_MAX_AGE")
-                .ok()
-                .and_then(|v| v.parse().ok()),
-            
+            cors_max_age: env::var("CORS_MAX_AGE").ok().and_then(|v| v.parse().ok()),
         }
     }
 
     pub fn init() {
-        CONFIG.set(Self::from_env()).expect("DbConfig can only be initialized once");
+        CONFIG
+            .set(Self::from_env())
+            .expect("DbConfig can only be initialized once");
     }
 
     pub fn get() -> &'static DbConfig {
-        CONFIG.get().expect("DbConfig is not initialized. Call DbConfig::init() first.")
+        CONFIG
+            .get()
+            .expect("DbConfig is not initialized. Call DbConfig::init() first.")
     }
 }
 

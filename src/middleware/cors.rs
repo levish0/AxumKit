@@ -1,27 +1,28 @@
-
+use crate::config::db_config::DbConfig;
 use axum::http::Method;
 use tower_http::cors::{AllowHeaders, AllowOrigin, CorsLayer};
 use tracing::{info, warn};
-use crate::config::db_config::DbConfig;
 
 pub fn cors_layer() -> CorsLayer {
     let allowed_origins = if DbConfig::get().cors_allowed_origins.is_empty() {
-        warn!(
-            "CORS_ALLOWED_ORIGINS is not set, allowing all origins."
-        );
+        warn!("CORS_ALLOWED_ORIGINS is not set, allowing all origins.");
         AllowOrigin::any()
     } else {
-        info!("CORS_ALLOWED_ORIGINS is set to {:?}", DbConfig::get().cors_allowed_origins);
+        info!(
+            "CORS_ALLOWED_ORIGINS is set to {:?}",
+            DbConfig::get().cors_allowed_origins
+        );
         AllowOrigin::list(DbConfig::get().cors_allowed_origins.clone())
     };
 
     let allowed_headers = if DbConfig::get().cors_allowed_headers.is_empty() {
-        warn!(
-            "CORS_ALLOWED_HEADERS is not set, allowing all headers."
-        );
+        warn!("CORS_ALLOWED_HEADERS is not set, allowing all headers.");
         AllowHeaders::any()
     } else {
-        info!("CORS_ALLOWED_HEADERS is set to {:?}", DbConfig::get().cors_allowed_headers);
+        info!(
+            "CORS_ALLOWED_HEADERS is set to {:?}",
+            DbConfig::get().cors_allowed_headers
+        );
         AllowHeaders::list(DbConfig::get().cors_allowed_headers.clone())
     };
 
