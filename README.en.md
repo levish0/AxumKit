@@ -26,6 +26,7 @@ A production-ready template for building high-performance web APIs with Rust, Ax
 - Rust (latest stable version recommended)
 - PostgreSQL (12+)
 - Cargo (Rust's package manager)
+- Docker and Docker Compose (optional, for containerized development)
 
 ### Installation
 
@@ -61,6 +62,58 @@ A production-ready template for building high-performance web APIs with Rust, Ax
    ```
    http://localhost:8000/docs
    ```
+
+## Docker Setup
+
+This project includes Docker configuration for easy development and deployment.
+
+### Prerequisites
+
+- Docker Engine 20.10.0+
+- Docker Compose 2.0.0+
+
+### Running with Docker
+
+1. Build and start the application:
+   ```bash
+   docker-compose up --build
+   ```
+
+2. For running in detached mode:
+   ```bash
+   docker-compose up -d --build
+   ```
+
+3. View logs:
+   ```bash
+   docker-compose logs -f
+   ```
+
+4. Stop the application:
+   ```bash
+   docker-compose down
+   ```
+
+5. Stop and remove all containers, networks, and volumes:
+   ```bash
+   docker-compose down -v
+   ```
+
+### Services
+
+- **app**: The main application server (port 8000)
+- **db**: PostgreSQL database (port 5432)
+- **migrate**: Runs database migrations on startup
+
+### Environment Variables
+
+You can configure the application by creating a `.env` file in the project root. See `.env.example` for available options.
+
+### Development Workflow
+
+- The application will automatically reload when source code changes
+- Database migrations run automatically on startup
+- The database persists data in a Docker volume
 
 ## Project Structure
 
