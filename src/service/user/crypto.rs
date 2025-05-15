@@ -8,10 +8,10 @@ pub fn hash_password(password: &str) -> Result<String, Errors> {
     // Use Argon2id with a minimum configuration of 19 MiB of memory,
     // an iteration count of 2, and 1 degree of parallelism.
     let params = Params::new(
-        19 * 1024, // 19 MiB 메모리 (KB 단위)
-        2,         // iterations
-        1,         // parallelism
-        None,      // output length 기본값 (32 bytes)
+        19 * 1024,  // 19 MiB 메모리 (KB 단위)
+        2,  // iterations
+        1,  // parallelism
+        None,   // output length 기본값 (32 bytes)
     )
     .map_err(|e| Errors::HashingError(e.to_string()))?;
 
