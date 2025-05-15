@@ -1,6 +1,8 @@
 use crate::service::error::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
-use crate::service::error::protocol::system::{DATABASE_ERROR, INTERNAL_ERROR, NOT_FOUND};
-use crate::service::error::protocol::user::{EMAIL_EXISTS, USER_NOT_FOUND, USERNAME_EXISTS};
+use crate::service::error::protocol::system::{
+    SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND,
+};
+use crate::service::error::protocol::user::{USER_INVALID_PASSWORD, USER_NOT_FOUND};
 use axum::Json;
 use axum::extract::Request;
 use axum::http::StatusCode;
@@ -23,31 +25,39 @@ impl IntoResponse for ErrorResponse {
 }
 
 pub enum Errors {
-    EmailExists,
-    UsernameTaken,
+    // User
+    UserInvalidPassword,
     UserNotFound,
-    DatabaseError(String),
+    // General
     BadRequestError(String),
     ValidationError(String),
-    InternalError(String),
+    // System
+    DatabaseError(String),
     NotFound(String),
+    HashingError(String),
 }
 
 impl IntoResponse for Errors {
     fn into_response(self) -> Response {
         let (status, code, details) = match self {
-            Errors::EmailExists => (StatusCode::BAD_REQUEST, EMAIL_EXISTS, None),
-            Errors::UsernameTaken => (StatusCode::BAD_REQUEST, USERNAME_EXISTS, None),
+            // User
+            Errors::UserInvalidPassword => (StatusCode::UNAUTHORIZED, USER_INVALID_PASSWORD, None),
             Errors::UserNotFound => (StatusCode::NOT_FOUND, USER_NOT_FOUND, None),
-            Errors::DatabaseError(msg) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, DATABASE_ERROR, Some(msg))
-            }
+            // General
             Errors::BadRequestError(msg) => (StatusCode::BAD_REQUEST, BAD_REQUEST, Some(msg)),
             Errors::ValidationError(msg) => (StatusCode::BAD_REQUEST, VALIDATION_ERROR, Some(msg)),
-            Errors::InternalError(msg) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, INTERNAL_ERROR, Some(msg))
-            }
-            Errors::NotFound(msg) => (StatusCode::NOT_FOUND, NOT_FOUND, Some(msg)),
+            // System
+            Errors::DatabaseError(msg) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                SYS_DATABASE_ERROR,
+                Some(msg),
+            ),
+            Errors::NotFound(msg) => (StatusCode::NOT_FOUND, SYS_NOT_FOUND, Some(msg)),
+            Errors::HashingError(msg) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                SYS_HASHING_ERROR,
+                Some(msg),
+            ),
         };
 
         let body = ErrorResponse {

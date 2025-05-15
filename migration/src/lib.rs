@@ -1,6 +1,5 @@
 pub use sea_orm_migration::prelude::*;
-
-mod m20250509_074628_create_users_table;
+mod m20250515_163857_create_users_table;
 
 pub struct Migrator;
 
@@ -8,7 +7,7 @@ pub struct Migrator;
 impl MigratorTrait for Migrator {
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         vec![
-            Box::new(m20250509_074628_create_users_table::Migration),
+            Box::new(m20250515_163857_create_users_table::Migration),
         ]
     }
 }

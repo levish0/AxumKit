@@ -1,6 +1,6 @@
 use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::Errors;
-use crate::service::user::user::{service_create_user, service_get_user};
+use crate::service::user::user::{service_create_user, service_get_user_by_handle};
 use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
 use axum::Router;
@@ -12,15 +12,15 @@ use tracing::info;
 
 pub fn user_routes() -> Router<AppState> {
     Router::new()
-        .route("/user/{id}", get(get_user))
+        .route("/user/{handle}", get(get_user))
         .route("/user", post(create_user))
 }
 
 #[utoipa::path(
     get,
-    path = "/v0/user/{id}",
+    path = "/v0/user/{handle}",
     params(
-        ("id" = i32, Path, description = "User ID")
+        ("handle" = String, Path, description = "User handle")
     ),
     responses(
         (status = StatusCode::OK, description = "Successfully retrieved user information", body = UserInfoResponse),
@@ -31,11 +31,11 @@ pub fn user_routes() -> Router<AppState> {
 )]
 pub async fn get_user(
     state: State<AppState>,
-    Path(id): Path<i32>,
+    Path(handle): Path<String>,
 ) -> Result<UserInfoResponse, Errors> {
-    info!("Received GET request for user with ID: {}", id);
+    info!("Received GET request for user with ID: {}", handle);
 
-    let user = service_get_user(&state.conn, id).await?;
+    let user = service_get_user_by_handle(&state.conn, &handle).await?;
     Ok(user)
 }
 

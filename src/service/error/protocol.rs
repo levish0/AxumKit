@@ -1,7 +1,6 @@
 pub mod user {
-    pub const EMAIL_EXISTS: &str = "user:email_exists";
-    pub const USERNAME_EXISTS: &str = "user:user_name_exists";
-    pub const USER_NOT_FOUND: &str = "user:user_not_found";
+    pub const USER_INVALID_PASSWORD: &str = "user:invalid_password";
+    pub const USER_NOT_FOUND: &str = "user:not_found";
 }
 
 pub mod general {
@@ -10,7 +9,7 @@ pub mod general {
 }
 
 pub mod system {
-    pub const INTERNAL_ERROR: &str = "system:internal_error";
-    pub const NOT_FOUND: &str = "system:not_found";
-    pub const DATABASE_ERROR: &str = "system:database_error";
+    pub const SYS_HASHING_ERROR: &str = "system:hashing_error";
+    pub const SYS_NOT_FOUND: &str = "system:not_found";
+    pub const SYS_DATABASE_ERROR: &str = "system:database_error";
 }
