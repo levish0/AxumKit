@@ -13,6 +13,7 @@ use crate::database::connection::establish_connection;
 use crate::middleware::cors::cors_layer;
 use crate::state::AppState;
 use axum::Router;
+use tower_http::compression::CompressionLayer;
 use tracing::info;
 
 pub async fn run_server() -> anyhow::Result<()> {
@@ -27,6 +28,7 @@ pub async fn run_server() -> anyhow::Result<()> {
     let app = Router::new()
         .merge(api_routes())
         .layer(cors_layer())
+        .layer(CompressionLayer::new())
         .with_state(AppState { conn });
 
     info!("Starting server at: {}", server_url);
