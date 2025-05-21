@@ -10,7 +10,7 @@ impl MigrationTrait for Migration {
             .get_connection()
             .execute_unprepared("CREATE EXTENSION IF NOT EXISTS \"pgcrypto\";")
             .await?;
-        
+
         manager
             .create_table(
                 Table::create()
@@ -21,7 +21,7 @@ impl MigrationTrait for Migration {
                             .uuid()
                             .not_null()
                             .primary_key()
-                            .default(Expr::cust("gen_random_uuid()"))
+                            .default(Expr::cust("gen_random_uuid()")),
                     )
                     .col(string_len(Users::Name, 20).not_null())
                     .col(string_len(Users::Handle, 20).not_null().unique_key())
@@ -37,7 +37,7 @@ impl MigrationTrait for Migration {
                     .name("idx_users_handle")
                     .table(Users::Table)
                     .col(Users::Handle)
-                    .to_owned()
+                    .to_owned(),
             )
             .await
     }
@@ -48,10 +48,10 @@ impl MigrationTrait for Migration {
                 Index::drop()
                     .name("idx_users_handle")
                     .table(Users::Table)
-                    .to_owned()
+                    .to_owned(),
             )
             .await?;
-        
+
         manager
             .drop_table(Table::drop().table(Users::Table).to_owned())
             .await

@@ -1,2 +1,2 @@
-mod crypto;
+pub mod crypto;
 pub mod user;

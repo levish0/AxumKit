@@ -1,21 +1,50 @@
-use crate::dto::user_dto::CreateUserRequest;
-use crate::dto::user_dto::UserInfoResponse;
+use crate::dto::auth_dto::{AuthLoginAccessTokenResponse, AuthLoginRequest};
+use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::ErrorResponse;
-use utoipa::OpenApi;
+use utoipa::{
+    Modify, OpenApi,
+    openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},
+};
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        crate::api::v0::routes::auth::auth::login,
         crate::api::v0::routes::user::user::get_user,
         crate::api::v0::routes::user::user::create_user,
+        crate::api::v0::routes::user::user::get_profile,
     ),
-    components(schemas(
-        CreateUserRequest,
-        UserInfoResponse,
-        ErrorResponse
-    )),
+    components(
+        schemas(
+            AuthLoginRequest,
+            AuthLoginAccessTokenResponse,
+            CreateUserRequest,
+            UserInfoResponse,
+            ErrorResponse
+        )
+    ),
     tags(
-        (name = "User")
-    )
+        (name = "User", description = "User management endpoints"),
+        (name = "Auth", description = "Authentication endpoints")
+    ),
+    modifiers(&SecurityAddon) // 보안 스키마 등록
 )]
 pub struct ApiDoc;
+
+pub struct SecurityAddon;
+
+impl Modify for SecurityAddon {
+    fn modify(&self, openapi: &mut utoipa::openapi::OpenApi) {
+        if let Some(components) = openapi.components.as_mut() {
+            components.add_security_scheme(
+                "bearer_auth",
+                SecurityScheme::Http(
+                    HttpBuilder::new()
+                        .scheme(HttpAuthScheme::Bearer)
+                        .bearer_format("JWT")
+                        .build(),
+                ),
+            );
+        }
+    }
+}

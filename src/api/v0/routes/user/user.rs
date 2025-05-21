@@ -1,9 +1,14 @@
+use crate::dto::auth_dto::AccessTokenClaims;
 use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
+use crate::middleware::auth::jwt_auth;
 use crate::service::error::errors::Errors;
-use crate::service::user::user::{service_create_user, service_get_user_by_handle};
+use crate::service::user::user::{
+    service_create_user, service_get_user_by_handle, service_get_user_by_uuid,
+};
 use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
 use axum::Router;
+use axum::extract::Extension;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
@@ -14,6 +19,11 @@ pub fn user_routes() -> Router<AppState> {
     Router::new()
         .route("/user/{handle}", get(get_user))
         .route("/user", post(create_user))
+        // 보호된 사용자 프로필 API
+        .route(
+            "/user/profile",
+            get(get_profile).route_layer(axum::middleware::from_fn(jwt_auth)),
+        )
 }
 
 #[utoipa::path(
@@ -30,7 +40,7 @@ pub fn user_routes() -> Router<AppState> {
     tag = "User"
 )]
 pub async fn get_user(
-    state: State<AppState>,
+    State(state): State<AppState>,
     Path(handle): Path<String>,
 ) -> Result<UserInfoResponse, Errors> {
     info!("Received GET request for user with ID: {}", handle);
@@ -45,14 +55,14 @@ pub async fn get_user(
     path = "/v0/user",
     request_body = CreateUserRequest,
     responses(
-        (status = StatusCode::NO_CONTENT, description = "User created successfully"),
-        (status = StatusCode::BAD_REQUEST, description = "Invalid request"),
+        (status = StatusCode::CREATED, description = "User created successfully"),
+        (status = StatusCode::BAD_REQUEST, description = "Invalid input"),
         (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal Server Error")
     ),
     tag = "User"
 )]
 pub async fn create_user(
-    state: State<AppState>,
+    State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<CreateUserRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     info!("Received POST request to create user: {:?}", payload);
@@ -60,4 +70,32 @@ pub async fn create_user(
     service_create_user(&state.conn, payload).await?;
 
     Ok(StatusCode::NO_CONTENT)
+}
+
+// 보호된 API - 사용자 프로필 조회
+#[utoipa::path(
+    get,
+    path = "/v0/user/profile",
+    responses(
+        (status = StatusCode::OK, description = "Successfully retrieved user profile", body = UserInfoResponse),
+        (status = StatusCode::UNAUTHORIZED, description = "Unauthorized"),
+        (status = StatusCode::NOT_FOUND, description = "User not found"),
+        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal Server Error")
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "User"
+)]
+pub async fn get_profile(
+    Extension(claims): Extension<AccessTokenClaims>,
+    state: State<AppState>,
+) -> Result<UserInfoResponse, Errors> {
+    // 실제 구현에서는 claims.sub에서 사용자 ID를 가져와 DB에서 조회
+    let user_uuid = claims.sub.clone();
+
+    // 예시 응답 (실제로는 DB에서 조회)
+    let user = service_get_user_by_uuid(&state.conn, &user_uuid).await?;
+
+    Ok(user)
 }

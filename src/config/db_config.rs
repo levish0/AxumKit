@@ -6,6 +6,8 @@ use tracing::warn;
 
 #[derive(Debug, Clone)]
 pub struct DbConfig {
+    pub jwt_secret: String,
+
     pub db_user: String,
     pub db_password: String,
     pub db_host: String,
@@ -77,6 +79,7 @@ impl DbConfig {
         };
 
         Self {
+            jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
             db_user: env::var("POSTGRES_USER").expect("POSTGRES_USER must be set"),
             db_password: env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set"),
             db_host: env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set"),

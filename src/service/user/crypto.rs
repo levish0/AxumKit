@@ -26,12 +26,11 @@ pub fn hash_password(password: &str) -> Result<String, Errors> {
     Ok(password_hash)
 }
 
-pub fn verify_password(password: &str, password_hash: &str) -> Result<bool, Errors> {
+pub fn verify_password(password: &str, password_hash: &str) -> Result<(), Errors> {
     let parsed_hash =
         PasswordHash::new(password_hash).map_err(|e| Errors::HashingError(e.to_string()))?;
 
     Argon2::default()
         .verify_password(password.as_bytes(), &parsed_hash)
-        .map(|_| true)
         .map_err(|_| Errors::UserInvalidPassword)
 }

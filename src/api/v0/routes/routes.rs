@@ -1,3 +1,4 @@
+use super::auth::auth::auth_routes;
 use super::openapi::ApiDoc;
 use super::user::user::user_routes;
 use crate::service::error::errors::handler_404;
@@ -10,6 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 pub fn api_routes() -> Router<AppState> {
     Router::new()
         .merge(SwaggerUi::new("/docs").url("/swagger.json", ApiDoc::openapi()))
+        .nest("/v0", auth_routes())
         .nest("/v0", user_routes()) // 실제 API 라우터
         .fallback(handler_404)
 }
