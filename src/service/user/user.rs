@@ -1,5 +1,5 @@
-use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
 use crate::entity::users::{ActiveModel as UserActiveModel, Column, Entity as UserEntity};
+use crate::payload::user_payload::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::Errors;
 use crate::service::user::crypto::hash_password;
 use anyhow::Result;

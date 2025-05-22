@@ -1,5 +1,5 @@
-use crate::dto::auth_dto::{AuthLoginAccessTokenResponse, AuthLoginRequest};
-use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
+use crate::payload::auth_payload::{AuthLoginAccessTokenResponse, AuthLoginRequest};
+use crate::payload::user_payload::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::ErrorResponse;
 use utoipa::{
     Modify, OpenApi,

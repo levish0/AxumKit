@@ -1,7 +1,7 @@
-use crate::dto::auth_dto::{AuthLoginRequest, AuthLoginResponse};
 use crate::entity::user_refresh_tokens::ActiveModel as RefreshTokenActiveModel;
 use crate::entity::users::{Column, Entity as UserEntity};
-use crate::service::auth::jwt::{create_access_token, create_refresh_token_jwt};
+use crate::payload::auth_payload::{AuthLoginRequest, AuthLoginResponse};
+use crate::service::auth::jwt::{create_jwt_access_token, create_jwt_refresh_token};
 use crate::service::error::errors::Errors;
 use crate::service::user::crypto::verify_password;
 use anyhow::Result;
@@ -15,7 +15,7 @@ pub async fn service_login(
     payload: AuthLoginRequest,
 ) -> Result<AuthLoginResponse, Errors> {
     let user = UserEntity::find()
-        .filter(Column::Handle.eq(payload.handle.clone()))
+        .filter(Column::Handle.eq(&payload.handle))
         .one(conn)
         .await
         .map_err(|e| Errors::DatabaseError(e.to_string()))?;
@@ -33,14 +33,14 @@ pub async fn service_login(
     let now = Utc::now();
     let access_token_expires_at = now + Duration::hours(1);
     let refresh_token_expires_at = now + Duration::days(14);
-    let access_token = create_access_token(
+    let access_token = create_jwt_access_token(
         &user.id,
         now.timestamp(),
         access_token_expires_at.timestamp(),
     )
     .unwrap();
     let jti_value = Uuid::new_v4();
-    let refresh_token = create_refresh_token_jwt(
+    let refresh_token = create_jwt_refresh_token(
         &user.id,
         jti_value,
         now.timestamp(),

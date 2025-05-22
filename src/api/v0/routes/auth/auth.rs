@@ -1,4 +1,4 @@
-use crate::dto::auth_dto::{AuthLoginAccessTokenResponse, AuthLoginRequest};
+use crate::payload::auth_payload::{AuthLoginAccessTokenResponse, AuthLoginRequest};
 use crate::service::auth::auth::service_login;
 use crate::service::error::errors::Errors;
 use crate::service::validator::json_validator::ValidatedJson;

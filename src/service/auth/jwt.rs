@@ -1,11 +1,12 @@
 use crate::config::db_config::DbConfig;
-use crate::dto::auth_dto::{AccessTokenClaims, RefreshTokenClaims};
+use crate::payload::auth_payload::{AccessTokenClaims, RefreshTokenClaims};
 use jsonwebtoken::{
     Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
 };
+use serde::de::DeserializeOwned;
 use uuid::Uuid;
 
-pub fn create_access_token(
+pub fn create_jwt_access_token(
     user_id: &Uuid,
     iat: i64,
     exp: i64,
@@ -21,18 +22,7 @@ pub fn create_access_token(
     encode(&Header::default(), &claims, &encoding_key)
 }
 
-pub fn decode_access_token(
-    token: &str,
-) -> Result<TokenData<AccessTokenClaims>, jsonwebtoken::errors::Error> {
-    let jwt_secret = &DbConfig::get().jwt_secret;
-    let decoding_key = DecodingKey::from_secret(jwt_secret.as_bytes());
-
-    let validation = Validation::new(Algorithm::HS256);
-
-    decode::<AccessTokenClaims>(token, &decoding_key, &validation)
-}
-
-pub fn create_refresh_token_jwt(
+pub fn create_jwt_refresh_token(
     user_id: &Uuid,
     jti: Uuid,
     iat: i64,
@@ -49,13 +39,23 @@ pub fn create_refresh_token_jwt(
     encode(&Header::default(), &claims, &encoding_key)
 }
 
+pub fn decode_token<T: DeserializeOwned>(
+    token: &str,
+) -> Result<TokenData<T>, jsonwebtoken::errors::Error> {
+    let jwt_secret = &DbConfig::get().jwt_secret;
+    let decoding_key = DecodingKey::from_secret(jwt_secret.as_bytes());
+    let validation = Validation::new(Algorithm::HS256);
+    decode::<T>(token, &decoding_key, &validation)
+}
+
+pub fn decode_access_token(
+    token: &str,
+) -> Result<TokenData<AccessTokenClaims>, jsonwebtoken::errors::Error> {
+    decode_token::<AccessTokenClaims>(token)
+}
+
 pub fn decode_refresh_token(
     token: &str,
 ) -> Result<TokenData<RefreshTokenClaims>, jsonwebtoken::errors::Error> {
-    let jwt_secret = &DbConfig::get().jwt_secret;
-    let decoding_key = DecodingKey::from_secret(jwt_secret.as_bytes());
-
-    let validation = Validation::new(Algorithm::HS256);
-
-    decode::<RefreshTokenClaims>(token, &decoding_key, &validation)
+    decode_token::<RefreshTokenClaims>(token)
 }

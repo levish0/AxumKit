@@ -1,6 +1,6 @@
-use crate::dto::auth_dto::AccessTokenClaims;
-use crate::dto::user_dto::{CreateUserRequest, UserInfoResponse};
-use crate::middleware::auth::jwt_auth;
+use crate::middleware::auth::access_jwt_auth;
+use crate::payload::auth_payload::AccessTokenClaims;
+use crate::payload::user_payload::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::Errors;
 use crate::service::user::user::{
     service_create_user, service_get_user_by_handle, service_get_user_by_uuid,
@@ -22,7 +22,7 @@ pub fn user_routes() -> Router<AppState> {
         // 보호된 사용자 프로필 API
         .route(
             "/user/profile",
-            get(get_profile).route_layer(axum::middleware::from_fn(jwt_auth)),
+            get(get_profile).route_layer(axum::middleware::from_fn(access_jwt_auth)),
         )
 }
 
@@ -91,7 +91,6 @@ pub async fn get_profile(
     Extension(claims): Extension<AccessTokenClaims>,
     state: State<AppState>,
 ) -> Result<UserInfoResponse, Errors> {
-    // 실제 구현에서는 claims.sub에서 사용자 ID를 가져와 DB에서 조회
     let user_uuid = claims.sub.clone();
 
     // 예시 응답 (실제로는 DB에서 조회)
