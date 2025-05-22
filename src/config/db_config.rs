@@ -6,6 +6,8 @@ use tracing::warn;
 
 #[derive(Debug, Clone)]
 pub struct DbConfig {
+    pub is_dev: bool,
+
     pub jwt_secret: String,
     pub auth_access_token_expire_time: i64,
     pub auth_refresh_token_expire_time: i64,
@@ -29,6 +31,11 @@ pub struct DbConfig {
 impl DbConfig {
     pub fn from_env() -> Self {
         dotenv().ok();
+
+        let is_dev = matches!(
+            env::var("ENVIRONMENT").as_deref(),
+            Ok("dev") | Ok("development")
+        );
 
         let cors_origins: Vec<HeaderValue> = match env::var("CORS_ALLOWED_ORIGINS").ok() {
             Some(origins) => origins
@@ -81,6 +88,7 @@ impl DbConfig {
         };
 
         Self {
+            is_dev,
             jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
 
             auth_access_token_expire_time: env::var("AUTH_ACCESS_TOKEN_EXPIRE_TIME")

@@ -1,3 +1,4 @@
+use crate::config::db_config::DbConfig;
 use crate::service::error::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
 use crate::service::error::protocol::system::{
     SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND, SYS_TOKEN_CREATION_ERROR,
@@ -18,6 +19,7 @@ use utoipa::ToSchema;
 pub struct ErrorResponse {
     pub status: u16,
     pub code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub details: Option<String>,
 }
 
@@ -75,10 +77,12 @@ impl IntoResponse for Errors {
             ),
         };
 
+        let is_dev = DbConfig::get().is_dev;
+
         let body = ErrorResponse {
             status: status.as_u16(),
             code: code.to_string(),
-            details,
+            details: if is_dev { details } else { None },
         };
 
         (status, Json(body)).into_response()
