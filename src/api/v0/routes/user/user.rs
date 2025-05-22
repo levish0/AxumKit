@@ -1,6 +1,7 @@
+use crate::dto::auth::internal::access_token::AccessTokenClaims;
+use crate::dto::user::request::create::CreateUserRequest;
+use crate::dto::user::response::info::UserInfoResponse;
 use crate::middleware::auth::access_jwt_auth;
-use crate::payload::auth_payload::AccessTokenClaims;
-use crate::payload::user_payload::{CreateUserRequest, UserInfoResponse};
 use crate::service::error::errors::Errors;
 use crate::service::user::user::{
     service_create_user, service_get_user_by_handle, service_get_user_by_uuid,
@@ -88,8 +89,8 @@ pub async fn create_user(
     tag = "User"
 )]
 pub async fn get_profile(
-    Extension(claims): Extension<AccessTokenClaims>,
     state: State<AppState>,
+    Extension(claims): Extension<AccessTokenClaims>,
 ) -> Result<UserInfoResponse, Errors> {
     let user_uuid = claims.sub.clone();
 

@@ -2,9 +2,9 @@ mod api;
 
 mod config;
 mod database;
+mod dto;
 mod entity;
 mod middleware;
-mod payload;
 mod service;
 mod state;
 

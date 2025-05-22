@@ -1,5 +1,7 @@
-use crate::payload::auth_payload::{AuthLoginAccessTokenResponse, AuthLoginRequest};
-use crate::payload::user_payload::{CreateUserRequest, UserInfoResponse};
+use crate::dto::auth::request::login::AuthLoginRequest;
+use crate::dto::auth::response::jwt::AuthJWTResponse;
+use crate::dto::user::request::create::CreateUserRequest;
+use crate::dto::user::response::info::UserInfoResponse;
 use crate::service::error::errors::ErrorResponse;
 use utoipa::{
     Modify, OpenApi,
@@ -10,6 +12,7 @@ use utoipa::{
 #[openapi(
     paths(
         crate::api::v0::routes::auth::auth::login,
+        crate::api::v0::routes::auth::auth::refresh,
         crate::api::v0::routes::user::user::get_user,
         crate::api::v0::routes::user::user::create_user,
         crate::api::v0::routes::user::user::get_profile,
@@ -17,7 +20,7 @@ use utoipa::{
     components(
         schemas(
             AuthLoginRequest,
-            AuthLoginAccessTokenResponse,
+            AuthJWTResponse,
             CreateUserRequest,
             UserInfoResponse,
             ErrorResponse

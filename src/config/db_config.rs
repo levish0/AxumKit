@@ -7,6 +7,8 @@ use tracing::warn;
 #[derive(Debug, Clone)]
 pub struct DbConfig {
     pub jwt_secret: String,
+    pub auth_access_token_expire_time: i64,
+    pub auth_refresh_token_expire_time: i64,
 
     pub db_user: String,
     pub db_password: String,
@@ -80,6 +82,16 @@ impl DbConfig {
 
         Self {
             jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
+
+            auth_access_token_expire_time: env::var("AUTH_ACCESS_TOKEN_EXPIRE_TIME")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(30), // 기본값 24시간
+            auth_refresh_token_expire_time: env::var("AUTH_REFRESH_TOKEN_EXPIRE_TIME")
+                .ok()
+                .and_then(|v| v.parse().ok())
+                .unwrap_or(14), // 기본값 7일 (일주일)
+
             db_user: env::var("POSTGRES_USER").expect("POSTGRES_USER must be set"),
             db_password: env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set"),
             db_host: env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set"),

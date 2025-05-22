@@ -1,8 +1,11 @@
 use crate::service::error::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
 use crate::service::error::protocol::system::{
-    SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND,
+    SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND, SYS_TOKEN_CREATION_ERROR,
 };
-use crate::service::error::protocol::user::{USER_INVALID_PASSWORD, USER_NOT_FOUND};
+use crate::service::error::protocol::user::{
+    USER_INVALID_PASSWORD, USER_INVALID_TOKEN, USER_NOT_FOUND, USER_TOKEN_EXPIRED,
+    USER_UNAUTHORIZED,
+};
 use axum::Json;
 use axum::extract::Request;
 use axum::http::StatusCode;
@@ -28,6 +31,9 @@ pub enum Errors {
     // User
     UserInvalidPassword,
     UserNotFound,
+    UserUnauthorized,
+    UserTokenExpired,
+    UserInvalidToken,
     // General
     BadRequestError(String),
     ValidationError(String),
@@ -35,6 +41,7 @@ pub enum Errors {
     DatabaseError(String),
     NotFound(String),
     HashingError(String),
+    TokenCreationError(String),
 }
 
 impl IntoResponse for Errors {
@@ -43,6 +50,9 @@ impl IntoResponse for Errors {
             // User
             Errors::UserInvalidPassword => (StatusCode::UNAUTHORIZED, USER_INVALID_PASSWORD, None),
             Errors::UserNotFound => (StatusCode::NOT_FOUND, USER_NOT_FOUND, None),
+            Errors::UserUnauthorized => (StatusCode::UNAUTHORIZED, USER_UNAUTHORIZED, None),
+            Errors::UserTokenExpired => (StatusCode::UNAUTHORIZED, USER_TOKEN_EXPIRED, None),
+            Errors::UserInvalidToken => (StatusCode::UNAUTHORIZED, USER_INVALID_TOKEN, None),
             // General
             Errors::BadRequestError(msg) => (StatusCode::BAD_REQUEST, BAD_REQUEST, Some(msg)),
             Errors::ValidationError(msg) => (StatusCode::BAD_REQUEST, VALIDATION_ERROR, Some(msg)),
@@ -56,6 +66,11 @@ impl IntoResponse for Errors {
             Errors::HashingError(msg) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 SYS_HASHING_ERROR,
+                Some(msg),
+            ),
+            Errors::TokenCreationError(msg) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                SYS_TOKEN_CREATION_ERROR,
                 Some(msg),
             ),
         };
