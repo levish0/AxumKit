@@ -48,6 +48,7 @@ impl IntoResponse for AuthLoginAccessTokenResponse {
 
         let cookie = Cookie::build(("refresh_token", self.refresh_token))
             .http_only(true)
+            .secure(true)
             .path("/")
             .max_age(Duration::days(14))
             .build();
