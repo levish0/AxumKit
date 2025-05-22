@@ -8,6 +8,8 @@ use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
 use axum::routing::post;
 use axum::{Extension, Router, extract::State};
+use headers::UserAgent;
+use axum_extra::TypedHeader;
 
 pub fn auth_routes() -> Router<AppState> {
     Router::new().route("/auth/login", post(login)).route(
@@ -29,6 +31,7 @@ pub fn auth_routes() -> Router<AppState> {
     tag = "Auth"
 )]
 pub async fn login(
+    user_agent: Option<TypedHeader<UserAgent>>,
     State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<AuthLoginRequest>,
 ) -> Result<AuthJWTResponse, Errors> {
@@ -52,6 +55,7 @@ pub async fn login(
     tag = "Auth"
 )]
 pub async fn refresh(
+    user_agent: Option<TypedHeader<UserAgent>>,
     State(state): State<AppState>,
     Extension(ctx): Extension<RefreshTokenContext>,
 ) -> Result<AuthJWTResponse, Errors> {
