@@ -15,7 +15,6 @@ where
     Form<T>: FromRequest<S, Rejection = FormRejection>,
 {
     type Rejection = Errors;
-
     async fn from_request(req: Request, state: &S) -> Result<Self, Self::Rejection> {
         let Form(value) = Form::<T>::from_request(req, state)
             .await

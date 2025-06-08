@@ -10,6 +10,8 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: Uuid,
     pub user_id: Uuid,
+    pub ip_address: Option<String>,
+    pub user_agent: Option<String>,
     pub refresh_token: String,
     pub expires_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,

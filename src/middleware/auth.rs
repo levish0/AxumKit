@@ -2,8 +2,8 @@ use crate::dto::auth::internal::refresh_token::RefreshTokenContext;
 use crate::service::auth::jwt::{decode_access_token, decode_refresh_token};
 use crate::service::error::errors::Errors;
 use axum::body::Body;
-use axum::http::header::COOKIE;
 use axum::http::Request;
+use axum::http::header::COOKIE;
 use axum::middleware::Next;
 use axum::response::Response;
 

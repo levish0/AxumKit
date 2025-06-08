@@ -46,6 +46,8 @@ pub async fn service_login(
     let refresh_model = RefreshTokenActiveModel {
         id: Set(refresh_token.jti),
         user_id: Set(user.id),
+        ip_address: Default::default(),
+        user_agent: Default::default(),
         refresh_token: Set(refresh_token.token.clone()),
         expires_at: Set(refresh_token.expires_at),
         created_at: Set(refresh_token.issued_at),
@@ -135,6 +137,8 @@ pub async fn service_refresh(
     let new_refresh_model = RefreshTokenActiveModel {
         id: Set(new_refresh_token.jti),
         user_id: Set(user.id),
+        ip_address: Default::default(),
+        user_agent: Default::default(),
         refresh_token: Set(new_refresh_token.token.clone()),
         expires_at: Set(new_refresh_token.expires_at),
         created_at: Set(new_refresh_token.issued_at),

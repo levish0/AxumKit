@@ -8,8 +8,8 @@ use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
 use axum::routing::post;
 use axum::{Extension, Router, extract::State};
-use headers::UserAgent;
 use axum_extra::TypedHeader;
+use headers::UserAgent;
 
 pub fn auth_routes() -> Router<AppState> {
     Router::new().route("/auth/login", post(login)).route(

@@ -30,7 +30,14 @@ pub fn cors_layer() -> CorsLayer {
     info!("Setting CORS max_age to {} seconds", max_age);
 
     CorsLayer::new()
-        .allow_methods(vec![Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_methods(vec![
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::OPTIONS,
+            Method::PATCH,
+        ])
         .allow_headers(allowed_headers)
         .allow_origin(allowed_origins)
         .max_age(std::time::Duration::from_secs(max_age))
