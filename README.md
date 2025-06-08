@@ -66,6 +66,10 @@ A production-ready template for building high-performance web APIs with Rust, Ax
    ```
    http://localhost:8000/docs
    ```
+   
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
 
 ## Docker Setup
 
