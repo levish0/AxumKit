@@ -1,6 +1,8 @@
 use dotenvy::dotenv;
 use sea_orm_migration::prelude::*;
 use std::env;
+use migration::Migrator;
+use migration::sea_orm::Database;
 
 #[async_std::main]
 async fn main() {
@@ -20,7 +22,7 @@ async fn main() {
         db_user, db_password, db_host, db_port, db_name
     );
 
-    env::set_var("DATABASE_URL", database_url);
+    let db = Database::connect(&database_url).await.unwrap();
 
-    cli::run_cli(migration::Migrator).await;
+    Migrator::up(&db, None).await.unwrap();
 }

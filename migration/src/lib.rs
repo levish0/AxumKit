@@ -4,6 +4,7 @@ mod m20250521_184105_user_refresh_tokens;
 mod m20250531_054355_user_refresh_tokens_user_agent;
 
 
+
 pub struct Migrator;
 
 #[async_trait::async_trait]
