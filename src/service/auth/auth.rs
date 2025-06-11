@@ -32,7 +32,15 @@ pub async fn service_login(
         }
     };
 
-    verify_password(&payload.password, &user.password)?;
+    match &user.password {
+        Some(hashed_password) => {
+            verify_password(&payload.password, hashed_password)?
+        },
+        None => {
+            error!("Password is not set for user: {}", user.id);
+            return Err(Errors::UserOauthAccount);
+        }
+    }
 
     let access_token = create_jwt_access_token(&user.id).map_err(|e| {
         error!("Failed to create access token: {:?}", e);

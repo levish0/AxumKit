@@ -11,6 +11,9 @@ pub struct DbConfig {
     pub jwt_secret: String,
     pub auth_access_token_expire_time: i64,
     pub auth_refresh_token_expire_time: i64,
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub google_redirect_url: String,
 
     pub db_user: String,
     pub db_password: String,
@@ -99,6 +102,10 @@ impl DbConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(14), // 기본값 7일 (일주일)
+
+            google_client_id: env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID must be set"),
+            google_client_secret: env::var("GOOGLE_CLIENT_SECRET").expect("GOOGLE_CLIENT_SECRET must be set"),
+            google_redirect_url: env::var("GOOGLE_REDIRECT_URL").expect("GOOGLE_REDIRECT_URL must be set"),
 
             db_user: env::var("POSTGRES_USER").expect("POSTGRES_USER must be set"),
             db_password: env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set"),

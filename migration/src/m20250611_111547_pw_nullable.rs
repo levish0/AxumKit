@@ -9,9 +9,8 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(UserRefreshTokens::Table)
-                    .add_column(ColumnDef::new(UserRefreshTokens::IpAddress).text().null())
-                    .add_column(ColumnDef::new(UserRefreshTokens::UserAgent).text().null())
+                    .table(Users::Table)
+                    .modify_column(ColumnDef::new(Users::Password).text().null())
                     .to_owned(),
             )
             .await
@@ -21,9 +20,8 @@ impl MigrationTrait for Migration {
         manager
             .alter_table(
                 Table::alter()
-                    .table(UserRefreshTokens::Table)
-                    .drop_column(UserRefreshTokens::IpAddress)
-                    .drop_column(UserRefreshTokens::UserAgent)
+                    .table(Users::Table)
+                    .modify_column(ColumnDef::new(Users::Password).text().not_null())
                     .to_owned(),
             )
             .await
@@ -31,8 +29,7 @@ impl MigrationTrait for Migration {
 }
 
 #[derive(DeriveIden)]
-enum UserRefreshTokens {
+enum Users {
     Table,
-    IpAddress,
-    UserAgent,
+    Password,
 }

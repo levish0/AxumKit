@@ -12,10 +12,12 @@ use axum_extra::TypedHeader;
 use headers::UserAgent;
 
 pub fn auth_routes() -> Router<AppState> {
-    Router::new().route("/auth/login", post(login)).route(
-        "/auth/refresh",
-        post(refresh).route_layer(axum::middleware::from_fn(refresh_jwt_auth)),
-    )
+    Router::new()
+        .route("/auth/login", post(login))
+        .route(
+            "/auth/refresh",
+            post(refresh).route_layer(axum::middleware::from_fn(refresh_jwt_auth)),
+        )
 }
 
 #[utoipa::path(
