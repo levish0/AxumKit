@@ -19,7 +19,7 @@ pub async fn service_create_user(
         name: Set(payload.name),
         handle: Set(payload.handle),
         email: Set(payload.email),
-        password: Set(Some(hashed_password)),
+        password: Set(hashed_password),
     };
 
     match new_user.insert(conn).await {

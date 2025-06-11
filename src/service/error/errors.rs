@@ -3,7 +3,10 @@ use crate::service::error::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
 use crate::service::error::protocol::system::{
     SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND, SYS_TOKEN_CREATION_ERROR,
 };
-use crate::service::error::protocol::user::{USER_INVALID_PASSWORD, USER_INVALID_TOKEN, USER_NOT_FOUND, USER_OAUTH_ACCOUNT, USER_TOKEN_EXPIRED, USER_UNAUTHORIZED};
+use crate::service::error::protocol::user::{
+    USER_INVALID_PASSWORD, USER_INVALID_TOKEN, USER_NOT_FOUND, USER_TOKEN_EXPIRED,
+    USER_UNAUTHORIZED,
+};
 use axum::Json;
 use axum::extract::Request;
 use axum::http::StatusCode;
@@ -29,7 +32,6 @@ impl IntoResponse for ErrorResponse {
 pub enum Errors {
     // User
     UserInvalidPassword,
-    UserOauthAccount,
     UserNotFound,
     UserUnauthorized,
     UserTokenExpired,
@@ -49,7 +51,6 @@ impl IntoResponse for Errors {
         let (status, code, details) = match self {
             // User
             Errors::UserInvalidPassword => (StatusCode::UNAUTHORIZED, USER_INVALID_PASSWORD, None),
-            Errors::UserOauthAccount => (StatusCode::UNAUTHORIZED, USER_OAUTH_ACCOUNT, None),
             Errors::UserNotFound => (StatusCode::NOT_FOUND, USER_NOT_FOUND, None),
             Errors::UserUnauthorized => (StatusCode::UNAUTHORIZED, USER_UNAUTHORIZED, None),
             Errors::UserTokenExpired => (StatusCode::UNAUTHORIZED, USER_TOKEN_EXPIRED, None),

@@ -1,6 +1,5 @@
 pub mod user {
     pub const USER_INVALID_PASSWORD: &str = "user:invalid_password";
-    pub const USER_OAUTH_ACCOUNT: &str = "user:oauth_account";
     pub const USER_NOT_FOUND: &str = "user:not_found";
     pub const USER_UNAUTHORIZED: &str = "user:unauthorized";
     pub const USER_TOKEN_EXPIRED: &str = "user:token_expired";

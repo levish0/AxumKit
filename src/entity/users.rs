@@ -12,7 +12,7 @@ pub struct Model {
     pub handle: String, // Unique
     pub email: String,  // Unique
     #[serde(skip_deserializing)]
-    pub password: Option<String>,
+    pub password: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
