@@ -5,7 +5,6 @@ use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::{Layer, fmt};
 
 static TRACING_GUARD: LazyLock<tracing_appender::non_blocking::WorkerGuard> = LazyLock::new(|| {
-    // logs 디렉토리가 없으면 생성
     std::fs::create_dir_all("logs").expect("Failed to create logs directory");
 
     let file_appender = tracing_appender::rolling::daily("logs", "app.log");
