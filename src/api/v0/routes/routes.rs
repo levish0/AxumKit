@@ -10,7 +10,7 @@ use utoipa_swagger_ui::SwaggerUi;
 /// API + Swagger UI 라우터 통합
 pub fn api_routes() -> Router<AppState> {
     let mut router = Router::new();
-    
+
     #[cfg(debug_assertions)]
     {
         router = router.merge(SwaggerUi::new("/docs").url("/swagger.json", ApiDoc::merged()));
