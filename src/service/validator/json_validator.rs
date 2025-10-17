@@ -1,4 +1,4 @@
-use crate::service::error::errors::Errors;
+use crate::errors::errors::Errors;
 use axum::Json;
 use axum::extract::rejection::JsonRejection;
 use axum::extract::{FromRequest, Request};

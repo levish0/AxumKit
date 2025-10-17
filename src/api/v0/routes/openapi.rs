@@ -2,7 +2,7 @@ use crate::dto::auth::request::login::AuthLoginRequest;
 use crate::dto::auth::response::jwt::AuthJWTResponse;
 use crate::dto::user::request::create::CreateUserRequest;
 use crate::dto::user::response::info::UserInfoResponse;
-use crate::service::error::errors::ErrorResponse;
+use crate::errors::errors::ErrorResponse;
 use utoipa::{
     Modify, OpenApi,
     openapi::security::{HttpAuthScheme, HttpBuilder, SecurityScheme},

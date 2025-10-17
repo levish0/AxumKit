@@ -169,7 +169,7 @@ This project uses `utoipa` to automatically generate OpenAPI documentation and s
     responses(
         (status = 200, description = "Successfully retrieved user", body = UserInfoResponse),
         (status = 404, description = "User not found"),
-        (status = 500, description = "Internal server error")
+        (status = 500, description = "Internal server errors")
     ),
     tag = "User"
 )]

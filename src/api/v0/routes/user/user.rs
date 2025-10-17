@@ -2,7 +2,7 @@ use crate::dto::auth::internal::access_token::AccessTokenClaims;
 use crate::dto::user::request::create::CreateUserRequest;
 use crate::dto::user::response::info::UserInfoResponse;
 use crate::middleware::auth::access_jwt_auth;
-use crate::service::error::errors::Errors;
+use crate::errors::errors::Errors;
 use crate::service::user::user::{
     service_create_user, service_get_user_by_handle, service_get_user_by_uuid,
 };

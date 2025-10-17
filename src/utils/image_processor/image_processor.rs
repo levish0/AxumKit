@@ -1,6 +1,6 @@
 use image::{DynamicImage, GenericImageView, ImageFormat, ImageReader, codecs::gif::GifDecoder};
 use std::io::Cursor;
-use crate::service::error::errors::Errors;
+use crate::errors::errors::Errors;
 
 pub struct ImageProcessor;
 

@@ -7,7 +7,7 @@ use crate::entity::user_refresh_tokens::{
 };
 use crate::entity::users::{Column as UserColumn, Entity as UserEntity};
 use crate::service::auth::jwt::{create_jwt_access_token, create_jwt_refresh_token};
-use crate::service::error::errors::Errors;
+use crate::errors::errors::Errors;
 use crate::service::user::crypto::verify_password;
 use anyhow::Result;
 use chrono::Utc;
@@ -87,7 +87,7 @@ pub async fn service_refresh(
         .one(conn)
         .await
         .map_err(|e| {
-            error!("Database error while fetching refresh token: {:?}", e);
+            error!("Database errors while fetching refresh token: {:?}", e);
             Errors::DatabaseError(e.to_string())
         })?;
 
@@ -104,7 +104,7 @@ pub async fn service_refresh(
         .one(conn)
         .await
         .map_err(|e| {
-            error!("Database error while fetching user: {:?}", e);
+            error!("Database errors while fetching user: {:?}", e);
             Errors::DatabaseError(e.to_string())
         })?;
 

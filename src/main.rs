@@ -40,6 +40,6 @@ async fn main() {
     init_tracing();
 
     if let Err(err) = run_server().await {
-        eprintln!("Application error: {}", err);
+        eprintln!("Application errors: {}", err);
     }
 }

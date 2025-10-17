@@ -3,6 +3,7 @@ use crate::utils::file_processor::image_processor::ImageProcessor;
 use blake3;
 use image::ImageFormat;
 use infer;
+use crate::utils::image_processor::ImageProcessor;
 
 /// Maximum image size before optimization (10MB)
 pub const MAX_IMAGE_SIZE: usize = 10 * 1024 * 1024;

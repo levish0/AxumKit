@@ -1,9 +1,9 @@
 use crate::config::db_config::DbConfig;
-use crate::service::error::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
-use crate::service::error::protocol::system::{
+use crate::errors::protocol::general::{BAD_REQUEST, VALIDATION_ERROR};
+use crate::errors::protocol::system::{
     SYS_DATABASE_ERROR, SYS_HASHING_ERROR, SYS_NOT_FOUND, SYS_TOKEN_CREATION_ERROR,
 };
-use crate::service::error::protocol::user::{
+use crate::errors::protocol::user::{
     USER_INVALID_PASSWORD, USER_INVALID_TOKEN, USER_NOT_FOUND, USER_TOKEN_EXPIRED,
     USER_UNAUTHORIZED,
 };
@@ -40,6 +40,7 @@ pub enum Errors {
     BadRequestError(String),
     ValidationError(String),
     // System
+    SysInternalError(String),
     DatabaseError(String),
     NotFound(String),
     HashingError(String),
@@ -59,7 +60,8 @@ impl IntoResponse for Errors {
             Errors::BadRequestError(msg) => (StatusCode::BAD_REQUEST, BAD_REQUEST, Some(msg)),
             Errors::ValidationError(msg) => (StatusCode::BAD_REQUEST, VALIDATION_ERROR, Some(msg)),
             // System
-            Errors::DatabaseError(msg) => (
+            Errors::SysInternalError(_)
+             | Errors::DatabaseError(msg) => (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 SYS_DATABASE_ERROR,
                 Some(msg),

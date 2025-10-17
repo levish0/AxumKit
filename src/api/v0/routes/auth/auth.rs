@@ -3,7 +3,7 @@ use crate::dto::auth::request::login::AuthLoginRequest;
 use crate::dto::auth::response::jwt::AuthJWTResponse;
 use crate::middleware::auth::refresh_jwt_auth;
 use crate::service::auth::auth::{service_login, service_refresh};
-use crate::service::error::errors::Errors;
+use crate::errors::errors::Errors;
 use crate::service::validator::json_validator::ValidatedJson;
 use crate::state::AppState;
 use axum::routing::post;
@@ -26,7 +26,7 @@ pub fn auth_routes() -> Router<AppState> {
         (status = StatusCode::OK, description = "Login successful", body = AuthJWTResponse),
         (status = StatusCode::UNAUTHORIZED, description = "Invalid credentials"),
         (status = StatusCode::BAD_REQUEST, description = "Invalid request"),
-        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error")
+        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server errors")
     ),
     tag = "Auth"
 )]
@@ -50,7 +50,7 @@ pub async fn login(
         (status = StatusCode::OK, description = "Token refresh successful", body = AuthJWTResponse),
         (status = StatusCode::UNAUTHORIZED, description = "Invalid or expired refresh token"),
         (status = StatusCode::BAD_REQUEST, description = "Invalid request"),
-        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error")
+        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server errors")
     ),
     tag = "Auth"
 )]

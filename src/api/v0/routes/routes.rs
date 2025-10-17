@@ -1,7 +1,7 @@
 use super::auth::auth::auth_routes;
 use super::openapi::ApiDoc;
 use super::user::user::user_routes;
-use crate::service::error::errors::handler_404;
+use crate::errors::errors::handler_404;
 use crate::state::AppState;
 use axum::Router;
 use utoipa::OpenApi;
