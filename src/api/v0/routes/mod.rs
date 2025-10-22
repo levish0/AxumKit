@@ -1,4 +1,4 @@
-mod auth;
+mod health;
+
 mod openapi;
 pub mod routes;
-mod user;

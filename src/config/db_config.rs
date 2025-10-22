@@ -9,21 +9,20 @@ pub struct DbConfig {
     pub is_dev: bool,
 
     pub jwt_secret: String,
-    pub auth_access_token_expire_time: i64,
-    pub auth_refresh_token_expire_time: i64,
-    pub auth_email_verification_token_expire_time: i64,
-    pub auth_password_reset_token_expire_time: i64,
+    pub auth_session_expire_time: i64,                  // hours
+    pub auth_email_verification_token_expire_time: i64, // hours
+    pub auth_password_reset_token_expire_time: i64,     // hours
 
     // Google
-    pub google_client_id: String,
-    pub google_client_secret: String,
-    pub google_redirect_uri: String,
-    pub google_link_redirect_uri: String,
+    // pub google_client_id: String,
+    // pub google_client_secret: String,
+    // pub google_redirect_uri: String,
+    // pub google_link_redirect_uri: String,
 
     // Github
-    pub github_client_id: String,
-    pub github_client_secret: String,
-    pub github_redirect_uri: String,
+    // pub github_client_id: String,
+    // pub github_client_secret: String,
+    // pub github_redirect_uri: String,
 
     // Cloudflare
     pub r2_public_domain: String,
@@ -45,23 +44,8 @@ pub struct DbConfig {
     pub redis_port: String,
     pub redis_ttl: u64,
 
-    // OpenSearch
-    // pub opensearch_host: String,
-    // pub opensearch_port: String,
-    // pub opensearch_scheme: String,
-    // pub opensearch_username: String,
-    // pub opensearch_password: String,
-    // pub opensearch_verify_certs: bool,
     pub server_host: String,
     pub server_port: String,
-
-    // Task Server
-    pub task_server_host: String,
-    pub task_server_port: String,
-
-    // Meilisearch
-    pub meilisearch_host: String,
-    pub meilisearch_api_key: Option<String>,
 
     pub cors_allowed_origins: Vec<HeaderValue>,
     pub cors_allowed_headers: Vec<HeaderName>,
@@ -131,40 +115,21 @@ static CONFIG: LazyLock<DbConfig> = LazyLock::new(|| {
         is_dev,
         jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
 
-        auth_access_token_expire_time: env::var("AUTH_ACCESS_TOKEN_EXPIRE_TIME")
+        auth_session_expire_time: env::var("AUTH_SESSION_EXPIRE_TIME")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(30), // 기본값 30분
-        auth_refresh_token_expire_time: env::var("AUTH_REFRESH_TOKEN_EXPIRE_TIME")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(14), // 기본값 14일 (일주일)
+            .unwrap_or(24), // 기본값 24시간 (hours)
+
         auth_email_verification_token_expire_time: env::var(
             "AUTH_EMAIL_VERIFICATION_TOKEN_EXPIRE_TIME",
         )
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(1), // 기본값 1시간
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(1), // 기본값 1시간 (hours)
         auth_password_reset_token_expire_time: env::var("AUTH_PASSWORD_RESET_TOKEN_EXPIRE_TIME")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(1), // 기본값 1시간
-
-        // Google
-        google_client_id: env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID must be set"),
-        google_client_secret: env::var("GOOGLE_CLIENT_SECRET")
-            .expect("GOOGLE_CLIENT_SECRET must be set"),
-        google_redirect_uri: env::var("GOOGLE_REDIRECT_URI")
-            .expect("GOOGLE_REDIRECT_URI must be set"),
-        google_link_redirect_uri: env::var("GOOGLE_LINK_REDIRECT_URI")
-            .expect("GOOGLE_LINK_REDIRECT_URI must be set"),
-
-        // Github
-        github_client_id: env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set"),
-        github_client_secret: env::var("GITHUB_CLIENT_SECRET")
-            .expect("GITHUB_CLIENT_SECRET must be set"),
-        github_redirect_uri: env::var("GITHUB_REDIRECT_URI")
-            .expect("GITHUB_REDIRECT_URI must be set"),
+            .unwrap_or(1), // 기본값 1시간 (hours)
 
         // Cloudflare
         r2_public_domain: env::var("R2_PUBLIC_DOMAIN").expect("R2_PUBLIC_DOMAIN must be set"),
@@ -196,33 +161,8 @@ static CONFIG: LazyLock<DbConfig> = LazyLock::new(|| {
             .and_then(|v| v.parse().ok())
             .unwrap_or(3600),
 
-        // Opensearch
-        /*
-         opensearch_host: env::var("OPENSEARCH_HOST").expect("OPENSEARCH_HOST must be set"),
-         opensearch_port: env::var("OPENSEARCH_PORT").expect("OPENSEARCH_HOST must be set"),
-         opensearch_scheme: env::var("OPENSEARCH_SCHEME")
-           .ok()
-            .unwrap_or("http".to_string()),
-         opensearch_username: env::var("OPENSEARCH_USERNAME").expect("OPENSEARCH_USERNAME must be set"),
-         opensearch_password:env::var("OPENSEARCH_PASSWORD").expect("OPENSEARCH_PASSWORD must be set"),
-        opensearch_verify_certs: env::var("OPENSEARCH_VERIFY_CERTS")
-            .unwrap_or_else(|_| "false".to_string())
-            .parse()
-            .unwrap_or(false),
-        */
         server_host: env::var("HOST").expect("HOST must be set in .env file"),
         server_port: env::var("PORT").expect("PORT must be set in .env file"),
-
-        // Task Server
-        task_server_host: env::var("TASK_SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string()),
-        task_server_port: env::var("TASK_SERVER_PORT").unwrap_or_else(|_| "7000".to_string()),
-
-        // Meilisearch
-        meilisearch_host: env::var("MEILISEARCH_HOST")
-            .unwrap_or_else(|_| "http://localhost:7700".to_string()),
-        meilisearch_api_key: env::var("MEILISEARCH_API_KEY")
-            .ok()
-            .filter(|key| !key.is_empty()),
 
         cors_allowed_origins: cors_origins,
         cors_allowed_headers: cors_headers,

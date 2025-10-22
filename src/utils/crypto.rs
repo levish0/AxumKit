@@ -13,7 +13,7 @@ pub fn hash_password(password: &str) -> Result<String, Errors> {
         1,         // parallelism
         None,      // output length 기본값 (32 bytes)
     )
-        .map_err(|e| Errors::HashingError(e.to_string()))?;
+    .map_err(|e| Errors::HashingError(e.to_string()))?;
 
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
     let salt = SaltString::generate(&mut OsRng);

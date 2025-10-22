@@ -11,32 +11,30 @@ rust-version = "1.86.0"
 anyhow = "1.0.100"
 axum = { version = "0.8.6", features = ["multipart", "macros"] }
 dotenvy = "0.15.7"
-sea-orm = {version = "1.1.14", features = ["sqlx-postgres", "runtime-tokio-native-tls"]}
 serde = {version = "1.0.228", features = ["derive"]}
-tokio = {version = "1.47.1", features = ["full"]}
+tokio = {version = "1.48.0", features = ["full"]}
 tracing = "0.1.41"
 validator = {version = "0.20.0", features = ["derive"]}
 tracing-subscriber = "0.3.20"
-tower-http = { version = "0.6.6", features = ["cors", "auth", "compression-full"] }
+tower-http = { version = "0.6.6", features = ["cors", "auth"] }
 utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"]}
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"]}
 argon2 = "0.5.3"
-jsonwebtoken = { version = "10.0.0", features = ["aws_lc_rs"] }
+jsonwebtoken = { version = "10.1.0", features = ["aws_lc_rs"] }
 chrono = { version = "0.4.42", features = ["serde"] }
-uuid = { version = "1.18.1", features = ["v7"] }
+uuid = { version = "1.18.1", features = ["v7", "v4"] }
 cookie = "0.18.1"
 axum-extra = { version = "0.10.3", features = ["typed-header"] }
 serde_json = "1.0.145"
 tracing-appender = "0.2.3"
 oauth2 = { version = "5.0.0", features = ["reqwest"] }
-reqwest = { version = "0.12.23", features = ["json", "multipart"] }
-rand = "0.9.2"
+reqwest = { version = "0.12.24", features = ["json", "multipart"] }
 aws-sdk-s3 = "1.108.0"
 aws-config = { version = "1.8.8", features = ["behavior-version-latest"] }
-meilisearch-sdk = "0.30.0"
-redis = { version = "0.32.5", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
+redis = { version = "0.32.7", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 infer = "0.19.0"
-sha2 = "0.10.9"
-image = "0.25.8"
+image = { version = "0.25.8", features =["webp"] }
+tower-cookies = "0.11.0"
+sea-orm = {version = "1.1.17", features = ["sqlx-postgres", "runtime-tokio-native-tls"]}
 blake3 = "1.8.2"
 zstd = "0.13.3"
