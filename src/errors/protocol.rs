@@ -2,7 +2,6 @@ pub mod user {
     pub const USER_INVALID_PASSWORD: &str = "user:invalid_password";
     pub const USER_PASSWORD_NOT_SET: &str = "user:password_not_set";
     pub const USER_INVALID_SESSION: &str = "user:invalid_session";
-
     pub const USER_NOT_VERIFIED: &str = "user:not_verified";
     pub const USER_NOT_FOUND: &str = "user:not_found";
     pub const USER_UNAUTHORIZED: &str = "user:unauthorized";
