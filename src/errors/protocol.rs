@@ -48,6 +48,21 @@ pub mod general {
     pub const BAD_REQUEST: &str = "general:bad_request";
     pub const VALIDATION_ERROR: &str = "general:validation_error";
 }
+pub mod oauth {
+    pub const OAUTH_INVALID_AUTH_URL: &str = "oauth:invalid_auth_url";
+    pub const OAUTH_INVALID_TOKEN_URL: &str = "oauth:invalid_token_url";
+    pub const OAUTH_INVALID_REDIRECT_URL: &str = "oauth:invalid_redirect_url";
+    pub const OAUTH_TOKEN_EXCHANGE_FAILED: &str = "oauth:token_exchange_failed";
+    pub const OAUTH_USER_INFO_FETCH_FAILED: &str = "oauth:user_info_fetch failed";
+    pub const OAUTH_USER_INFO_PARSE_FAILED: &str = "oauth:user_info_parse failed";
+    pub const OAUTH_ACCOUNT_ALREADY_LINKED: &str = "oauth:account_already_linked";
+    pub const OAUTH_CONNECTION_NOT_FOUND: &str = "oauth:connection_not_found";
+    pub const OAUTH_CANNOT_UNLINK_LAST_CONNECTION: &str = "oauth:cannot_unlink_last_connection";
+    pub const OAUTH_INVALID_IMAGE_URL: &str = "oauth:invalid_image_url";
+    pub const OAUTH_INVALID_STATE: &str = "oauth:invalid_state";
+    pub const OAUTH_STATE_EXPIRED: &str = "oauth:state_expired";
+    pub const OAUTH_HANDLE_REQUIRED: &str = "oauth:handle_required";
+}
 
 pub mod system {
     pub const SYS_INTERNAL_ERROR: &str = "system:internal_error";

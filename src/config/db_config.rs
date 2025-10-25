@@ -14,15 +14,14 @@ pub struct DbConfig {
     pub auth_password_reset_token_expire_time: i64,     // hours
 
     // Google
-    // pub google_client_id: String,
-    // pub google_client_secret: String,
-    // pub google_redirect_uri: String,
-    // pub google_link_redirect_uri: String,
+    pub google_client_id: String,
+    pub google_client_secret: String,
+    pub google_redirect_uri: String,
 
     // Github
-    // pub github_client_id: String,
-    // pub github_client_secret: String,
-    // pub github_redirect_uri: String,
+    pub github_client_id: String,
+    pub github_client_secret: String,
+    pub github_redirect_uri: String,
 
     // Cloudflare
     pub r2_public_domain: String,
@@ -130,6 +129,20 @@ static CONFIG: LazyLock<DbConfig> = LazyLock::new(|| {
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(1), // 기본값 1시간 (hours)
+
+        // Google
+        google_client_id: env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID must be set"),
+        google_client_secret: env::var("GOOGLE_CLIENT_SECRET")
+            .expect("GOOGLE_CLIENT_SECRET must be set"),
+        google_redirect_uri: env::var("GOOGLE_REDIRECT_URI")
+            .expect("GOOGLE_REDIRECT_URI must be set"),
+
+        // Github
+        github_client_id: env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set"),
+        github_client_secret: env::var("GITHUB_CLIENT_SECRET")
+            .expect("GITHUB_CLIENT_SECRET must be set"),
+        github_redirect_uri: env::var("GITHUB_REDIRECT_URI")
+            .expect("GITHUB_REDIRECT_URI must be set"),
 
         // Cloudflare
         r2_public_domain: env::var("R2_PUBLIC_DOMAIN").expect("R2_PUBLIC_DOMAIN must be set"),

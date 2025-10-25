@@ -2,14 +2,11 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
-#[derive(Deserialize, Validate, Debug, ToSchema)]
+#[derive(Debug, Deserialize, ToSchema, Validate)]
 pub struct CreateUserRequest {
-    #[validate(length(
-        min = 3,
-        max = 20,
-        message = "Name must be between 3 and 20 characters."
-    ))]
-    pub name: String,
+    #[schema(example = "user@example.com")]
+    #[validate(email)]
+    pub email: String,
     #[validate(length(
         min = 3,
         max = 20,
@@ -17,11 +14,15 @@ pub struct CreateUserRequest {
     ))]
     pub handle: String,
     #[validate(length(
+        min = 3,
+        max = 20,
+        message = "Name must be between 3 and 20 characters."
+    ))]
+    pub display_name: String,
+    #[validate(length(
         min = 6,
         max = 20,
         message = "Password must be between 6 and 20 characters."
     ))]
     pub password: String,
-    #[validate(email)]
-    pub email: String,
 }

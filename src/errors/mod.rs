@@ -1,3 +1,3 @@
 pub mod errors;
-mod protocol;
 mod handlers;
+mod protocol;

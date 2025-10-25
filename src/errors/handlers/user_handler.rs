@@ -3,12 +3,15 @@ use crate::errors::protocol::user::*;
 use axum::http::StatusCode;
 use tracing::{debug, warn};
 
+/// 사용자 관련 에러 로깅 처리
 pub fn log_error(error: &Errors) {
     match error {
+        // 리소스 찾을 수 없음 - warn! 레벨
         Errors::UserNotFound => {
             warn!("Resource not found: {:?}", error);
         }
 
+        // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
         Errors::UserInvalidPassword
         | Errors::UserPasswordNotSet
         | Errors::UserInvalidSession
@@ -53,6 +56,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::UserNoRefreshToken => Some((StatusCode::UNAUTHORIZED, USER_NO_REFRESH_TOKEN, None)),
         Errors::UserInvalidToken => Some((StatusCode::UNAUTHORIZED, USER_INVALID_TOKEN, None)),
 
-        _ => None,
+        _ => None, // 다른 도메인의 에러는 None 반환
     }
 }
