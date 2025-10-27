@@ -11,9 +11,14 @@ use axum::{Router, middleware};
 use std::net::SocketAddr;
 use tower_cookies::CookieManagerLayer;
 use tracing::error;
+use AxumKit::connection::r2_conn::establish_r2_connection;
 
 pub async fn run_server() -> anyhow::Result<()> {
     let conn = establish_connection().await;
+    let r2_client = establish_r2_connection().await.map_err(|e| {
+        error!("Failed to establish cloudflare_r2 connection: {}", e);
+        anyhow::anyhow!("R2 connection failed: {}", e)
+    })?;
     let redis_client = establish_redis_connection().await.map_err(|e| {
         error!("Failed to establish redis connection: {}", e);
         anyhow::anyhow!("Redis connection failed: {}", e)
