@@ -1,7 +1,7 @@
 use crate::config::db_config::DbConfig;
 use crate::errors::handlers::{
-    email_handler, file_handler, general_handler, oauth_handler, password_handler, session_handler,
-    system_handler, token_handler, user_handler,
+    email_handler, file_handler, general_handler, oauth_handler, password_handler,
+    rate_limit_handler, session_handler, system_handler, token_handler, user_handler,
 };
 use axum::Json;
 use axum::extract::Request;
@@ -128,6 +128,9 @@ pub enum Errors {
     NotFound(String),           // 리소스를 찾을 수 없음 (추가 정보 포함)
     HashingError(String),       // 해싱 오류 (추가 정보 포함)
     TokenCreationError(String), // 토큰 생성 오류 (추가 정보 포함)
+
+    // Rate Limiting
+    RateLimitExceeded, // 요청 제한 초과
 }
 
 // IntoResponse 트레이트 구현: Errors를 HTTP 응답으로 변환
@@ -142,6 +145,7 @@ impl IntoResponse for Errors {
         password_handler::log_error(&self);
         token_handler::log_error(&self);
         email_handler::log_error(&self);
+        rate_limit_handler::log_error(&self);
         file_handler::log_error(&self);
         system_handler::log_error(&self);
         general_handler::log_error(&self);
@@ -153,6 +157,7 @@ impl IntoResponse for Errors {
             .or_else(|| password_handler::map_response(&self))
             .or_else(|| token_handler::map_response(&self))
             .or_else(|| email_handler::map_response(&self))
+            .or_else(|| rate_limit_handler::map_response(&self))
             .or_else(|| file_handler::map_response(&self))
             .or_else(|| system_handler::map_response(&self))
             .or_else(|| general_handler::map_response(&self))

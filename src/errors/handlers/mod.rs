@@ -8,3 +8,5 @@ pub mod session_handler;
 pub mod system_handler;
 pub mod token_handler;
 pub mod user_handler;
+
+pub mod rate_limit_handler;

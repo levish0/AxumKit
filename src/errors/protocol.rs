@@ -72,3 +72,7 @@ pub mod system {
     pub const SYS_DATABASE_ERROR: &str = "system:database_error";
     pub const SYS_TOKEN_CREATION_ERROR: &str = "system:token_creation_error";
 }
+
+pub mod rate_limit {
+    pub const RATE_LIMIT_EXCEEDED: &str = "rate_limit:exceeded";
+}

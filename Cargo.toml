@@ -1,6 +1,6 @@
 [package]
 name = "AxumKit"
-version = "0.1.0"
+version = "0.1.2"
 authors = [
     "Levi Lim <shiueo.csh@gmail.com>",
 ]
@@ -22,7 +22,7 @@ utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"]}
 argon2 = "0.5.3"
 jsonwebtoken = { version = "10.1.0", features = ["aws_lc_rs"] }
 chrono = { version = "0.4.42", features = ["serde"] }
-uuid = { version = "1.18.1", features = ["v4", "v7"] }
+uuid = { version = "1.18.1", features = ["v7", "v4"] }
 cookie = "0.18.1"
 axum-extra = { version = "0.10.3", features = ["typed-header"] }
 serde_json = "1.0.145"
@@ -31,10 +31,12 @@ oauth2 = { version = "5.0.0", features = ["reqwest"] }
 reqwest = { version = "0.12.24", features = ["json", "multipart"] }
 aws-sdk-s3 = "1.108.0"
 aws-config = { version = "1.8.8", features = ["behavior-version-latest"] }
+meilisearch-sdk = "0.30.0"
 redis = { version = "0.32.7", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 infer = "0.19.0"
 image = { version = "0.25.8", features =["webp"] }
 tower-cookies = "0.11.0"
-sea-orm = {version = "2.0.0-rc.14", features = ["sqlx-postgres", "runtime-tokio-native-tls"]}
+sea-orm = { version = "2.0.0-rc.15", features = ["sqlx-postgres", "runtime-tokio-native-tls"]}
 blake3 = "1.8.2"
 zstd = "0.13.3"
+tower = { version = "0.5.2" }

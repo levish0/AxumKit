@@ -3,11 +3,13 @@ use AxumKit::config::db_config::DbConfig;
 use AxumKit::connection::database::establish_connection;
 use AxumKit::connection::http::create_http_client;
 use AxumKit::connection::redis_connection::establish_redis_connection;
+use AxumKit::middleware::anonymous_user::anonymous_user_middleware;
 use AxumKit::middleware::cors::cors_layer;
 use AxumKit::state::AppState;
 use AxumKit::utils::logger::init_tracing;
-use axum::Router;
+use axum::{Router, middleware};
 use std::net::SocketAddr;
+use tower_cookies::CookieManagerLayer;
 use tracing::error;
 
 pub async fn run_server() -> anyhow::Result<()> {
@@ -26,14 +28,20 @@ pub async fn run_server() -> anyhow::Result<()> {
         &DbConfig::get().server_host,
         &DbConfig::get().server_port
     );
+
+    let state = AppState {
+        conn,
+        // r2_client,
+        redis_client,
+        http_client,
+    };
+
     let app = Router::new()
-        .merge(api_routes())
+        .merge(api_routes(state.clone()))
+        .layer(middleware::from_fn(anonymous_user_middleware))
+        .layer(CookieManagerLayer::new())
         .layer(cors_layer())
-        .with_state(AppState {
-            conn,
-            redis_client,
-            http_client,
-        });
+        .with_state(state);
 
     println!("Starting server at: {}", server_url);
 

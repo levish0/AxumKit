@@ -1,5 +1,7 @@
+use super::auth::openapi::AuthApiDoc;
 use super::health::openapi::HealthApiDoc;
 use crate::errors::errors::ErrorResponse;
+
 use utoipa::openapi::security::{ApiKey, ApiKeyValue};
 use utoipa::{Modify, OpenApi, openapi::security::SecurityScheme};
 
@@ -17,7 +19,8 @@ pub struct ApiDoc;
 impl ApiDoc {
     pub fn merged() -> utoipa::openapi::OpenApi {
         let mut openapi = Self::openapi();
-
+        openapi.merge(AuthApiDoc::openapi());
+        openapi.merge(HealthApiDoc::openapi());
         openapi
     }
 }
