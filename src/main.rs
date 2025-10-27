@@ -1,8 +1,8 @@
 use AxumKit::api::v0::routes::routes::api_routes;
 use AxumKit::config::db_config::DbConfig;
-use AxumKit::connection::database::establish_connection;
-use AxumKit::connection::http::create_http_client;
-use AxumKit::connection::redis_connection::establish_redis_connection;
+use AxumKit::connection::database_conn::establish_connection;
+use AxumKit::connection::http_conn::create_http_client;
+use AxumKit::connection::redis_conn::establish_redis_connection;
 use AxumKit::middleware::anonymous_user::anonymous_user_middleware;
 use AxumKit::middleware::cors::cors_layer;
 use AxumKit::state::AppState;

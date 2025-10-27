@@ -1,3 +1,4 @@
-pub mod database;
-pub mod http;
-pub mod redis_connection;
+pub mod database_conn;
+pub mod http_conn;
+pub mod redis_conn;
+pub mod r2_conn;
