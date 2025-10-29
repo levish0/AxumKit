@@ -7,6 +7,7 @@ use axum::{
     extract::{Extension, State},
     response::Response,
 };
+use crate::extractors::session::RequiredSession;
 
 #[utoipa::path(
     post,
@@ -22,7 +23,7 @@ use axum::{
 )]
 pub async fn auth_logout(
     State(state): State<AppState>,
-    Extension(session_context): Extension<SessionContext>,
+    RequiredSession(session_context): RequiredSession,
 ) -> Result<Response, Errors> {
     // 로그아웃 처리
     service_logout(&state.redis_client, &session_context.session_id).await?;

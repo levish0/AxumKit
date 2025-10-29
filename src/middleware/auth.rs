@@ -6,9 +6,10 @@ use axum::{body::Body, extract::State, http::Request, middleware::Next, response
 use tower_cookies::Cookies;
 use uuid::Uuid;
 
-pub const SESSION_COOKIE_NAME: &str = "session_id";
+const SESSION_COOKIE_NAME: &str = "session_id";
 
-// 필수 세션 middleware - session_id와 user_id를 추출해서 SessionContext에 포함
+// DEPRECATED: Use RequiredSession extractor instead
+#[allow(dead_code)]
 pub async fn session_auth(
     State(state): State<AppState>,
     cookies: Cookies,
@@ -36,4 +37,33 @@ pub async fn session_auth(
     });
 
     Ok(next.run(req).await)
+}
+
+/// DEPRECATED: Use OptionalSession extractor instead
+#[allow(dead_code)]
+pub async fn optional_session_auth(
+    State(state): State<AppState>,
+    cookies: Cookies,
+    mut req: Request<Body>,
+    next: Next,
+) -> Response {
+    // 쿠키에서 session_id 추출 시도
+    if let Some(cookie) = cookies.get(SESSION_COOKIE_NAME) {
+        let session_id = cookie.value().to_string();
+
+        // Redis에서 세션 조회 시도
+        if let Ok(Some(session)) = SessionService::get_session(&state.redis_client, &session_id).await {
+            // user_id 파싱 시도
+            if let Ok(user_id) = Uuid::parse_str(&session.user_id) {
+                // 성공하면 SessionContext 추가
+                req.extensions_mut().insert(SessionContext {
+                    user_id,
+                    session_id,
+                });
+            }
+        }
+    }
+
+    // 실패해도 에러 반환하지 않고 계속 진행
+    next.run(req).await
 }
