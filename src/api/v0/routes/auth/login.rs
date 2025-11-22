@@ -2,8 +2,8 @@ use crate::dto::auth::{LoginRequest, create_login_response};
 use crate::errors::errors::Errors;
 use crate::service::auth::login::service_login;
 use crate::state::AppState;
-use crate::utils::extract_ip_address::extract_ip_address;
-use crate::utils::extract_user_agent::extract_user_agent;
+use crate::utils::extract::extract_ip_address::extract_ip_address;
+use crate::utils::extract::extract_user_agent::extract_user_agent;
 use crate::utils::validator::json_validator::ValidatedJson;
 use axum::http::HeaderMap;
 use axum::{

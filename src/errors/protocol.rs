@@ -22,11 +22,11 @@ pub mod token {
 }
 
 pub mod password {
-    pub const PASSWORD_REQUIRED_FOR_UPDATE: &str = "password:required_for_update";
-    pub const PASSWORD_INCORRECT: &str = "password:incorrect";
-    pub const PASSWORD_CANNOT_UPDATE_OAUTH_ONLY: &str = "password:cannot_update_oauth_only";
-    pub const PASSWORD_NEW_PASSWORD_MISSING: &str = "password:new_password_missing";
-    pub const PASSWORD_ALREADY_SET: &str = "password:already_set";
+    pub const PASSWORD_REQUIRED_FOR_UPDATE: &str = "crypto:required_for_update";
+    pub const PASSWORD_INCORRECT: &str = "crypto:incorrect";
+    pub const PASSWORD_CANNOT_UPDATE_OAUTH_ONLY: &str = "crypto:cannot_update_oauth_only";
+    pub const PASSWORD_NEW_PASSWORD_MISSING: &str = "crypto:new_password_missing";
+    pub const PASSWORD_ALREADY_SET: &str = "crypto:already_set";
 }
 pub mod session {
     pub const SESSION_INVALID_USER_ID: &str = "session:invalid_user_id";

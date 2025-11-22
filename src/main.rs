@@ -15,7 +15,6 @@ use tower_cookies::CookieManagerLayer;
 use tower_http::LatencyUnit;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
 use tower_http::trace::TraceLayer;
-use tracing::error;
 use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {

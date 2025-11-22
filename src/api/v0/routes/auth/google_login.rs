@@ -3,8 +3,8 @@ use crate::dto::oauth::request::google::GoogleLoginRequest;
 use crate::errors::errors::Errors;
 use crate::service::oauth::google_sign_in::service_google_sign_in;
 use crate::state::AppState;
-use crate::utils::extract_ip_address::extract_ip_address;
-use crate::utils::extract_user_agent::extract_user_agent;
+use crate::utils::extract::extract_ip_address::extract_ip_address;
+use crate::utils::extract::extract_user_agent::extract_user_agent;
 use crate::utils::validator::json_validator::ValidatedJson;
 use axum::{
     extract::{ConnectInfo, State},

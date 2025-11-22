@@ -1,6 +1,6 @@
 use crate::entity::users::{ActiveModel as UserActiveModel, Model as UserModel};
 use crate::errors::errors::Errors;
-use crate::utils::crypto::hash_password;
+use crate::utils::crypto::password::hash_password;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 
 pub async fn repository_create_user<C>(

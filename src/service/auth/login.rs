@@ -2,7 +2,7 @@ use crate::dto::auth::LoginRequest;
 use crate::errors::errors::{Errors, ServiceResult};
 use crate::repository::user::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
-use crate::utils::crypto::verify_password;
+use crate::utils::crypto::password::verify_password;
 use redis::aio::ConnectionManager;
 use sea_orm::DatabaseConnection;
 

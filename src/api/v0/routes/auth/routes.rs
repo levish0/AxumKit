@@ -52,7 +52,7 @@ pub fn auth_routes(state: AppState) -> Router<AppState> {
                 .layer(middleware::from_fn_with_state(state.clone(), rate_limit)),
         );
 
-    // Email/password login route - 5 req/min
+    // Email/crypto login route - 5 req/min
     let email_login_routes = Router::new()
         .route("/auth/login", post(auth_login))
         .route_layer(

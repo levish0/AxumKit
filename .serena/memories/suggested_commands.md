@@ -76,7 +76,7 @@ cd ..
 ### SeaORM Entity Generation
 ```bash
 sea-orm-cli generate entity \
-  -u postgres://user:password@localhost:5432/database \
+  -u postgres://user:crypto@localhost:5432/database \
   -o src/entity
 ```
 
