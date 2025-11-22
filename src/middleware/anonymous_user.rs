@@ -19,7 +19,7 @@ pub async fn anonymous_user_middleware(
     // 쿠키에서 anonymous_user_id 확인
     let (final_anonymous_id, has_anonymous_id) = match cookies.get(ANONYMOUS_USER_COOKIE_NAME) {
         Some(cookie) => (cookie.value().to_string(), true),
-        None => (Uuid::new_v4().to_string(), false),
+        None => (Uuid::now_v7().to_string(), false),
     };
 
     // Extension에 익명 사용자 컨텍스트 추가

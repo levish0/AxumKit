@@ -40,5 +40,6 @@ pub fn cors_layer() -> CorsLayer {
         ])
         .allow_headers(allowed_headers)
         .allow_origin(allowed_origins)
+        .allow_credentials(true)
         .max_age(std::time::Duration::from_secs(max_age))
 }

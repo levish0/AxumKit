@@ -1,7 +1,7 @@
 use crate::dto::auth::internal::anonymous_user::AnonymousUserContext;
 use crate::errors::errors::Errors;
 use crate::state::AppState;
-use crate::utils::extract_ip_address::extract_ip_address;
+use crate::utils::extract::extract_ip_address::extract_ip_address;
 use axum::http::HeaderMap;
 use axum::{
     Extension,

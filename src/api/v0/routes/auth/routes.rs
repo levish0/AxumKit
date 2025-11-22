@@ -30,9 +30,7 @@ const EMAIL_LOGIN_LIMIT: RateLimitConfig = RateLimitConfig {
 
 pub fn auth_routes(state: AppState) -> Router<AppState> {
     // Protected routes (require authentication)
-    let protected_routes = Router::new()
-        .route("/auth/logout", post(auth_logout));
-
+    let protected_routes = Router::new().route("/auth/logout", post(auth_logout));
 
     // OAuth authorize routes (URL generation) - 10 req/min
     let oauth_authorize_routes = Router::new()

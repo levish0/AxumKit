@@ -52,7 +52,9 @@ pub async fn optional_session_auth(
         let session_id = cookie.value().to_string();
 
         // Redis에서 세션 조회 시도
-        if let Ok(Some(session)) = SessionService::get_session(&state.redis_client, &session_id).await {
+        if let Ok(Some(session)) =
+            SessionService::get_session(&state.redis_client, &session_id).await
+        {
             // user_id 파싱 시도
             if let Ok(user_id) = Uuid::parse_str(&session.user_id) {
                 // 성공하면 SessionContext 추가

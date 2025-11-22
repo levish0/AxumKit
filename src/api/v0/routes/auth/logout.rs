@@ -1,13 +1,13 @@
 use crate::dto::auth::create_logout_response;
 use crate::dto::auth::internal::session::SessionContext;
 use crate::errors::errors::Errors;
+use crate::extractors::session::RequiredSession;
 use crate::service::auth::logout::service_logout;
 use crate::state::AppState;
 use axum::{
     extract::{Extension, State},
     response::Response,
 };
-use crate::extractors::session::RequiredSession;
 
 #[utoipa::path(
     post,
