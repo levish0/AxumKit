@@ -1,42 +1,61 @@
-[package]
-name = "AxumKit"
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
 version = "0.1.2"
 authors = [
     "Levi Lim <shiueo.csh@gmail.com>",
 ]
+repository = "https://github.com/levish0/AxumKit"
 edition = "2024"
-rust-version = "1.86.0"
+rust-version = "1.92.0"
 
-[dependencies]
-anyhow = "1.0.100"
+[workspace.dependencies]
+tokio = { version = "1.48.0", features = ["full"] }
 axum = { version = "0.8.7", features = ["multipart", "macros"] }
-dotenvy = "0.15.7"
-serde = {version = "1.0.228", features = ["derive"]}
-tokio = {version = "1.48.0", features = ["full"]}
-tracing = "0.1.41"
-validator = {version = "0.20.0", features = ["derive"]}
-tracing-subscriber = { version = "0.3.20", features = ["json", "env-filter"] }
-tower-http = { version = "0.6.6", features = ["cors", "auth", "trace", "request-id"] }
-utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"]}
-utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"]}
-argon2 = "0.5.3"
-jsonwebtoken = { version = "10.1.0", features = ["aws_lc_rs"] }
-chrono = { version = "0.4.42", features = ["serde"] }
-uuid = { version = "1.18.1", features = ["v7", "v4"] }
-cookie = "0.18.1"
 axum-extra = { version = "0.12.2", features = ["typed-header"] }
-serde_json = "1.0.145"
-tracing-appender = "0.2.3"
-oauth2 = { version = "5.0.0", features = ["reqwest"] }
-reqwest = { version = "0.12.24", features = ["json", "multipart"] }
-aws-sdk-s3 = "1.108.0"
-aws-config = { version = "1.8.8", features = ["behavior-version-latest"] }
-meilisearch-sdk = "0.30.0"
-redis = { version = "0.32.7", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
-infer = "0.19.0"
-image = { version = "0.25.8", features =["webp"] }
+tower = "0.5.2"
+tower-http = { version = "0.6.8", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
-sea-orm = { version = "2.0.0-rc.15", features = ["sqlx-postgres", "runtime-tokio-native-tls"]}
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+sea-orm = { version = "2.0.0-rc.21", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
+redis = { version = "1.0.1", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
+apalis = { version = "0.7.4", features = ["tracing", "retry", "timeout", "limit", "catch-panic"] }
+apalis-redis = "0.7.4"
+apalis-cron = "0.7.4"
+argon2 = "0.5.3"
+oauth2 = { version = "5.0.0", features = ["reqwest"] }
+totp-rs = { version = "5.7.0", features = ["qr"] }
+cookie = "0.18.1"
+aws-sdk-s3 = "1.117.0"
+aws-config = { version = "1.8.12", features = ["behavior-version-latest"] }
+meilisearch-sdk = { version = "0.31.0" }
+utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"] }
+validator = { version = "0.20.0", features = ["derive"] }
+tracing = "0.1.43"
+tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"] }
+tracing-appender = "0.2.4"
+reqwest = { version = "0.12.25", features = ["json", "multipart"] }
+anyhow = "1.0.100"
+chrono = { version = "0.4.42", features = ["serde"] }
+chrono-tz = "0.10.4"
+uuid = { version = "1.19.0", features = ["v7"] }
+dotenvy = "0.15.7"
+rand = "0.9.2"
+hex = "0.4.3"
+base64 = "0.22.1"
+regex = "1.12.2"
+image = { version = "0.25.9", features = ["webp"] }
+infer = "0.19.0"
 blake3 = "1.8.2"
 zstd = "0.13.3"
-tower = { version = "0.5.2" }
+lettre = { version = "0.11.19", features = ["tokio1-native-tls"] }
+mrml = "5.1.0"
+minijinja = { version = "2.14.0", features = ["loader"] }
+similar = "2.7.0"
+
+[profile.dev]
+opt-level = 1
