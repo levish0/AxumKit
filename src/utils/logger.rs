@@ -21,9 +21,9 @@ static TRACING_GUARD: LazyLock<Option<tracing_appender::non_blocking::WorkerGuar
         #[cfg(debug_assertions)]
         {
             // 개발 환경: 콘솔 + 파일 (human-readable)
-            std::fs::create_dir_all("logs").expect("Failed to create logs directory");
+            std::fs::create_dir_all("../../../../logs").expect("Failed to create logs directory");
 
-            let file_appender = tracing_appender::rolling::daily("logs", "app.log");
+            let file_appender = tracing_appender::rolling::daily("../../../../logs", "app.log");
             let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
             tracing_subscriber::registry()
