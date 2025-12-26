@@ -1,3 +1,3 @@
 mod auth;
-mod openapi;
+pub mod openapi;
 pub mod routes;

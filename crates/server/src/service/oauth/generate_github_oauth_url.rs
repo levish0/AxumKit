@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::dto::oauth::internal::oauth_state_data::OAuthStateData;
 use crate::dto::oauth::response::oauth_url::OAuthUrlResponse;
 use crate::errors::errors::Errors;
@@ -17,7 +17,7 @@ use uuid::Uuid;
 pub async fn service_generate_github_oauth_url(
     redis_conn: &ConnectionManager,
 ) -> Result<OAuthUrlResponse, Errors> {
-    let config = DbConfig::get();
+    let config = ServerConfig::get();
 
     // 1. State 생성
     let state = Uuid::new_v4().to_string();

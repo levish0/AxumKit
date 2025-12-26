@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::dto::oauth::internal::oauth_state_data::OAuthStateData;
 use crate::entity::common::OAuthProvider;
 use crate::errors::errors::Errors;
@@ -38,7 +38,7 @@ pub async fn service_google_sign_in<C>(
 where
     C: ConnectionTrait + TransactionTrait,
 {
-    let config = DbConfig::get();
+    let config = ServerConfig::get();
 
     // 1. Redis에서 state 검증 및 PKCE verifier 조회 (get_del로 1회용)
     let state_key = format!("oauth:state:{}", state);

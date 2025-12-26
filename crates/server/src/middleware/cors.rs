@@ -1,32 +1,32 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use axum::http::Method;
 use tower_http::cors::{AllowHeaders, AllowOrigin, CorsLayer};
 use tracing::{info, warn};
 
 pub fn cors_layer() -> CorsLayer {
-    let allowed_origins = if DbConfig::get().cors_allowed_origins.is_empty() {
+    let allowed_origins = if ServerConfig::get().cors_allowed_origins.is_empty() {
         warn!("CORS_ALLOWED_ORIGINS is not set, allowing all origins.");
         AllowOrigin::any()
     } else {
         info!(
             "CORS_ALLOWED_ORIGINS is set to {:?}",
-            DbConfig::get().cors_allowed_origins
+            ServerConfig::get().cors_allowed_origins
         );
-        AllowOrigin::list(DbConfig::get().cors_allowed_origins.clone())
+        AllowOrigin::list(ServerConfig::get().cors_allowed_origins.clone())
     };
 
-    let allowed_headers = if DbConfig::get().cors_allowed_headers.is_empty() {
+    let allowed_headers = if ServerConfig::get().cors_allowed_headers.is_empty() {
         warn!("CORS_ALLOWED_HEADERS is not set, allowing all headers.");
         AllowHeaders::any()
     } else {
         info!(
             "CORS_ALLOWED_HEADERS is set to {:?}",
-            DbConfig::get().cors_allowed_headers
+            ServerConfig::get().cors_allowed_headers
         );
-        AllowHeaders::list(DbConfig::get().cors_allowed_headers.clone())
+        AllowHeaders::list(ServerConfig::get().cors_allowed_headers.clone())
     };
 
-    let max_age = DbConfig::get().cors_max_age.unwrap_or(300);
+    let max_age = ServerConfig::get().cors_max_age.unwrap_or(300);
     info!("Setting CORS max_age to {} seconds", max_age);
 
     CorsLayer::new()

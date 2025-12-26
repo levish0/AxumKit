@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::dto::auth::internal::anonymous_user::AnonymousUserContext;
 use axum::body::Body;
 use axum::http::Request;
@@ -31,7 +31,7 @@ pub async fn anonymous_user_middleware(
 
     // 쿠키가 없었다면 새로 생성해서 설정
     if !has_anonymous_id {
-        let is_dev = DbConfig::get().is_dev;
+        let is_dev = ServerConfig::get().is_dev;
 
         let same_site_attribute = if is_dev {
             SameSite::None
