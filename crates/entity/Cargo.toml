@@ -1,0 +1,16 @@
+[package]
+name = "entity"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "entity"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+sea-orm.workspace = true
+serde.workspace = true
+uuid.workspace = true
+utoipa.workspace = true
