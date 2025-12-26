@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::errors::handlers::{
     email_handler, file_handler, general_handler, oauth_handler, password_handler,
     rate_limit_handler, session_handler, system_handler, token_handler, user_handler,
@@ -168,7 +168,7 @@ impl IntoResponse for Errors {
             });
 
         // 개발 환경에서만 상세 오류 정보 포함
-        let is_dev = DbConfig::get().is_dev;
+        let is_dev = ServerConfig::get().is_dev;
 
         // 오류 응답 구성
         let body = ErrorResponse {

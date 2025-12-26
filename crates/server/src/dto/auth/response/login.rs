@@ -1,11 +1,11 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::errors::errors::Errors;
 use axum::http::{HeaderValue, StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
 use cookie::{Cookie, SameSite, time::Duration};
 
 pub fn create_login_response(session_id: String) -> Result<Response, Errors> {
-    let config = DbConfig::get();
+    let config = ServerConfig::get();
     let is_dev = config.is_dev;
 
     let mut response = StatusCode::NO_CONTENT.into_response();

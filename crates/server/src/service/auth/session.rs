@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use crate::dto::auth::internal::session::Session;
 use crate::errors::errors::Errors;
 use crate::utils::redis_cache::set_json_with_ttl;
@@ -14,7 +14,7 @@ impl SessionService {
         user_agent: Option<String>,
         ip_address: Option<String>,
     ) -> Result<Session, Errors> {
-        let config = DbConfig::get();
+        let config = ServerConfig::get();
         let session = Session::new(user_id, config.auth_session_expire_time)
             .with_client_info(user_agent, ip_address);
 
@@ -68,7 +68,7 @@ impl SessionService {
         session_id: &str,
     ) -> Result<Option<Session>, Errors> {
         if let Some(mut session) = Self::get_session(redis, session_id).await? {
-            let config = DbConfig::get();
+            let config = ServerConfig::get();
             let now = chrono::Utc::now();
             session.expires_at = now + chrono::Duration::hours(config.auth_session_expire_time);
 

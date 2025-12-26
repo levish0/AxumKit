@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use redis::aio::ConnectionManager;
 use redis::{Client, RedisResult};
 use tracing::info;
@@ -6,8 +6,8 @@ use tracing::info;
 pub async fn establish_redis_connection() -> RedisResult<ConnectionManager> {
     let redis_url = format!(
         "redis://{}:{}",
-        &DbConfig::get().redis_host,
-        &DbConfig::get().redis_port,
+        &ServerConfig::get().redis_host,
+        &ServerConfig::get().redis_port,
     );
     info!("Connecting to Redis at: {}", redis_url);
 

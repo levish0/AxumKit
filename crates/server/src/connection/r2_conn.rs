@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_s3::error::SdkError;
 use aws_sdk_s3::{Client, Error as S3Error};
@@ -117,7 +117,7 @@ impl R2Client {
 }
 
 pub async fn establish_r2_connection() -> Result<R2Client, Box<dyn std::error::Error>> {
-    let config = DbConfig::get();
+    let config = ServerConfig::get();
 
     let r2_endpoint = format!("https://{}.r2.cloudflarestorage.com", config.r2_account_id);
 

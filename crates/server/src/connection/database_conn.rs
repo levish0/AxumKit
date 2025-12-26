@@ -1,4 +1,4 @@
-use crate::config::server_config::DbConfig;
+use crate::config::server_config::ServerConfig;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};
@@ -18,11 +18,11 @@ pub async fn establish_connection() -> DatabaseConnection {
     // Retrieve database connection information from the environment and build the URL
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",
-        &DbConfig::get().db_user,
-        &DbConfig::get().db_password,
-        &DbConfig::get().db_host,
-        &DbConfig::get().db_port,
-        &DbConfig::get().db_name
+        &ServerConfig::get().db_user,
+        &ServerConfig::get().db_password,
+        &ServerConfig::get().db_host,
+        &ServerConfig::get().db_port,
+        &ServerConfig::get().db_name
     );
     info!("Attempting to connect to database: {}", database_url);
 
@@ -30,8 +30,8 @@ pub async fn establish_connection() -> DatabaseConnection {
     let mut options = ConnectOptions::new(database_url);
     options
         // Configure connection pool size
-        .max_connections(DbConfig::get().db_max_connection) // Maximum number of connections
-        .min_connections(DbConfig::get().db_min_connection) // Minimum number of connections
+        .max_connections(ServerConfig::get().db_max_connection) // Maximum number of connections
+        .min_connections(ServerConfig::get().db_min_connection) // Minimum number of connections
         // Configure timeouts
         .connect_timeout(Duration::from_secs(8)) // Connection timeout: 8 seconds
         .acquire_timeout(Duration::from_secs(30))
