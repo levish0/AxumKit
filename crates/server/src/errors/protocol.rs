@@ -47,6 +47,7 @@ pub mod file {
 pub mod general {
     pub const BAD_REQUEST: &str = "general:bad_request";
     pub const VALIDATION_ERROR: &str = "general:validation_error";
+    pub const INVALID_IP_ADDRESS: &str = "general:invalid_ip_address";
 }
 pub mod oauth {
     pub const OAUTH_INVALID_AUTH_URL: &str = "oauth:invalid_auth_url";

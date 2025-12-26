@@ -1,12 +1,5 @@
-
-use axum::{Router, middleware};
-use std::net::SocketAddr;
 use axum::extract::DefaultBodyLimit;
-use tower_cookies::CookieManagerLayer;
-use tower_http::LatencyUnit;
-use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
-use tower_http::trace::TraceLayer;
-use tracing::{Level, error};
+use axum::{Router, middleware};
 use server::api::routes::api_routes;
 use server::config::server_config::ServerConfig;
 use server::connection::database_conn::establish_connection;
@@ -18,6 +11,12 @@ use server::middleware::cors::cors_layer;
 use server::middleware::trace_layer_config::make_span_with_request_id;
 use server::state::AppState;
 use server::utils::logger::init_tracing;
+use std::net::SocketAddr;
+use tower_cookies::CookieManagerLayer;
+use tower_http::LatencyUnit;
+use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
+use tower_http::trace::TraceLayer;
+use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {
     let conn = establish_connection().await;
@@ -49,7 +48,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 
     let app = Router::new()
         .merge(api_routes(state.clone()))
-         .layer(DefaultBodyLimit::max(8 * 1024 * 1024)) // 8MB default body limit
+        .layer(DefaultBodyLimit::max(8 * 1024 * 1024)) // 8MB default body limit
         .layer(middleware::from_fn(anonymous_user_middleware))
         .layer(CookieManagerLayer::new())
         .layer(cors_layer())

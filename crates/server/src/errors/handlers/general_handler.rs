@@ -10,7 +10,8 @@ pub fn log_error(error: &Errors) {
         Errors::ForbiddenError(_)
         | Errors::BadRequestError(_)
         | Errors::ValidationError(_)
-        | Errors::FileTooLargeError(_) => {
+        | Errors::FileTooLargeError(_)
+        | Errors::InvalidIpAddress => {
             debug!("Client error: {:?}", error);
         }
 
@@ -35,6 +36,7 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             "FILE_TOO_LARGE",
             Some(msg.clone()),
         )),
+        Errors::InvalidIpAddress => Some((StatusCode::BAD_REQUEST, INVALID_IP_ADDRESS, None)),
 
         _ => None, // 다른 도메인의 에러는 None 반환
     }

@@ -120,6 +120,7 @@ pub enum Errors {
     BadRequestError(String),   // 잘못된 요청 (추가 정보 포함)
     ValidationError(String),   // 유효성 검사 오류 (추가 정보 포함)
     FileTooLargeError(String), // 파일 크기 초과 오류
+    InvalidIpAddress,          // 유효하지 않은 IP 주소
 
     // 시스템 오류
     SysInternalError(String),
