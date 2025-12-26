@@ -1,10 +1,3 @@
-pub mod clients;
-pub mod config;
-pub mod connection;
-pub mod jobs;
-pub mod templates;
-pub mod utils;
-
 use lettre::{AsyncSmtpTransport, Tokio1Executor};
 use meilisearch_sdk::client::Client as MeiliClient;
 use redis::aio::ConnectionManager as RedisConnectionManager;
