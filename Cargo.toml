@@ -4,9 +4,7 @@ members = ["crates/*"]
 
 [workspace.package]
 version = "0.1.2"
-authors = [
-    "Levi Lim <shiueo.csh@gmail.com>",
-]
+authors = ["Levi Laine <shiueo.csh@gmail.com>"]
 repository = "https://github.com/levish0/AxumKit"
 edition = "2024"
 rust-version = "1.92.0"
