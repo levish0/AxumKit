@@ -10,14 +10,14 @@ edition = "2024"
 rust-version = "1.92.0"
 
 [workspace.dependencies]
-tokio = { version = "1.48.0", features = ["full"] }
+tokio = { version = "1.49.0", features = ["full"] }
 axum = { version = "0.8.8", features = ["multipart", "macros"] }
-axum-extra = { version = "0.12.3", features = ["typed-header"] }
+axum-extra = { version = "0.12.5", features = ["typed-header"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.8", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.147"
+serde_json = "1.0.149"
 sea-orm = { version = "2.0.0-rc.22", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
 redis = { version = "1.0.2", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 apalis = { version = "1.0.0-rc.1", features = ["tracing", "retry", "timeout", "limit", "catch-panic"] }
@@ -28,7 +28,7 @@ totp-rs = { version = "5.7.0", features = ["qr"] }
 cookie = "0.18.1"
 aws-sdk-s3 = "1.119.0"
 aws-config = { version = "1.8.12", features = ["behavior-version-latest"] }
-meilisearch-sdk = { version = "0.31.0" }
+meilisearch-sdk = { version = "0.32.0" }
 utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"] }
 validator = { version = "0.20.0", features = ["derive"] }
@@ -46,7 +46,7 @@ hex = "0.4.3"
 base64 = "0.22.1"
 image = { version = "0.25.9", features = ["webp"] }
 infer = "0.19.0"
-blake3 = "1.8.2"
+blake3 = "1.8.3"
 zstd = "0.13.3"
 lettre = { version = "0.11.19", features = ["tokio1-native-tls"] }
 mrml = "5.1.0"
