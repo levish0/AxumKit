@@ -9,19 +9,19 @@ repository = "https://github.com/levish0/AxumKit"
 edition = "2024"
 rust-version = "1.92.0"
 
+
 [workspace.dependencies]
 tokio = { version = "1.49.0", features = ["full"] }
 axum = { version = "0.8.8", features = ["multipart", "macros"] }
-axum-extra = { version = "0.12.5", features = ["typed-header"] }
+axum-extra = { version = "0.12.5", features = ["typed-header", "query"] }
 tower = "0.5.2"
 tower-http = { version = "0.6.8", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-sea-orm = { version = "2.0.0-rc.22", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
+sea-orm = { version = "2.0.0-rc.27", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
 redis = { version = "1.0.2", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
-apalis = { version = "1.0.0-rc.1", features = ["tracing", "retry", "timeout", "limit", "catch-panic"] }
-apalis-cron = "1.0.0-rc.1"
+tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
 oauth2 = { version = "5.0.0", features = ["reqwest"] }
 totp-rs = { version = "5.7.0", features = ["qr"] }
@@ -44,6 +44,9 @@ dotenvy = "0.15.7"
 rand = "0.9.2"
 hex = "0.4.3"
 base64 = "0.22.1"
+regex = "1.12.2"
+threeway_merge = "0.1.14"
+blame-rs = "0.1.7"
 image = { version = "0.25.9", features = ["webp"] }
 infer = "0.19.0"
 blake3 = "1.8.3"
@@ -51,9 +54,10 @@ zstd = "0.13.3"
 lettre = { version = "0.11.19", features = ["tokio1-native-tls"] }
 mrml = "5.1.0"
 minijinja = { version = "2.14.0", features = ["loader"] }
-apalis-amqp = "1.0.0-rc.1"
-apalis-codec = "0.1.0-rc.1"
-cron = "0.15.0"
+similar = "2.7.0"
+futures = "0.3.31"
+async-nats = "0.45.0"
+tokio-stream = { version = "0.1.18", features = ["sync"] }
 
 [profile.dev]
 opt-level = 1

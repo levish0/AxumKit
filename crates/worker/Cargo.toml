@@ -10,7 +10,7 @@ description = "worker"
 path = "src/lib.rs"
 
 [[bin]]
-name = "worker"
+name = "v7_worker"
 path = "src/main.rs"
 
 [dependencies]
@@ -25,15 +25,17 @@ dotenvy.workspace = true
 uuid.workspace = true
 chrono.workspace = true
 chrono-tz.workspace = true
-apalis.workspace = true
-apalis-amqp.workspace = true
-apalis-cron.workspace = true
+tokio-cron-scheduler.workspace = true
 redis.workspace = true
 sea-orm.workspace = true
 meilisearch-sdk.workspace = true
 lettre.workspace = true
 mrml.workspace = true
 minijinja.workspace = true
-cron.workspace = true
-
-entity = { path = "../entity" }
+aws-config.workspace = true
+aws-sdk-s3.workspace = true
+zstd.workspace = true
+futures.workspace = true
+async-nats.workspace = true
+sitemap-rs = "0.4.0"
+urlencoding = "2.1.3"
