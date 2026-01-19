@@ -5,7 +5,7 @@ use axumkit_config::ServerConfig;
 pub fn hash_backup_code(code: &str) -> String {
     let config = ServerConfig::get();
     let key = blake3::derive_key(
-        "sevenwiki totp backup code v1",
+        "axumkit totp backup code v1",
         config.totp_secret.as_bytes(),
     );
     let mut hasher = blake3::Hasher::new_keyed(&key);
