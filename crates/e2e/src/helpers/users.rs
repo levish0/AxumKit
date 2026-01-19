@@ -29,7 +29,7 @@ impl TestUser {
 impl TestServer {
     /// Create a regular verified user
     pub async fn create_user(&self) -> Result<TestUser> {
-        let unique_id = &Uuid::now_v7().to_string()[..8];
+        let unique_id = &Uuid::new_v4().to_string()[..8];
         let handle = format!("test{}", unique_id);
         let email = format!("{}@test.local", handle);
         let password = "testpass123".to_string();
