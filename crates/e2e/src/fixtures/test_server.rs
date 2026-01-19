@@ -64,11 +64,6 @@ impl TestServer {
         self.containers.run_migration().await
     }
 
-    /// Run database seed
-    pub async fn run_seed(&self) -> Result<()> {
-        self.containers.run_seed().await
-    }
-
     /// Get recent server logs (last N lines)
     pub async fn get_server_logs(&self, lines: u32) -> Result<String> {
         self.containers.get_server_logs(lines).await
