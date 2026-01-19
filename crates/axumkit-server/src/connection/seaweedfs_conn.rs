@@ -1,5 +1,4 @@
 use aws_config::{BehaviorVersion, Region};
-use aws_sdk_s3::config::RequestChecksumCalculation;
 use aws_sdk_s3::error::SdkError;
 use aws_sdk_s3::{Client, Error as S3Error};
 use axumkit_config::ServerConfig;
@@ -157,7 +156,6 @@ pub async fn establish_seaweedfs_connection()
 
     let s3_config = aws_sdk_s3::config::Builder::from(&aws_config)
         .force_path_style(true)
-        .request_checksum_calculation(RequestChecksumCalculation::WhenRequired)
         .build();
 
     let client = Client::from_conf(s3_config);

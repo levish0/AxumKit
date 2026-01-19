@@ -1,6 +1,5 @@
 use crate::config::WorkerConfig;
 use aws_config::{BehaviorVersion, Region};
-use aws_sdk_s3::config::{RequestChecksumCalculation, ResponseChecksumValidation};
 use aws_sdk_s3::error::SdkError;
 use aws_sdk_s3::{Client, Error as S3Error};
 use std::sync::Arc;
@@ -155,12 +154,8 @@ pub async fn establish_r2_connection(config: &WorkerConfig) -> anyhow::Result<R2
         .load()
         .await;
 
-    // Enable path-style addressing for R2 (required for S3-compatible services with custom endpoints)
-    // Disable checksum calculation to avoid crc-fast panic on CPUs without SSE4.1/PCLMULQDQ
     let s3_config = aws_sdk_s3::config::Builder::from(&aws_config)
         .force_path_style(true)
-        .request_checksum_calculation(RequestChecksumCalculation::WhenRequired)
-        .response_checksum_validation(ResponseChecksumValidation::WhenRequired)
         .build();
 
     let client = Client::from_conf(s3_config);
