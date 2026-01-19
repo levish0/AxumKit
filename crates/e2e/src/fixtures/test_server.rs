@@ -64,7 +64,7 @@ impl TestServer {
         self.containers.run_migration().await
     }
 
-    /// Run database seed (ACL rules, etc.)
+    /// Run database seed
     pub async fn run_seed(&self) -> Result<()> {
         self.containers.run_seed().await
     }
