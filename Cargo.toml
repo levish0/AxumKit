@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Levi Laine <shiueo.csh@gmail.com>"]
 repository = "https://github.com/levish0/AxumKit"
 edition = "2024"
