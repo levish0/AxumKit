@@ -4,10 +4,7 @@ use axumkit_config::ServerConfig;
 /// TOTP_SECRET을 키로 사용하여 암호학적으로 안전한 해시 생성
 pub fn hash_backup_code(code: &str) -> String {
     let config = ServerConfig::get();
-    let key = blake3::derive_key(
-        "axumkit totp backup code v1",
-        config.totp_secret.as_bytes(),
-    );
+    let key = blake3::derive_key("axumkit totp backup code v1", config.totp_secret.as_bytes());
     let mut hasher = blake3::Hasher::new_keyed(&key);
     hasher.update(code.as_bytes());
     hasher.finalize().to_hex().to_string()

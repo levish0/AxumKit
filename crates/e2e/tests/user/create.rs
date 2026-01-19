@@ -21,7 +21,10 @@ async fn test_create_user() {
     tracing::info!("Created user: {} ({})", user.handle, user.email);
 
     // Create another user
-    let user2 = app.create_user().await.expect("Failed to create second user");
+    let user2 = app
+        .create_user()
+        .await
+        .expect("Failed to create second user");
     assert!(!user2.session_id.is_empty());
     assert_ne!(user.id, user2.id);
     tracing::info!("Created user2: {} ({})", user2.handle, user2.email);
