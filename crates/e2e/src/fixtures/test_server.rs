@@ -23,7 +23,7 @@ impl TestServer {
 
         // Connect to database (dynamically allocated port)
         let db_url = format!(
-            "postgres://postgres:postgrespw@localhost:{}/sevenwiki",
+            "postgres://postgres:postgrespw@localhost:{}/axumkit",
             containers.postgres_port
         );
         tracing::info!("Connecting to database at {}", db_url);
