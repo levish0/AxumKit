@@ -1,0 +1,10 @@
+[package]
+name = "axumkit_config"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+
+[dependencies]
+axum = { workspace = true }
+dotenvy = { workspace = true }
+tracing = { workspace = true }

@@ -1,0 +1,32 @@
+[package]
+name = "e2e"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "E2E tests for axumkit server"
+publish = false
+
+[lib]
+name = "e2e"
+path = "src/lib.rs"
+
+[dependencies]
+# Internal crates
+axumkit_entity.workspace = true
+axumkit_dto.workspace = true
+sea-orm.workspace = true
+
+# External dependencies
+tokio.workspace = true
+tokio-stream.workspace = true
+reqwest = { workspace = true, features = ["cookies"] }
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
+futures.workspace = true
+urlencoding.workspace = true

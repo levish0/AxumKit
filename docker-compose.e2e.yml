@@ -1,0 +1,245 @@
+networks:
+  e2e-network:
+    name: e2e-network  # Fixed name (no project prefix)
+    driver: bridge
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: e2e-postgres
+    environment:
+      POSTGRES_DB: axumkit
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+    ports:
+      - "5432"  # Dynamic port allocation
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d axumkit"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-session:
+    image: redis:8-alpine
+    container_name: e2e-redis-session
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy volatile-ttl
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-cache:
+    image: redis:8-alpine
+    container_name: e2e-redis-cache
+    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.30.1
+    container_name: e2e-meilisearch
+    environment:
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  nats:
+    image: nats:2.12.3-alpine
+    container_name: e2e-nats
+    command: ["--jetstream", "--store_dir=/data", "-m", "8222"]
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.04
+    container_name: e2e-seaweedfs
+    command: "server -filer -s3"
+    networks:
+      - e2e-network
+    healthcheck:
+      test: ["CMD", "curl", "-s", "http://localhost:8333/"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 10s
+
+  parser:
+    image: ghcr.io/axumkit/sevenmark-server:latest
+    container_name: e2e-parser
+    environment:
+      HOST: 0.0.0.0
+      PORT: "9000"
+      RUST_LOG: info
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_NAME: axumkit
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
+    networks:
+      - e2e-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health-check"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  server:
+    build:
+      context: .
+      target: server-runtime
+    container_name: e2e-server
+    ports:
+      - "8000"  # Dynamic port allocation
+    environment:
+      ENVIRONMENT: test
+      HOST: 0.0.0.0
+      PORT: "8000"
+      RUST_LOG: info
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_NAME: axumkit
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_MAX_CONNECTION: "10"
+      POSTGRES_MIN_CONNECTION: "2"
+      REDIS_SESSION_HOST: redis-session
+      REDIS_SESSION_PORT: "6379"
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_PORT: "6379"
+      REDIS_CACHE_TTL: "3600"
+      MEILISEARCH_HOST: http://meilisearch:7700
+      NATS_URL: nats://nats:4222
+      R2_ENDPOINT: http://seaweedfs:8333
+      R2_ACCESS_KEY_ID: ""
+      R2_SECRET_ACCESS_KEY: ""
+      R2_BUCKET_NAME: axumkit-test
+      R2_REGION: us-east-1
+      R2_PUBLIC_DOMAIN: ""
+      R2_ACCOUNT_ID: ""
+      WIKI_PARSER_HOST: parser
+      WIKI_PARSER_PORT: "9000"
+      TOTP_SECRET: test-totp-secret-key-for-e2e
+      AUTH_SESSION_MAX_LIFETIME_HOURS: "720"
+      AUTH_SESSION_SLIDING_TTL_HOURS: "168"
+      AUTH_SESSION_REFRESH_THRESHOLD: "50"
+      TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
+      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
+      GOOGLE_CLIENT_ID: mock
+      GOOGLE_CLIENT_SECRET: mock
+      GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
+      GOOGLE_LINK_REDIRECT_URI: http://localhost:8000/auth/google/link
+      GITHUB_CLIENT_ID: mock
+      GITHUB_CLIENT_SECRET: mock
+      GITHUB_REDIRECT_URI: http://localhost:8000/auth/github/callback
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+      CORS_ALLOWED_HEADERS: Content-Type,Authorization
+      CORS_MAX_AGE: "86400"
+    networks:
+      - e2e-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-session:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy
+      parser:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+      target: worker-runtime
+    container_name: e2e-worker
+    environment:
+      RUST_LOG: info
+      # Database
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_NAME: axumkit
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+      # Job Queue
+      NATS_URL: nats://nats:4222
+      # Search
+      MEILISEARCH_HOST: http://meilisearch:7700
+      # Redis Cache
+      REDIS_CACHE_HOST: redis-cache
+      REDIS_CACHE_PORT: "6379"
+      # SMTP (mock for e2e)
+      SMTP_HOST: localhost
+      SMTP_PORT: "25"
+      SMTP_USER: test
+      SMTP_PASSWORD: test
+      SMTP_TLS: "false"
+      EMAILS_FROM_EMAIL: test@test.com
+      EMAILS_FROM_NAME: Test
+      # Frontend
+      FRONTEND_HOST: http://localhost:5173
+      PROJECT_NAME: axumkit
+      FRONTEND_PATH_VERIFY_EMAIL: /verify-email
+      FRONTEND_PATH_RESET_PASSWORD: /reset-password
+      FRONTEND_PATH_CONFIRM_EMAIL_CHANGE: /confirm-email-change
+      # SeaweedFS
+      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
+      # R2 (mock)
+      R2_ENDPOINT: http://seaweedfs:8333
+      R2_REGION: us-east-1
+      R2_ACCESS_KEY_ID: ""
+      R2_SECRET_ACCESS_KEY: ""
+      R2_BUCKET_NAME: axumkit-test
+      R2_PUBLIC_DOMAIN: ""
+    networks:
+      - e2e-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      seaweedfs:
+        condition: service_healthy

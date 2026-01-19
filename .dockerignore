@@ -1,0 +1,74 @@
+# Rust build artifacts
+target/
+**/target/
+
+# Git
+.git/
+.gitignore
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# CI/CD
+.github/
+
+# Tests
+tests/
+e2e/
+test-ui/
+
+# Python (worker) - exclude entire directory for Rust build
+worker/
+
+# Node (if any)
+node_modules/
+**/node_modules/
+**/.pnpm-store/
+pnpm-lock.yaml
+package-lock.json
+npm-debug.log
+yarn-error.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# MCP
+.serena/
+.claude/
+.mcp.json
+
+# Project specific
+docker_env/
+swagger.json
+nul
+
+# Keep Cargo.lock for reproducible builds
+!Cargo.lock

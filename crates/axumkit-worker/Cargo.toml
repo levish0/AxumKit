@@ -1,0 +1,46 @@
+[package]
+name = "axumkit_worker"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "axumkit/worker"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "axumkit_worker"
+path = "src/main.rs"
+
+[dependencies]
+# Internal crates
+axumkit_constants.workspace = true
+axumkit_entity.workspace = true
+
+# External dependencies
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+anyhow.workspace = true
+dotenvy.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+chrono-tz.workspace = true
+tokio-cron-scheduler.workspace = true
+redis.workspace = true
+sea-orm.workspace = true
+meilisearch-sdk.workspace = true
+lettre.workspace = true
+mrml.workspace = true
+minijinja.workspace = true
+aws-config.workspace = true
+aws-sdk-s3.workspace = true
+zstd.workspace = true
+futures.workspace = true
+async-nats.workspace = true
+sitemap-rs.workspace = true
+urlencoding.workspace = true

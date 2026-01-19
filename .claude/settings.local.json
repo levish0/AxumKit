@@ -6,7 +6,9 @@
       "mcp__serena__get_symbols_overview",
       "mcp__serena__find_symbol",
       "mcp__serena__write_memory",
-      "mcp__serena__search_for_pattern"
+      "mcp__serena__search_for_pattern",
+      "Bash(find:*)",
+      "Bash(cargo check:*)"
     ],
     "deny": [],
     "ask": []
