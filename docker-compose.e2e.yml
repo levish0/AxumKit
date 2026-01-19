@@ -85,33 +85,6 @@ services:
       retries: 15
       start_period: 10s
 
-  parser:
-    image: ghcr.io/axumkit/sevenmark-server:latest
-    container_name: e2e-parser
-    environment:
-      HOST: 0.0.0.0
-      PORT: "9000"
-      RUST_LOG: info
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: "5432"
-      POSTGRES_NAME: axumkit
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespw
-      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
-    networks:
-      - e2e-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      seaweedfs:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/health-check"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 10s
-
   server:
     build:
       context: .
@@ -145,8 +118,6 @@ services:
       R2_REGION: us-east-1
       R2_PUBLIC_DOMAIN: ""
       R2_ACCOUNT_ID: ""
-      WIKI_PARSER_HOST: parser
-      WIKI_PARSER_PORT: "9000"
       TOTP_SECRET: test-totp-secret-key-for-e2e
       AUTH_SESSION_MAX_LIFETIME_HOURS: "720"
       AUTH_SESSION_SLIDING_TTL_HOURS: "168"
@@ -177,8 +148,6 @@ services:
       nats:
         condition: service_healthy
       seaweedfs:
-        condition: service_healthy
-      parser:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
