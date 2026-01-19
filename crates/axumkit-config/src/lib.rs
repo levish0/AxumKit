@@ -1,4 +1,4 @@
-//! V7 Configuration
+//! AxumKit Configuration
 
 mod server_config;
 

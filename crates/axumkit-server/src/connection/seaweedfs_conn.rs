@@ -133,7 +133,7 @@ impl SeaweedFsClient {
 }
 
 /// 버킷 이름 (하드코딩 - 변경할 이유 없음)
-const BUCKET_NAME: &str = "v7-content";
+const BUCKET_NAME: &str = "axumkit-content";
 
 pub async fn establish_seaweedfs_connection()
 -> Result<SeaweedFsClient, Box<dyn std::error::Error + Send + Sync>> {

@@ -126,7 +126,7 @@ jobs:
           file: ./Dockerfile
           target: server-runtime
           load: true
-          tags: V7-server:test
+          tags: axumkit-server:test
           cache-from: type=gha
 
       - name: Build test worker image
@@ -136,12 +136,12 @@ jobs:
           file: ./Dockerfile
           target: worker-runtime
           load: true
-          tags: V7-worker:test
+          tags: axumkit-worker:test
           cache-from: type=gha
 
       - name: Test Docker images
         run: |
           echo "Testing Docker images..."
-          docker images V7-server:test
-          docker images V7-worker:test
+          docker images axumkit-server:test
+          docker images axumkit-worker:test
           echo "✅ Docker images built successfully"

@@ -1,4 +1,4 @@
-//! V7 Error Types
+//! AxumKit Error Types
 
 pub mod errors;
 pub mod handlers;

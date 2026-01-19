@@ -1,7 +1,7 @@
-//! E2E test framework for V7 server.
+//! E2E test framework for AxumKit.
 //!
 //! Provides test infrastructure using Docker containers for PostgreSQL, Redis, MeiliSearch,
-//! NATS, SeaweedFS, Parser, and the V7 server/worker.
+//! NATS, SeaweedFS, and the AxumKit server/worker.
 
 pub mod fixtures;
 pub mod helpers;

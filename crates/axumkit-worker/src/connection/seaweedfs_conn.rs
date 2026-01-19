@@ -99,7 +99,7 @@ pub struct StorageObjectInfo {
     pub last_modified: Option<chrono::DateTime<chrono::Utc>>,
 }
 
-const BUCKET_NAME: &str = "v7-content";
+const BUCKET_NAME: &str = "axumkit-content";
 
 pub async fn establish_seaweedfs_connection(
     config: &WorkerConfig,
