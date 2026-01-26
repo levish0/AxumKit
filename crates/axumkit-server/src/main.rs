@@ -3,7 +3,7 @@ use axumkit_config::ServerConfig;
 use axumkit_dto::action_logs::ActionLogResponse;
 use axumkit_server::api::routes::api_routes;
 use axumkit_server::connection::{
-    MeilisearchClient, create_http_client, establish_read_connection, establish_r2_connection,
+    MeilisearchClient, create_http_client, establish_r2_connection, establish_read_connection,
     establish_redis_connection, establish_seaweedfs_connection, establish_write_connection,
 };
 use axumkit_server::eventstream::start_eventstream_subscriber;

@@ -98,14 +98,10 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
             .expect("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE must be set"),
 
         // Database (Write only)
-        db_write_host: env::var("POSTGRES_WRITE_HOST")
-            .expect("POSTGRES_WRITE_HOST must be set"),
-        db_write_port: env::var("POSTGRES_WRITE_PORT")
-            .expect("POSTGRES_WRITE_PORT must be set"),
-        db_write_name: env::var("POSTGRES_WRITE_NAME")
-            .expect("POSTGRES_WRITE_NAME must be set"),
-        db_write_user: env::var("POSTGRES_WRITE_USER")
-            .expect("POSTGRES_WRITE_USER must be set"),
+        db_write_host: env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST must be set"),
+        db_write_port: env::var("POSTGRES_WRITE_PORT").expect("POSTGRES_WRITE_PORT must be set"),
+        db_write_name: env::var("POSTGRES_WRITE_NAME").expect("POSTGRES_WRITE_NAME must be set"),
+        db_write_user: env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER must be set"),
         db_write_password: env::var("POSTGRES_WRITE_PASSWORD")
             .expect("POSTGRES_WRITE_PASSWORD must be set"),
         db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
