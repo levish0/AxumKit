@@ -24,6 +24,6 @@ pub async fn list_posts(
     State(state): State<AppState>,
     Query(query): Query<ListPostsQuery>,
 ) -> Result<impl IntoResponse, Errors> {
-    let response = service_list_posts(&state.conn, query.limit, query.offset).await?;
+    let response = service_list_posts(&state.write_db, query.limit, query.offset).await?;
     Ok(response)
 }

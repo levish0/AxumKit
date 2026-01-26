@@ -29,7 +29,7 @@ pub async fn auth_change_email(
     ValidatedJson(payload): ValidatedJson<ChangeEmailRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     service_change_email(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.worker,
         session.user_id,

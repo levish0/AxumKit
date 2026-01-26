@@ -20,5 +20,5 @@ pub async fn check_handle_available(
     State(state): State<AppState>,
     ValidatedPath(path): ValidatedPath<CheckHandleAvailablePath>,
 ) -> Result<CheckHandleAvailableResponse, Errors> {
-    service_check_handle_available(&state.conn, &path.handle).await
+    service_check_handle_available(&state.write_db, &path.handle).await
 }

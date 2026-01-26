@@ -24,7 +24,7 @@ pub async fn create_post(
     ValidatedJson(payload): ValidatedJson<CreatePostRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     let response = service_create_post(
-        &state.conn,
+        &state.write_db,
         &state.seaweedfs_client,
         &state.worker,
         session.user_id,

@@ -3,8 +3,8 @@ use axumkit_config::ServerConfig;
 use axumkit_dto::action_logs::ActionLogResponse;
 use axumkit_server::api::routes::api_routes;
 use axumkit_server::connection::{
-    MeilisearchClient, create_http_client, establish_connection, establish_r2_connection,
-    establish_redis_connection, establish_seaweedfs_connection,
+    MeilisearchClient, create_http_client, establish_read_connection, establish_r2_connection,
+    establish_redis_connection, establish_seaweedfs_connection, establish_write_connection,
 };
 use axumkit_server::eventstream::start_eventstream_subscriber;
 use axumkit_server::middleware::anonymous_user::anonymous_user_middleware;
@@ -22,7 +22,8 @@ use tower_http::trace::TraceLayer;
 use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {
-    let conn = establish_connection().await;
+    let write_db = establish_write_connection().await;
+    let read_db = establish_read_connection().await;
     let r2_client = establish_r2_connection().await.map_err(|e| {
         error!("Failed to establish cloudflare_r2 connection: {}", e);
         anyhow::anyhow!("R2 connection failed: {}", e)
@@ -90,7 +91,8 @@ pub async fn run_server() -> anyhow::Result<()> {
     );
 
     let state = AppState {
-        conn,
+        write_db,
+        read_db,
         r2_client,
         seaweedfs_client,
         redis_session,

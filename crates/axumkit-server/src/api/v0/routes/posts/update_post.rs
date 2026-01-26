@@ -28,7 +28,7 @@ pub async fn update_post(
     ValidatedJson(payload): ValidatedJson<UpdatePostRequest>,
 ) -> Result<PostResponse, Errors> {
     service_update_post(
-        &state.conn,
+        &state.write_db,
         &state.seaweedfs_client,
         &state.worker,
         path.id,

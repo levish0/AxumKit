@@ -13,8 +13,8 @@ pub async fn establish_connection() -> DatabaseConnection {
     // Configure connection options
     let mut options = ConnectOptions::new(database_url);
     options
-        .max_connections(WorkerConfig::get().db_max_connection)
-        .min_connections(WorkerConfig::get().db_min_connection)
+        .max_connections(WorkerConfig::get().db_write_max_connection)
+        .min_connections(WorkerConfig::get().db_write_min_connection)
         .connect_timeout(Duration::from_secs(8))
         .acquire_timeout(Duration::from_secs(30))
         .idle_timeout(Duration::from_secs(300))

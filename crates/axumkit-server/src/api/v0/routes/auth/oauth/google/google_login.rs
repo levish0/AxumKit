@@ -43,7 +43,7 @@ pub async fn auth_google_login(
 
     // Google OAuth 로그인 처리
     let result = service_google_sign_in(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.http_client,
         &payload.code,

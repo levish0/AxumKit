@@ -29,7 +29,7 @@ pub async fn auth_change_password(
     ValidatedJson(payload): ValidatedJson<ChangePasswordRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     service_change_password(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         session.user_id,
         &session.session_id,

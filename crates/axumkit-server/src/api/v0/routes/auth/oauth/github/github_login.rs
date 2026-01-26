@@ -43,7 +43,7 @@ pub async fn auth_github_login(
 
     // GitHub OAuth 로그인 처리
     let result = service_github_sign_in(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.http_client,
         &payload.code,

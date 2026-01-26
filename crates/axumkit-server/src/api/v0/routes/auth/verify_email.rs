@@ -24,7 +24,7 @@ pub async fn auth_verify_email(
     State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<VerifyEmailRequest>,
 ) -> Result<impl IntoResponse, Errors> {
-    service_verify_email(&state.conn, &state.redis_session, &payload.token).await?;
+    service_verify_email(&state.write_db, &state.redis_session, &payload.token).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

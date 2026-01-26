@@ -23,7 +23,7 @@ pub async fn auth_forgot_password(
     ValidatedJson(payload): ValidatedJson<ForgotPasswordRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     service_forgot_password(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.worker,
         &payload.email,

@@ -24,6 +24,6 @@ pub async fn totp_setup(
     State(state): State<AppState>,
     RequiredSession(session): RequiredSession,
 ) -> Result<TotpSetupResponse, Errors> {
-    let user = repository_get_user_by_id(&state.conn, session.user_id).await?;
-    service_totp_setup(&state.conn, session.user_id, &user.email).await
+    let user = repository_get_user_by_id(&state.write_db, session.user_id).await?;
+    service_totp_setup(&state.write_db, session.user_id, &user.email).await
 }

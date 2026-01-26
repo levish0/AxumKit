@@ -23,5 +23,5 @@ pub async fn delete_post(
     RequiredSession(session): RequiredSession,
     ValidatedPath(path): ValidatedPath<GetPostPath>,
 ) -> Result<DeletePostResponse, Errors> {
-    service_delete_post(&state.conn, &state.worker, path.id, session.user_id).await
+    service_delete_post(&state.write_db, &state.worker, path.id, session.user_id).await
 }

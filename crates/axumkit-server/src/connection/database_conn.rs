@@ -3,65 +3,93 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};
 
-// This module manages database connections.
-// It provides functionality for connecting to a PostgreSQL database
-// and configuring the connection pool.
+struct DbConnConfig<'a> {
+    user: &'a str,
+    password: &'a str,
+    host: &'a str,
+    port: &'a str,
+    name: &'a str,
+    max_connections: u32,
+    min_connections: u32,
+}
 
-/// Establishes and returns a database connection.
-///
-/// This function is called at application startup to connect to the PostgreSQL database.
-/// It reads connection information from the configuration file and sets up the connection pool.
-///
-/// # Returns
-/// * `DatabaseConnection` - The successfully established database connection object.
-pub async fn establish_connection() -> DatabaseConnection {
-    // Retrieve database connection information from the environment and build the URL
-    let db_config = ServerConfig::get();
+async fn establish_connection_with_config(
+    config: DbConnConfig<'_>,
+    label: &str,
+) -> DatabaseConnection {
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",
-        &db_config.db_user,
-        &db_config.db_password,
-        &db_config.db_host,
-        &db_config.db_port,
-        &db_config.db_name
+        config.user, config.password, config.host, config.port, config.name
     );
 
     // Log with masked password
     let masked_url = format!(
         "postgres://{}:{}@{}:{}/{}",
-        &db_config.db_user,
-        "*".repeat(db_config.db_password.len()),
-        &db_config.db_host,
-        &db_config.db_port,
-        &db_config.db_name
+        config.user,
+        "*".repeat(config.password.len()),
+        config.host,
+        config.port,
+        config.name
     );
-    info!("Attempting to connect to database: {}", masked_url);
+    info!(
+        "Attempting to connect to {} database: {}",
+        label, masked_url
+    );
 
     // Configure connection options
     let mut options = ConnectOptions::new(database_url);
     options
-        // Configure connection pool size
-        .max_connections(ServerConfig::get().db_max_connection) // Maximum number of connections
-        .min_connections(ServerConfig::get().db_min_connection) // Minimum number of connections
-        // Configure timeouts
-        .connect_timeout(Duration::from_secs(8)) // Connection timeout: 8 seconds
+        .max_connections(config.max_connections)
+        .min_connections(config.min_connections)
+        .connect_timeout(Duration::from_secs(8))
         .acquire_timeout(Duration::from_secs(30))
-        .idle_timeout(Duration::from_secs(300)) // Idle timeout: 5 minutes
-        // Enable SQL logging (for debugging)
+        .idle_timeout(Duration::from_secs(300))
         .sqlx_logging(false);
 
-    // Attempt to connect to the database and handle the result
     match Database::connect(options).await {
         Ok(connection) => {
-            // On successful connection, log the success and return the connection object
-            info!("Successfully connected to the database.");
+            info!("Successfully connected to the {} database.", label);
             connection
         }
         Err(err) => {
-            // On failure, log the error and terminate the application
-            // Since the database connection is critical, the application cannot continue without it
-            error!("Failed to connect to the database: {}", err);
-            panic!("Failed to connect to the database");
+            error!("Failed to connect to the {} database: {}", label, err);
+            panic!("Failed to connect to the {} database", label);
         }
     }
+}
+
+/// Establishes and returns a Write (Primary) database connection.
+pub async fn establish_write_connection() -> DatabaseConnection {
+    let db_config = ServerConfig::get();
+    establish_connection_with_config(
+        DbConnConfig {
+            user: &db_config.db_write_user,
+            password: &db_config.db_write_password,
+            host: &db_config.db_write_host,
+            port: &db_config.db_write_port,
+            name: &db_config.db_write_name,
+            max_connections: db_config.db_write_max_connection,
+            min_connections: db_config.db_write_min_connection,
+        },
+        "Write",
+    )
+    .await
+}
+
+/// Establishes and returns a Read (Replica) database connection.
+pub async fn establish_read_connection() -> DatabaseConnection {
+    let db_config = ServerConfig::get();
+    establish_connection_with_config(
+        DbConnConfig {
+            user: &db_config.db_read_user,
+            password: &db_config.db_read_password,
+            host: &db_config.db_read_host,
+            port: &db_config.db_read_port,
+            name: &db_config.db_read_name,
+            max_connections: db_config.db_read_max_connection,
+            min_connections: db_config.db_read_min_connection,
+        },
+        "Read",
+    )
+    .await
 }

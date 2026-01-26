@@ -27,5 +27,5 @@ pub async fn update_my_profile(
     RequiredSession(session_context): RequiredSession,
     ValidatedJson(payload): ValidatedJson<UpdateMyProfileRequest>,
 ) -> Result<UserResponse, Errors> {
-    service_update_my_profile(&state.conn, &session_context, payload).await
+    service_update_my_profile(&state.write_db, &session_context, payload).await
 }

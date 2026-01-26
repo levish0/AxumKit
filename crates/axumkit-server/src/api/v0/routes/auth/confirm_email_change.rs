@@ -22,7 +22,7 @@ pub async fn auth_confirm_email_change(
     State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<ConfirmEmailChangeRequest>,
 ) -> Result<impl IntoResponse, Errors> {
-    service_confirm_email_change(&state.conn, &state.redis_session, &payload.token).await?;
+    service_confirm_email_change(&state.write_db, &state.redis_session, &payload.token).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

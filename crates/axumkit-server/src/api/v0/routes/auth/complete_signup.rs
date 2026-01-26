@@ -43,7 +43,7 @@ pub async fn auth_complete_signup(
 
     // OAuth pending signup 완료
     let session_id = service_complete_signup(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &payload.pending_token,
         &payload.handle,

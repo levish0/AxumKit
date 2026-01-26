@@ -23,7 +23,7 @@ pub async fn totp_verify(
     ValidatedJson(payload): ValidatedJson<TotpVerifyRequest>,
 ) -> Result<Response, Errors> {
     let result = service_totp_verify(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &payload.temp_token,
         &payload.code,

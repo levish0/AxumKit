@@ -43,7 +43,7 @@ pub async fn auth_login(
 
     // 로그인 처리
     let result = service_login(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         payload,
         Some(user_agent),

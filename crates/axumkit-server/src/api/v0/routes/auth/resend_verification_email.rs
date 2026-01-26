@@ -28,7 +28,7 @@ pub async fn auth_resend_verification_email(
     RequiredSession(session_context): RequiredSession,
 ) -> Result<impl IntoResponse, Errors> {
     service_resend_verification_email(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.worker,
         session_context.user_id,

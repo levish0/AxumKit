@@ -31,14 +31,14 @@ pub struct WorkerConfig {
     pub frontend_path_reset_password: String,
     pub frontend_path_confirm_email_change: String,
 
-    // Database
-    pub db_user: String,
-    pub db_password: String,
-    pub db_host: String,
-    pub db_port: String,
-    pub db_name: String,
-    pub db_max_connection: u32,
-    pub db_min_connection: u32,
+    // Database (Write only - worker does indexing, cleanup, etc.)
+    pub db_write_host: String,
+    pub db_write_port: String,
+    pub db_write_name: String,
+    pub db_write_user: String,
+    pub db_write_password: String,
+    pub db_write_max_connection: u32,
+    pub db_write_min_connection: u32,
 
     // Cron
     pub cron_timezone: String,
@@ -97,17 +97,22 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         frontend_path_confirm_email_change: env::var("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE")
             .expect("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE must be set"),
 
-        // Database
-        db_user: env::var("POSTGRES_USER").expect("POSTGRES_USER must be set"),
-        db_password: env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set"),
-        db_host: env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set"),
-        db_port: env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set"),
-        db_name: env::var("POSTGRES_NAME").expect("POSTGRES_NAME must be set"),
-        db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
+        // Database (Write only)
+        db_write_host: env::var("POSTGRES_WRITE_HOST")
+            .expect("POSTGRES_WRITE_HOST must be set"),
+        db_write_port: env::var("POSTGRES_WRITE_PORT")
+            .expect("POSTGRES_WRITE_PORT must be set"),
+        db_write_name: env::var("POSTGRES_WRITE_NAME")
+            .expect("POSTGRES_WRITE_NAME must be set"),
+        db_write_user: env::var("POSTGRES_WRITE_USER")
+            .expect("POSTGRES_WRITE_USER must be set"),
+        db_write_password: env::var("POSTGRES_WRITE_PASSWORD")
+            .expect("POSTGRES_WRITE_PASSWORD must be set"),
+        db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(10),
-        db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
+        db_write_min_connection: env::var("POSTGRES_WRITE_MIN_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(2),
@@ -144,7 +149,11 @@ impl WorkerConfig {
     pub fn database_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            self.db_user, self.db_password, self.db_host, self.db_port, self.db_name
+            self.db_write_user,
+            self.db_write_password,
+            self.db_write_host,
+            self.db_write_port,
+            self.db_write_name
         )
     }
 }

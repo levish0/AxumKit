@@ -30,7 +30,7 @@ pub async fn auth_github_link(
     ValidatedJson(payload): ValidatedJson<GithubLinkRequest>,
 ) -> Result<StatusCode, Errors> {
     service_link_github_oauth(
-        &state.conn,
+        &state.write_db,
         &state.redis_session,
         &state.http_client,
         session_context.user_id,

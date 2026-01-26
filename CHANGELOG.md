@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-26
+
+### Changed
+
+- **Database Connection Split**: Separate Write (Primary) and Read (Replica) database connections
+  - `AppState.conn` → `AppState.write_db` and `AppState.read_db`
+  - Environment variables changed from `POSTGRES_*` to `POSTGRES_WRITE_*` and `POSTGRES_READ_*`
+  - Worker uses `POSTGRES_WRITE_*` only (background jobs don't need read replica)
+  - Enables PgBouncer connection pooling and read replica support for better scalability
+
+### Added
+
+- Worker environment variables added to `.env.example` (SMTP, FRONTEND_HOST, etc.)
+
 ## [0.2.3] - 2026-01-26
 
 ### Changed

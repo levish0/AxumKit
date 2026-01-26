@@ -36,13 +36,23 @@ pub struct ServerConfig {
     pub r2_secret_access_key: String,
     pub turnstile_secret_key: String,
 
-    pub db_user: String,
-    pub db_password: String,
-    pub db_host: String,
-    pub db_port: String,
-    pub db_name: String,
-    pub db_max_connection: u32,
-    pub db_min_connection: u32,
+    // Write DB (Primary)
+    pub db_write_host: String,
+    pub db_write_port: String,
+    pub db_write_name: String,
+    pub db_write_user: String,
+    pub db_write_password: String,
+    pub db_write_max_connection: u32,
+    pub db_write_min_connection: u32,
+
+    // Read DB (Replica)
+    pub db_read_host: String,
+    pub db_read_port: String,
+    pub db_read_name: String,
+    pub db_read_user: String,
+    pub db_read_password: String,
+    pub db_read_max_connection: u32,
+    pub db_read_min_connection: u32,
 
     // Redis Session (persistent, for sessions/tokens/rate-limit)
     pub redis_session_host: String,
@@ -195,16 +205,34 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         turnstile_secret_key: env::var("TURNSTILE_SECRET_KEY")
             .expect("TURNSTILE_SECRET_KEY must be set"),
 
-        db_user: env::var("POSTGRES_USER").expect("POSTGRES_USER must be set"),
-        db_password: env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD must be set"),
-        db_host: env::var("POSTGRES_HOST").expect("POSTGRES_HOST must be set"),
-        db_port: env::var("POSTGRES_PORT").expect("POSTGRES_PORT must be set"),
-        db_name: env::var("POSTGRES_NAME").expect("POSTGRES_NAME must be set"),
-        db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
+        // Write DB (Primary)
+        db_write_host: env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST must be set"),
+        db_write_port: env::var("POSTGRES_WRITE_PORT").expect("POSTGRES_WRITE_PORT must be set"),
+        db_write_name: env::var("POSTGRES_WRITE_NAME").expect("POSTGRES_WRITE_NAME must be set"),
+        db_write_user: env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER must be set"),
+        db_write_password: env::var("POSTGRES_WRITE_PASSWORD")
+            .expect("POSTGRES_WRITE_PASSWORD must be set"),
+        db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(100),
-        db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
+        db_write_min_connection: env::var("POSTGRES_WRITE_MIN_CONNECTION")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(10),
+
+        // Read DB (Replica)
+        db_read_host: env::var("POSTGRES_READ_HOST").expect("POSTGRES_READ_HOST must be set"),
+        db_read_port: env::var("POSTGRES_READ_PORT").expect("POSTGRES_READ_PORT must be set"),
+        db_read_name: env::var("POSTGRES_READ_NAME").expect("POSTGRES_READ_NAME must be set"),
+        db_read_user: env::var("POSTGRES_READ_USER").expect("POSTGRES_READ_USER must be set"),
+        db_read_password: env::var("POSTGRES_READ_PASSWORD")
+            .expect("POSTGRES_READ_PASSWORD must be set"),
+        db_read_max_connection: env::var("POSTGRES_READ_MAX_CONNECTION")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(100),
+        db_read_min_connection: env::var("POSTGRES_READ_MIN_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(10),

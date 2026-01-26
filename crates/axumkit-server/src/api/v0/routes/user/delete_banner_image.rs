@@ -23,6 +23,6 @@ pub async fn delete_banner_image(
     State(state): State<AppState>,
     RequiredSession(session_context): RequiredSession,
 ) -> Result<StatusCode, Errors> {
-    service_delete_banner_image(&state.conn, &state.r2_client, &session_context).await?;
+    service_delete_banner_image(&state.write_db, &state.r2_client, &session_context).await?;
     Ok(StatusCode::NO_CONTENT)
 }
