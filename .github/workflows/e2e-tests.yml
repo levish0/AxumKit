@@ -28,4 +28,4 @@ jobs:
           workspaces: "."
 
       - name: Run E2E tests
-        run: cargo test -p e2e -- --nocapture --test-threads=1
+        run: cargo test -p e2e -- --nocapture
