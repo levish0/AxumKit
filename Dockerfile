@@ -1,5 +1,5 @@
 # Chef stage - install cargo-chef
-FROM rust:1.92.0 AS chef
+FROM rust:1.93.0 AS chef
 WORKDIR /app
 RUN cargo install cargo-chef
 
