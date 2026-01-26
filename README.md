@@ -11,6 +11,8 @@ Production-ready Rust web API template.
 - **Storage**: SeaweedFS (content), Cloudflare R2 (files)
 - **Search**: MeiliSearch full-text search
 - **API Docs**: OpenAPI/Swagger (debug builds)
+- **Testing**: Parallelized E2E tests with Docker
+- **CI/CD**: GitHub Actions (Docker build & push to GHCR)
 
 ## Architecture
 
