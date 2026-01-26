@@ -140,33 +140,6 @@ impl E2eContainers {
         Ok(())
     }
 
-    /// Run database seed (ACL rules, etc.)
-    pub async fn run_seed(&self) -> Result<()> {
-        tracing::info!("Running database seed...");
-        let output = Command::new("docker")
-            .args([
-                "compose",
-                "-p",
-                &self.project_name,
-                "-f",
-                COMPOSE_FILE,
-                "exec",
-                "server",
-                "./seed",
-            ])
-            .current_dir(&self.project_root)
-            .stdout(Stdio::inherit())
-            .stderr(Stdio::inherit())
-            .output()
-            .await?;
-
-        if !output.status.success() {
-            return Err(anyhow::anyhow!("Seed failed"));
-        }
-        tracing::info!("Seed completed");
-        Ok(())
-    }
-
     /// Get server logs (last N lines)
     pub async fn get_server_logs(&self, lines: u32) -> Result<String> {
         let output = Command::new("docker")
