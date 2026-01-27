@@ -21,6 +21,6 @@ pub async fn get_user_profile_by_id(
     State(state): State<AppState>,
     ValidatedQuery(payload): ValidatedQuery<GetUserProfileByIdRequest>,
 ) -> Result<PublicUserProfile, Errors> {
-    let profile = service_get_user_profile_by_id(&state.write_db, payload.user_id).await?;
+    let profile = service_get_user_profile_by_id(&state.read_db, payload.user_id).await?;
     Ok(profile)
 }

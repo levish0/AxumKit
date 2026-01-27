@@ -20,5 +20,5 @@ pub async fn get_post(
     State(state): State<AppState>,
     ValidatedPath(path): ValidatedPath<GetPostPath>,
 ) -> Result<PostResponse, Errors> {
-    service_get_post(&state.write_db, &state.seaweedfs_client, path.id).await
+    service_get_post(&state.read_db, &state.seaweedfs_client, path.id).await
 }

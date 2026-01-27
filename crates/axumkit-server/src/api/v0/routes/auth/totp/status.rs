@@ -22,5 +22,5 @@ pub async fn totp_status(
     State(state): State<AppState>,
     RequiredSession(session): RequiredSession,
 ) -> Result<TotpStatusResponse, Errors> {
-    service_totp_status(&state.write_db, session.user_id).await
+    service_totp_status(&state.read_db, session.user_id).await
 }

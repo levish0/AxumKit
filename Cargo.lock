@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_config"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "axum",
  "dotenvy",
@@ -1016,7 +1016,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_dto"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "axum",
  "axum-extra",
@@ -1037,7 +1037,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_entity"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "sea-orm",
  "serde",
@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_errors"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "axum",
  "axumkit_config",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_server"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1108,7 +1108,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_worker"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -1960,7 +1960,7 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "e2e"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "anyhow",
  "axumkit_dto",

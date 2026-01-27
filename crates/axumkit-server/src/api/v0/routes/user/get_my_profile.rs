@@ -22,5 +22,5 @@ pub async fn get_my_profile(
     State(state): State<AppState>,
     RequiredSession(session_context): RequiredSession,
 ) -> Result<UserResponse, Errors> {
-    service_get_my_profile(&state.write_db, &session_context).await
+    service_get_my_profile(&state.read_db, &session_context).await
 }

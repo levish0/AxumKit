@@ -23,7 +23,7 @@ pub async fn list_oauth_connections(
     State(state): State<AppState>,
     RequiredSession(session_context): RequiredSession,
 ) -> Result<OAuthConnectionListResponse, Errors> {
-    let result = service_list_oauth_connections(&state.write_db, session_context.user_id).await?;
+    let result = service_list_oauth_connections(&state.read_db, session_context.user_id).await?;
 
     Ok(result)
 }

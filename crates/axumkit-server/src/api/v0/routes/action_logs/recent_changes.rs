@@ -20,5 +20,5 @@ pub async fn get_action_logs(
     State(state): State<AppState>,
     ValidatedQuery(payload): ValidatedQuery<GetActionLogsRequest>,
 ) -> Result<ActionLogListResponse, Errors> {
-    service_get_action_logs(&state.write_db, payload).await
+    service_get_action_logs(&state.read_db, payload).await
 }
