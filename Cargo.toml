@@ -24,18 +24,19 @@ axumkit_server = { path = "crates/axumkit-server" }
 tokio = { version = "1.49.0", features = ["full"] }
 axum = { version = "0.8.8", features = ["multipart", "macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header", "query"] }
+tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
 tower-http = { version = "0.6.8", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
-sea-orm = { version = "2.0.0-rc.29", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
-redis = { version = "1.0.2", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
+sea-orm = { version = "2.0.0-rc.30", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
+redis = { version = "1.0.3", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
 oauth2 = { version = "5.0.0", features = ["reqwest"] }
 totp-rs = { version = "5.7.0", features = ["qr"] }
 cookie = "0.18.1"
-aws-sdk-s3 = "1.120.0"
+aws-sdk-s3 = "1.121.0"
 aws-config = { version = "1.8.12", features = ["behavior-version-latest"] }
 meilisearch-sdk = { version = "0.32.0" }
 utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
@@ -48,7 +49,7 @@ reqwest = { version = "0.12.28", features = ["json", "multipart"] }
 anyhow = "1.0.100"
 chrono = { version = "0.4.43", features = ["serde"] }
 chrono-tz = "0.10.4"
-uuid = { version = "1.19.0", features = ["v7", "v4"] }
+uuid = { version = "1.20.0", features = ["v7", "v4"] }
 dotenvy = "0.15.7"
 rand = "0.9.2"
 hex = "0.4.3"
@@ -59,10 +60,10 @@ blake3 = "1.8.3"
 zstd = "0.13.3"
 lettre = { version = "0.11.19", features = ["tokio1-native-tls"] }
 mrml = "5.1.0"
-minijinja = { version = "2.14.0", features = ["loader"] }
+minijinja = { version = "2.15.1", features = ["loader"] }
 similar = "2.7.0"
 futures = "0.3.31"
-async-nats = "0.45.0"
+async-nats = "0.46.0"
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 sitemap-rs = "0.4.0"
 urlencoding = "2.1.3"
