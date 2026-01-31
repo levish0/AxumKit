@@ -999,7 +999,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_config"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "axum",
  "dotenvy",
@@ -1016,7 +1016,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_dto"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "axum",
  "axum-extra",
@@ -1037,7 +1037,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_entity"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "sea-orm",
  "serde",
@@ -1047,7 +1047,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_errors"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "axum",
  "axumkit_config",
@@ -1059,7 +1059,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_server"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1095,6 +1095,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "totp-rs",
+ "tower",
  "tower-cookies",
  "tower-http",
  "tracing",
@@ -1108,7 +1109,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_worker"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -1960,7 +1961,7 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "e2e"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "axumkit_dto",
@@ -6105,6 +6106,7 @@ dependencies = [
  "pin-project-lite",
  "sync_wrapper",
  "tokio",
+ "tokio-util",
  "tower-layer",
  "tower-service",
  "tracing",
@@ -7000,6 +7002,14 @@ name = "xmlparser"
 version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66fee0b777b0f5ac1c69bb06d361268faafa61cd4682ae064a171c16c433e9e4"
+
+[[package]]
+name = "xtask"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+]
 
 [[package]]
 name = "xxhash-rust"

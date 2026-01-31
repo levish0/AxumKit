@@ -24,6 +24,7 @@ axumkit_errors.workspace = true
 axumkit_worker.workspace = true
 
 # External dependencies
+tower.workspace = true
 tokio.workspace = true
 axum.workspace = true
 axum-extra.workspace = true

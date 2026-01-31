@@ -1,3 +1,5 @@
+use axum::error_handling::HandleErrorLayer;
+use axum::handler::Handler;
 use axum::{Router, extract::DefaultBodyLimit, middleware};
 use axumkit_config::ServerConfig;
 use axumkit_dto::action_logs::ActionLogResponse;
@@ -9,12 +11,18 @@ use axumkit_server::connection::{
 use axumkit_server::eventstream::start_eventstream_subscriber;
 use axumkit_server::middleware::anonymous_user::anonymous_user_middleware;
 use axumkit_server::middleware::cors::cors_layer;
+use axumkit_server::middleware::stability::handle_tower_error;
 use axumkit_server::middleware::trace_layer_config::make_span_with_request_id;
 use axumkit_server::state::AppState;
 use axumkit_server::utils::logger::init_tracing;
 use std::net::SocketAddr;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::broadcast;
+use tower::ServiceBuilder;
+use tower::buffer::BufferLayer;
+use tower::limit::ConcurrencyLimitLayer;
+use tower::timeout::TimeoutLayer;
 use tower_cookies::CookieManagerLayer;
 use tower_http::LatencyUnit;
 use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetRequestIdLayer};
@@ -109,6 +117,19 @@ pub async fn run_server() -> anyhow::Result<()> {
         .layer(DefaultBodyLimit::max(8 * 1024 * 1024)) // 8MB default body limit
         .layer(middleware::from_fn(anonymous_user_middleware))
         .layer(CookieManagerLayer::new())
+        // Stability layer: protect DB pool and prevent zombie requests
+        .layer(
+            ServiceBuilder::new()
+                .layer(HandleErrorLayer::new(handle_tower_error))
+                .layer(BufferLayer::new(ServerConfig::get().stability_buffer_size))
+                .layer(ConcurrencyLimitLayer::new(
+                    ServerConfig::get().stability_concurrency_limit,
+                ))
+                .layer(TimeoutLayer::new(Duration::from_secs(
+                    ServerConfig::get().stability_timeout_secs,
+                ))),
+        )
+        // CORS must be outside stability layer so 503 responses also get CORS headers
         .layer(cors_layer())
         // HTTP request/response tracing with request ID
         .layer(PropagateRequestIdLayer::x_request_id())

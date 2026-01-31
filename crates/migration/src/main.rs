@@ -7,8 +7,7 @@ async fn main() {
     dotenv().ok();
 
     let db_user = env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER not set");
-    let db_password =
-        env::var("POSTGRES_WRITE_PASSWORD").expect("POSTGRES_WRITE_PASSWORD not set");
+    let db_password = env::var("POSTGRES_WRITE_PASSWORD").expect("POSTGRES_WRITE_PASSWORD not set");
     let db_host = env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST not set");
     let db_port = env::var("POSTGRES_WRITE_PORT")
         .expect("POSTGRES_WRITE_PORT not set")

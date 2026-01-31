@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-01-31
+
+### Added
+
+- **Stability Layer**: Tower middleware stack to protect server from overload
+  - `ConcurrencyLimitLayer` - Max concurrent requests (default: 500)
+  - `BufferLayer` - Request queue when at limit (default: 1024)
+  - `TimeoutLayer` - Request timeout (default: 30s)
+  - Configurable via `STABILITY_CONCURRENCY_LIMIT`, `STABILITY_BUFFER_SIZE`, `STABILITY_TIMEOUT_SECS`
+
+- **xtask**: Development environment management tool
+  - `cargo xtask dev` - Full setup (docker + migrate)
+  - `cargo xtask docker-up/down/status` - Docker service management
+  - `cargo xtask migrate/migrate-fresh` - Database migrations
+  - Manages Redis Session, Redis Cache, NATS, MeiliSearch, SeaweedFS
+
+- **load-tests**: k6 load testing suite
+  - `health-check.js` - Health check endpoint load test
+  - 4 scenarios: normal (100 VUs), at_limit (500), buffer (1000), spike (10000)
+
 ## [0.3.1] - 2026-01-27
 
 ### Changed

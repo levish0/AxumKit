@@ -82,6 +82,11 @@ pub struct ServerConfig {
 
     // Cookie Domain (e.g., ".example.com" for cross-subdomain cookies)
     pub cookie_domain: Option<String>,
+
+    // Stability Layer (protect DB pool from overload)
+    pub stability_concurrency_limit: usize, // Max concurrent requests (default: 500)
+    pub stability_buffer_size: usize,       // Request queue size (default: 1024)
+    pub stability_timeout_secs: u64,        // Request timeout in seconds (default: 30)
 }
 
 // LazyLock으로 자동 초기화
@@ -272,6 +277,20 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 
         // SeaweedFS
         seaweedfs_endpoint: env::var("SEAWEEDFS_ENDPOINT").expect("SEAWEEDFS_ENDPOINT must be set"),
+
+        // Stability Layer
+        stability_concurrency_limit: env::var("STABILITY_CONCURRENCY_LIMIT")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(500),
+        stability_buffer_size: env::var("STABILITY_BUFFER_SIZE")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(1024),
+        stability_timeout_secs: env::var("STABILITY_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
     }
 });
 
