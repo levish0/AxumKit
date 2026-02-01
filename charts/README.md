@@ -47,7 +47,7 @@ kubectl logs -l app.kubernetes.io/name=axumkit-server -f
 kubectl port-forward svc/axumkit-axumkit-server 8000:8000
 ```
 
-## DB Migration & Seed
+## DB Migration
 
 ### Migration (Automatic)
 

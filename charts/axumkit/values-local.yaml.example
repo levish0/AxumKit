@@ -8,7 +8,7 @@ axumkit-server:
   image:
     repository: ghcr.io/levish0/axumkit
     pullPolicy: IfNotPresent
-    tag: "0.3.2"
+    tag: "0.4.0"
 
   config:
     ENVIRONMENT: "dev"
@@ -40,7 +40,7 @@ axumkit-worker:
   image:
     repository: ghcr.io/levish0/axumkit-worker
     pullPolicy: IfNotPresent
-    tag: "0.3.2"
+    tag: "0.4.0"
 
   config:
     RUST_LOG: "debug"
