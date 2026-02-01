@@ -1,0 +1,13 @@
+apiVersion: v2
+name: axumkit-server
+description: AxumKit API Server
+type: application
+version: 0.4.0
+appVersion: "0.4.0"
+keywords:
+  - axum
+  - api
+  - rust
+home: https://github.com/levish0/AxumKit
+maintainers:
+  - name: Levi Laine

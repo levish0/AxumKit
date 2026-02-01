@@ -1,0 +1,92 @@
+name: Helm Chart Release
+
+on:
+  push:
+    tags: ["v*"]
+    paths:
+      - "charts/**"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "charts/**"
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Lint axumkit-server chart
+        run: helm lint charts/axumkit-server
+
+      - name: Lint axumkit-worker chart
+        run: helm lint charts/axumkit-worker
+
+  release:
+    runs-on: ubuntu-latest
+    needs: lint
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update chart versions
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+
+          # Update axumkit-server chart
+          sed -i "s/^version:.*/version: $VERSION/" charts/axumkit-server/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" charts/axumkit-server/Chart.yaml
+
+          # Update axumkit-worker chart
+          sed -i "s/^version:.*/version: $VERSION/" charts/axumkit-worker/Chart.yaml
+          sed -i "s/^appVersion:.*/appVersion: \"$VERSION\"/" charts/axumkit-worker/Chart.yaml
+
+      - name: Log in to Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Package and push axumkit-server chart
+        run: |
+          helm package charts/axumkit-server
+          helm push axumkit-server-*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+
+      - name: Package and push axumkit-worker chart
+        run: |
+          helm package charts/axumkit-worker
+          helm push axumkit-worker-*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+
+      - name: Summary
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          echo "## Helm Charts Published" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### axumkit-server" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "helm pull oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/axumkit-server --version $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### axumkit-worker" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "helm pull oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts/axumkit-worker --version $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,65 @@
+# =============================================================================
+# Local Development Values
+# =============================================================================
+# Copy this file to values-local.yaml and fill in your credentials
+# DO NOT commit values-local.yaml to git!
+
+axumkit-server:
+  image:
+    repository: ghcr.io/levish0/axumkit
+    pullPolicy: IfNotPresent
+    tag: "0.3.2"
+
+  config:
+    ENVIRONMENT: "dev"
+    RUST_LOG: "debug"
+
+  secret:
+    TOTP_SECRET: "your-totp-secret-here"
+
+    POSTGRES_WRITE_PASSWORD: "axumkit_secret"
+    POSTGRES_READ_PASSWORD: "axumkit_secret"
+
+    GOOGLE_CLIENT_ID: ""
+    GOOGLE_CLIENT_SECRET: ""
+    GOOGLE_REDIRECT_URI: "http://localhost:8000/v0/auth/google/callback"
+
+    GITHUB_CLIENT_ID: ""
+    GITHUB_CLIENT_SECRET: ""
+    GITHUB_REDIRECT_URI: "http://localhost:8000/v0/auth/github/callback"
+
+    R2_ENDPOINT: ""
+    R2_PUBLIC_DOMAIN: ""
+    R2_BUCKET_NAME: ""
+    R2_ACCESS_KEY_ID: ""
+    R2_SECRET_ACCESS_KEY: ""
+
+    TURNSTILE_SECRET_KEY: ""
+
+axumkit-worker:
+  image:
+    repository: ghcr.io/levish0/axumkit-worker
+    pullPolicy: IfNotPresent
+    tag: "0.3.2"
+
+  config:
+    RUST_LOG: "debug"
+    FRONTEND_HOST: "http://localhost:5173"
+
+  secret:
+    SMTP_HOST: "smtp.gmail.com"
+    SMTP_USER: ""
+    SMTP_PASSWORD: ""
+    EMAILS_FROM_EMAIL: "noreply@example.com"
+
+    POSTGRES_WRITE_PASSWORD: "axumkit_secret"
+
+    R2_ENDPOINT: ""
+    R2_PUBLIC_DOMAIN: ""
+    R2_BUCKET_NAME: ""
+    R2_ACCESS_KEY_ID: ""
+    R2_SECRET_ACCESS_KEY: ""
+
+postgresql:
+  auth:
+    password: "axumkit_secret"

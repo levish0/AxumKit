@@ -1,0 +1,204 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/levish0/axumkit
+  pullPolicy: IfNotPresent
+  tag: ""  # Defaults to chart appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: api.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# =============================================================================
+# Environment Configuration (from server_config.rs)
+# =============================================================================
+
+# ConfigMap: Non-sensitive configuration
+config:
+  # Server (required)
+  ENVIRONMENT: "prod"
+  HOST: "0.0.0.0"
+  PORT: "8000"
+  RUST_LOG: "info"
+
+  # Stability Layer (optional, has defaults)
+  STABILITY_CONCURRENCY_LIMIT: "500"
+  STABILITY_BUFFER_SIZE: "1024"
+  STABILITY_TIMEOUT_SECS: "30"
+
+  # Session (required)
+  AUTH_SESSION_MAX_LIFETIME_HOURS: "720"
+  AUTH_SESSION_SLIDING_TTL_HOURS: "24"
+  AUTH_SESSION_REFRESH_THRESHOLD: "50"
+
+  # Token expiration (optional, defaults in minutes)
+  AUTH_EMAIL_VERIFICATION_TOKEN_EXPIRE_TIME: "60"
+  AUTH_PASSWORD_RESET_TOKEN_EXPIRE_TIME: "15"
+  AUTH_EMAIL_CHANGE_TOKEN_EXPIRE_TIME: "15"
+  OAUTH_PENDING_SIGNUP_TTL_MINUTES: "10"
+
+  # Redis Session (optional, defaults: redis-session:6379)
+  REDIS_SESSION_HOST: "redis-session"
+  REDIS_SESSION_PORT: "6379"
+
+  # Redis Cache (optional, defaults: redis-cache:6379, ttl=3600)
+  REDIS_CACHE_HOST: "redis-cache"
+  REDIS_CACHE_PORT: "6379"
+  REDIS_CACHE_TTL: "3600"
+
+  # MeiliSearch (optional, default: http://localhost:7700)
+  MEILISEARCH_HOST: "http://meilisearch:7700"
+
+  # CORS (optional)
+  CORS_ALLOWED_ORIGINS: ""
+  CORS_ALLOWED_HEADERS: "Content-Type"
+  CORS_MAX_AGE: "86400"
+
+  # Cookie domain (optional)
+  COOKIE_DOMAIN: ""
+
+# Secret: Reference existing secret (recommended for production)
+existingSecret: ""
+
+# Secret: Create from values (NOT recommended for production - use existingSecret)
+secret:
+  # TOTP (required)
+  TOTP_SECRET: ""
+
+  # PostgreSQL Write - Primary (required)
+  POSTGRES_WRITE_HOST: ""
+  POSTGRES_WRITE_PORT: "5432"
+  POSTGRES_WRITE_NAME: ""
+  POSTGRES_WRITE_USER: ""
+  POSTGRES_WRITE_PASSWORD: ""
+  POSTGRES_WRITE_MAX_CONNECTION: "100"
+  POSTGRES_WRITE_MIN_CONNECTION: "10"
+
+  # PostgreSQL Read - Replica (required)
+  POSTGRES_READ_HOST: ""
+  POSTGRES_READ_PORT: "5432"
+  POSTGRES_READ_NAME: ""
+  POSTGRES_READ_USER: ""
+  POSTGRES_READ_PASSWORD: ""
+  POSTGRES_READ_MAX_CONNECTION: "100"
+  POSTGRES_READ_MIN_CONNECTION: "10"
+
+  # NATS (optional, default: nats://localhost:4222)
+  NATS_URL: ""
+
+  # SeaweedFS (required)
+  SEAWEEDFS_ENDPOINT: ""
+
+  # Google OAuth (required)
+  GOOGLE_CLIENT_ID: ""
+  GOOGLE_CLIENT_SECRET: ""
+  GOOGLE_REDIRECT_URI: ""
+
+  # GitHub OAuth (required)
+  GITHUB_CLIENT_ID: ""
+  GITHUB_CLIENT_SECRET: ""
+  GITHUB_REDIRECT_URI: ""
+
+  # Cloudflare R2 (required)
+  R2_ENDPOINT: ""
+  R2_REGION: "auto"
+  R2_PUBLIC_DOMAIN: ""
+  R2_BUCKET_NAME: ""
+  R2_ACCESS_KEY_ID: ""
+  R2_SECRET_ACCESS_KEY: ""
+
+  # Cloudflare Turnstile (required)
+  TURNSTILE_SECRET_KEY: ""
+
+  # MeiliSearch API Key (optional)
+  MEILISEARCH_API_KEY: ""
+
+# Migration job configuration
+migration:
+  enabled: true
+  backoffLimit: 3
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Probes
+livenessProbe:
+  httpGet:
+    path: /health-check
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health-check
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3

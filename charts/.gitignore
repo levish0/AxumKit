@@ -1,0 +1,7 @@
+# Helm
+charts/*/charts/*.tgz
+Chart.lock
+
+# Local values (may contain secrets)
+values-local.yaml
+**/values-local.yaml

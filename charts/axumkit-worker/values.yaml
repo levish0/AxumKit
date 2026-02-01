@@ -1,0 +1,119 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/levish0/axumkit-worker
+  pullPolicy: IfNotPresent
+  tag: ""  # Defaults to chart appVersion
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# =============================================================================
+# Environment Configuration (from worker_config.rs)
+# =============================================================================
+
+# ConfigMap: Non-sensitive configuration
+config:
+  RUST_LOG: "info"
+
+  # MeiliSearch (optional, default: http://localhost:7700)
+  MEILISEARCH_HOST: "http://meilisearch:7700"
+
+  # Redis Cache (optional, defaults: 127.0.0.1:6380)
+  REDIS_CACHE_HOST: "redis-cache"
+  REDIS_CACHE_PORT: "6379"
+
+  # Frontend & Project (required)
+  FRONTEND_HOST: ""
+  PROJECT_NAME: "AxumKit"
+  FRONTEND_PATH_VERIFY_EMAIL: "/verify-email"
+  FRONTEND_PATH_RESET_PASSWORD: "/reset-password"
+  FRONTEND_PATH_CONFIRM_EMAIL_CHANGE: "/confirm-email-change"
+
+  # Cron (optional, default: UTC)
+  CRON_TIMEZONE: "UTC"
+
+# Secret: Reference existing secret (recommended for production)
+existingSecret: ""
+
+# Secret: Create from values (NOT recommended for production - use existingSecret)
+secret:
+  # SMTP (required)
+  SMTP_HOST: ""
+  SMTP_PORT: "587"
+  SMTP_USER: ""
+  SMTP_PASSWORD: ""
+  SMTP_TLS: "true"
+  EMAILS_FROM_EMAIL: ""
+  EMAILS_FROM_NAME: "AxumKit"
+
+  # PostgreSQL Write - Primary (required)
+  POSTGRES_WRITE_HOST: ""
+  POSTGRES_WRITE_PORT: "5432"
+  POSTGRES_WRITE_NAME: ""
+  POSTGRES_WRITE_USER: ""
+  POSTGRES_WRITE_PASSWORD: ""
+  POSTGRES_WRITE_MAX_CONNECTION: "10"
+  POSTGRES_WRITE_MIN_CONNECTION: "2"
+
+  # NATS (optional, default: nats://localhost:4222)
+  NATS_URL: ""
+
+  # SeaweedFS (required)
+  SEAWEEDFS_ENDPOINT: ""
+
+  # Cloudflare R2 (required for sitemap)
+  R2_ENDPOINT: ""
+  R2_REGION: "auto"
+  R2_PUBLIC_DOMAIN: ""
+  R2_BUCKET_NAME: ""
+  R2_ACCESS_KEY_ID: ""
+  R2_SECRET_ACCESS_KEY: ""
+
+  # MeiliSearch API Key (optional)
+  MEILISEARCH_API_KEY: ""
