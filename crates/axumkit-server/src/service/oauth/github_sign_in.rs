@@ -7,14 +7,14 @@ use crate::service::oauth::provider::github::client::{
 use crate::service::oauth::types::OAuthStateData;
 use crate::service::oauth::types::PendingSignupData;
 use crate::utils::redis_cache::set_json_with_ttl;
-use crate::utils::redis_keys::{oauth_pending_key, oauth_state_key};
-use axumkit_config::ServerConfig;
-use axumkit_dto::oauth::internal::SignInResult;
-use axumkit_entity::common::OAuthProvider;
-use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
+use axumkit_config::ServerConfig;
+use axumkit_constants::{oauth_pending_key, oauth_state_key};
+use axumkit_dto::oauth::internal::SignInResult;
+use axumkit_entity::common::OAuthProvider;
+use axumkit_errors::errors::{Errors, ServiceResult};
 
 /// GitHub OAuth 로그인을 처리합니다.
 ///

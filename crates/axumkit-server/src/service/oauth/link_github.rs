@@ -3,13 +3,14 @@ use crate::repository::oauth::find_oauth_connection::repository_find_oauth_conne
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::service::oauth::provider::github::{exchange_github_code, fetch_github_user_info};
 use crate::service::oauth::types::OAuthStateData;
-use axumkit_config::ServerConfig;
-use axumkit_entity::common::OAuthProvider;
-use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use uuid::Uuid;
+use axumkit_config::ServerConfig;
+use axumkit_constants::oauth_state_key;
+use axumkit_entity::common::OAuthProvider;
+use axumkit_errors::errors::{Errors, ServiceResult};
 
 /// GitHub OAuth를 기존 계정에 연결합니다.
 ///
@@ -35,7 +36,7 @@ where
     let config = ServerConfig::get();
 
     // 1. Redis에서 state 검증 및 PKCE verifier 조회 (get_del로 1회용)
-    let state_key = format!("oauth:state:{}", state);
+    let state_key = oauth_state_key(state);
     let mut redis_mut = redis_conn.clone();
     let state_json: Option<String> = redis_mut
         .get_del(&state_key)

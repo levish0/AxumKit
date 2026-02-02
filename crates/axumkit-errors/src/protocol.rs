@@ -35,6 +35,7 @@ pub mod oauth {
     pub const OAUTH_STATE_EXPIRED: &str = "oauth:state_expired";
     pub const OAUTH_HANDLE_REQUIRED: &str = "oauth:handle_required";
     pub const OAUTH_EMAIL_ALREADY_EXISTS: &str = "oauth:email_already_exists";
+    pub const OAUTH_EMAIL_NOT_VERIFIED: &str = "oauth:email_not_verified";
 }
 
 pub mod general {

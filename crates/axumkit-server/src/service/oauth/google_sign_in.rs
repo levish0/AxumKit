@@ -7,14 +7,14 @@ use crate::service::oauth::provider::google::client::{
 use crate::service::oauth::types::OAuthStateData;
 use crate::service::oauth::types::PendingSignupData;
 use crate::utils::redis_cache::set_json_with_ttl;
-use crate::utils::redis_keys::{oauth_pending_key, oauth_state_key};
-use axumkit_config::ServerConfig;
-use axumkit_dto::oauth::internal::SignInResult;
-use axumkit_entity::common::OAuthProvider;
-use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
+use axumkit_config::ServerConfig;
+use axumkit_constants::{oauth_pending_key, oauth_state_key};
+use axumkit_dto::oauth::internal::SignInResult;
+use axumkit_entity::common::OAuthProvider;
+use axumkit_errors::errors::{Errors, ServiceResult};
 
 /// Google OAuth 로그인을 처리합니다.
 ///
@@ -74,6 +74,11 @@ where
 
     // 3. Access token으로 사용자 정보 가져오기
     let user_info = fetch_google_user_info(http_client, &access_token).await?;
+
+    // 3-1. 이메일 검증 여부 확인
+    if !user_info.verified_email {
+        return Err(Errors::OauthEmailNotVerified);
+    }
 
     // 4. 기존 OAuth 연결 확인
     if let Some(existing_user) =

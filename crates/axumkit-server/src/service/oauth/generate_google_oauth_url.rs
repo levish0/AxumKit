@@ -1,11 +1,12 @@
 use crate::service::oauth::provider::google::client::generate_google_auth_url;
 use crate::service::oauth::types::OAuthStateData;
 use crate::utils::redis_cache::set_json_with_ttl;
-use axumkit_config::ServerConfig;
-use axumkit_dto::oauth::response::OAuthUrlResponse;
-use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
+use axumkit_config::ServerConfig;
+use axumkit_constants::oauth_state_key;
+use axumkit_dto::oauth::response::OAuthUrlResponse;
+use axumkit_errors::errors::ServiceResult;
 
 /// Google OAuth 인증 URL을 생성하고 state를 Redis에 저장합니다.
 ///
@@ -33,7 +34,7 @@ pub async fn service_generate_google_oauth_url(
     // 3. State와 PKCE verifier를 Redis에 저장
     let state_data = OAuthStateData { pkce_verifier };
 
-    let state_key = format!("oauth:state:{}", state);
+    let state_key = oauth_state_key(&state);
 
     // 5분 TTL로 Redis에 저장
     set_json_with_ttl(redis_conn, &state_key, &state_data, 300).await?;

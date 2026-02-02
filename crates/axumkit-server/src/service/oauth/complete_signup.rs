@@ -5,11 +5,11 @@ use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::repository::user::find_by_handle::repository_find_user_by_handle;
 use crate::service::auth::session::SessionService;
 use crate::service::oauth::types::PendingSignupData;
-use crate::utils::redis_keys::oauth_pending_key;
-use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::{ConnectionTrait, TransactionSession, TransactionTrait};
+use axumkit_constants::oauth_pending_key;
+use axumkit_errors::errors::{Errors, ServiceResult};
 
 /// OAuth pending signup을 완료하고 세션을 생성합니다.
 ///

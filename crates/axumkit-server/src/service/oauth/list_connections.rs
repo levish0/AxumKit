@@ -1,8 +1,8 @@
 use crate::repository::oauth::list_oauth_connections::repository_list_oauth_connections_by_user_id;
-use axumkit_dto::oauth::response::{OAuthConnectionListResponse, OAuthConnectionResponse};
-use axumkit_errors::errors::ServiceResult;
 use sea_orm::ConnectionTrait;
 use uuid::Uuid;
+use axumkit_dto::oauth::response::{OAuthConnectionListResponse, OAuthConnectionResponse};
+use axumkit_errors::errors::ServiceResult;
 
 /// 사용자의 모든 OAuth 연결 목록을 조회합니다.
 pub async fn service_list_oauth_connections<C>(

@@ -1,10 +1,10 @@
 use crate::service::oauth::types::{GithubEmail, GithubUserInfo};
-use axumkit_errors::errors::Errors;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
     PkceCodeVerifier, RedirectUrl, Scope, TokenResponse, TokenUrl, basic::BasicClient,
 };
 use reqwest::Client as HttpClient;
+use axumkit_errors::errors::Errors;
 
 const GITHUB_AUTH_URL: &str = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL: &str = "https://github.com/login/oauth/access_token";
@@ -88,7 +88,7 @@ pub async fn fetch_github_user_info(
 ) -> Result<GithubUserInfo, Errors> {
     let response = http_client
         .get(GITHUB_USER_INFO_URL)
-        .header("User-Agent", "axumkit-server")
+        .header("User-Agent", "AxumKit")
         .bearer_auth(access_token)
         .send()
         .await
@@ -116,7 +116,7 @@ pub async fn fetch_github_user_emails(
 ) -> Result<Vec<GithubEmail>, Errors> {
     let response = http_client
         .get(GITHUB_USER_EMAILS_URL)
-        .header("User-Agent", "axumkit-server")
+        .header("User-Agent", "AxumKit")
         .bearer_auth(access_token)
         .send()
         .await

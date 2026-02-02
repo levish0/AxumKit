@@ -28,7 +28,8 @@ pub fn log_error(error: &Errors) {
         | Errors::OauthInvalidState
         | Errors::OauthStateExpired
         | Errors::OauthHandleRequired
-        | Errors::OauthEmailAlreadyExists => {
+        | Errors::OauthEmailAlreadyExists
+        | Errors::OauthEmailNotVerified => {
             debug!("Client error: {:?}", error);
         }
 
@@ -78,6 +79,9 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::OauthHandleRequired => Some((StatusCode::BAD_REQUEST, OAUTH_HANDLE_REQUIRED, None)),
         Errors::OauthEmailAlreadyExists => {
             Some((StatusCode::CONFLICT, OAUTH_EMAIL_ALREADY_EXISTS, None))
+        }
+        Errors::OauthEmailNotVerified => {
+            Some((StatusCode::BAD_REQUEST, OAUTH_EMAIL_NOT_VERIFIED, None))
         }
 
         _ => None, // 다른 도메인의 에러는 None 반환

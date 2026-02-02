@@ -1,10 +1,10 @@
 use crate::service::oauth::types::GoogleUserInfo;
-use axumkit_errors::errors::Errors;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
     PkceCodeVerifier, RedirectUrl, Scope, TokenResponse, TokenUrl, basic::BasicClient,
 };
 use reqwest::Client as HttpClient;
+use axumkit_errors::errors::Errors;
 
 const GOOGLE_AUTH_URL: &str = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL: &str = "https://oauth2.googleapis.com/token";

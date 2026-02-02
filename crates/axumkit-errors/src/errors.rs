@@ -106,6 +106,7 @@ pub enum Errors {
     OauthStateExpired,
     OauthHandleRequired,
     OauthEmailAlreadyExists,
+    OauthEmailNotVerified,
 
     // Password errors
     PasswordRequiredForUpdate,
