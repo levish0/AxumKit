@@ -13,6 +13,6 @@ pub enum OAuthProvider {
     Discord,
     #[sea_orm(string_value = "x")]
     X,
-    #[sea_orm(string_value = "Microsoft")]
+    #[sea_orm(string_value = "microsoft")]
     Microsoft,
 }
