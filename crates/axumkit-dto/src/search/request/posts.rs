@@ -1,3 +1,4 @@
+use crate::validator::string_validator::validate_not_blank;
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use validator::Validate;
@@ -10,6 +11,7 @@ pub struct SearchPostsRequest {
         max = 200,
         message = "Query must be between 1 and 200 characters"
     ))]
+    #[validate(custom(function = "validate_not_blank"))]
     pub query: String,
 
     #[validate(range(min = 1, message = "Page must be greater than 0"))]

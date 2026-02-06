@@ -1,3 +1,4 @@
+use crate::validator::string_validator::validate_not_blank;
 use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
@@ -15,5 +16,6 @@ pub struct CompleteSignupRequest {
         max = 20,
         message = "Handle must be between 3 and 20 characters"
     ))]
+    #[validate(custom(function = "validate_not_blank"))]
     pub handle: String,
 }

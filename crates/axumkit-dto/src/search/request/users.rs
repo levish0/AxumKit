@@ -1,3 +1,4 @@
+use crate::validator::string_validator::validate_not_blank;
 use serde::Deserialize;
 use utoipa::{IntoParams, ToSchema};
 use validator::Validate;
@@ -7,6 +8,7 @@ use validator::Validate;
 pub struct SearchUsersRequest {
     /// Search query for handle, display_name, or bio. Empty or omitted returns all users.
     #[validate(length(max = 100, message = "Query must be at most 100 characters."))]
+    #[validate(custom(function = "validate_not_blank"))]
     #[serde(default)]
     pub query: Option<String>,
 

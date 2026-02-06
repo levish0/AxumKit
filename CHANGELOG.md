@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-02-06
+
+### Improved
+
+- **Whitespace-only string validation (`validate_not_blank`)**
+  - Added `string_validator::validate_not_blank` custom validator to reject whitespace-only strings
+  - Applied to 13 fields across 9 request DTOs (handles, display names, titles, content, search queries, bio)
+  - Excluded: passwords, tokens, TOTP codes, OAuth codes/states, email addresses
+  - Addresses `validator` crate's `length(min=1)` not catching whitespace-only input (uses `chars().count()` without trim)
+
+---
+
 ## [0.4.2] - 2026-02-06
 
 ### Improved
