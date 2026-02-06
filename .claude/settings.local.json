@@ -8,7 +8,8 @@
       "mcp__serena__write_memory",
       "mcp__serena__search_for_pattern",
       "Bash(find:*)",
-      "Bash(cargo check:*)"
+      "Bash(cargo check:*)",
+      "Bash(dir:*)"
     ],
     "deny": [],
     "ask": []

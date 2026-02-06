@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="axumkit_banner.png" alt="AxumKit" />
+  <img src="assets/axumkit_banner.png" alt="AxumKit" />
 </p>
 
 # AxumKit
