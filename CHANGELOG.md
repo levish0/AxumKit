@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-02-06
+
+### Improved
+
+- **Environment variable validation**
+  - `ServerConfig`: Replaced individual `.expect()` calls with `require!`/`require_parse!` macros that collect all missing/invalid variables and report them at once (30 required vars: 27 string + 3 parsed)
+  - `WorkerConfig`: Same pattern applied with `require!` macro (20 required string vars)
+  - Startup now shows all configuration errors in a single panic message instead of failing on the first missing variable
+
+---
+
 ## [0.4.1] - 2026-02-02
 
 ### Added

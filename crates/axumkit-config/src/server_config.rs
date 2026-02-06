@@ -93,6 +93,35 @@ pub struct ServerConfig {
 static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     dotenv().ok();
 
+    let mut errors: Vec<String> = Vec::new();
+
+    macro_rules! require {
+        ($name:expr) => {
+            env::var($name).unwrap_or_else(|_| {
+                errors.push(format!("  - {} (missing)", $name));
+                String::new()
+            })
+        };
+    }
+
+    macro_rules! require_parse {
+        ($name:expr, $ty:ty) => {{
+            match env::var($name) {
+                Ok(raw) => match raw.parse::<$ty>() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        errors.push(format!("  - {} (invalid value: '{}')", $name, raw));
+                        Default::default()
+                    }
+                },
+                Err(_) => {
+                    errors.push(format!("  - {} (missing)", $name));
+                    Default::default()
+                }
+            }
+        }};
+    }
+
     let is_dev = matches!(
         env::var("ENVIRONMENT").as_deref(),
         Ok("dev") | Ok("development")
@@ -148,24 +177,59 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         }
     };
 
+    // Required string vars
+    let totp_secret = require!("TOTP_SECRET");
+    let google_client_id = require!("GOOGLE_CLIENT_ID");
+    let google_client_secret = require!("GOOGLE_CLIENT_SECRET");
+    let google_redirect_uri = require!("GOOGLE_REDIRECT_URI");
+    let github_client_id = require!("GITHUB_CLIENT_ID");
+    let github_client_secret = require!("GITHUB_CLIENT_SECRET");
+    let github_redirect_uri = require!("GITHUB_REDIRECT_URI");
+    let r2_endpoint = require!("R2_ENDPOINT");
+    let r2_region = require!("R2_REGION");
+    let r2_public_domain = require!("R2_PUBLIC_DOMAIN");
+    let r2_bucket_name = require!("R2_BUCKET_NAME");
+    let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
+    let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
+    let turnstile_secret_key = require!("TURNSTILE_SECRET_KEY");
+    let db_write_host = require!("POSTGRES_WRITE_HOST");
+    let db_write_port = require!("POSTGRES_WRITE_PORT");
+    let db_write_name = require!("POSTGRES_WRITE_NAME");
+    let db_write_user = require!("POSTGRES_WRITE_USER");
+    let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
+    let db_read_host = require!("POSTGRES_READ_HOST");
+    let db_read_port = require!("POSTGRES_READ_PORT");
+    let db_read_name = require!("POSTGRES_READ_NAME");
+    let db_read_user = require!("POSTGRES_READ_USER");
+    let db_read_password = require!("POSTGRES_READ_PASSWORD");
+    let server_host = require!("HOST");
+    let server_port = require!("PORT");
+    let seaweedfs_endpoint = require!("SEAWEEDFS_ENDPOINT");
+
+    // Required parsed vars
+    let auth_session_max_lifetime_hours =
+        require_parse!("AUTH_SESSION_MAX_LIFETIME_HOURS", i64);
+    let auth_session_sliding_ttl_hours =
+        require_parse!("AUTH_SESSION_SLIDING_TTL_HOURS", i64);
+    let auth_session_refresh_threshold =
+        require_parse!("AUTH_SESSION_REFRESH_THRESHOLD", u8);
+
+    // Panic with all errors at once
+    if !errors.is_empty() {
+        panic!(
+            "\n\nMissing or invalid environment variables ({} errors):\n{}\n",
+            errors.len(),
+            errors.join("\n")
+        );
+    }
+
     ServerConfig {
         is_dev,
-        totp_secret: env::var("TOTP_SECRET").expect("TOTP_SECRET must be set"),
+        totp_secret,
 
-        auth_session_max_lifetime_hours: env::var("AUTH_SESSION_MAX_LIFETIME_HOURS")
-            .expect("AUTH_SESSION_MAX_LIFETIME_HOURS must be set")
-            .parse()
-            .expect("AUTH_SESSION_MAX_LIFETIME_HOURS must be a valid integer"),
-
-        auth_session_sliding_ttl_hours: env::var("AUTH_SESSION_SLIDING_TTL_HOURS")
-            .expect("AUTH_SESSION_SLIDING_TTL_HOURS must be set")
-            .parse()
-            .expect("AUTH_SESSION_SLIDING_TTL_HOURS must be a valid integer"),
-
-        auth_session_refresh_threshold: env::var("AUTH_SESSION_REFRESH_THRESHOLD")
-            .expect("AUTH_SESSION_REFRESH_THRESHOLD must be set")
-            .parse()
-            .expect("AUTH_SESSION_REFRESH_THRESHOLD must be a valid integer (0-100)"),
+        auth_session_max_lifetime_hours,
+        auth_session_sliding_ttl_hours,
+        auth_session_refresh_threshold,
 
         auth_email_verification_token_expire_time: env::var(
             "AUTH_EMAIL_VERIFICATION_TOKEN_EXPIRE_TIME",
@@ -187,36 +251,30 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
             .unwrap_or(10), // 기본값 10분
 
         // Google
-        google_client_id: env::var("GOOGLE_CLIENT_ID").expect("GOOGLE_CLIENT_ID must be set"),
-        google_client_secret: env::var("GOOGLE_CLIENT_SECRET")
-            .expect("GOOGLE_CLIENT_SECRET must be set"),
-        google_redirect_uri: env::var("GOOGLE_REDIRECT_URI")
-            .expect("GOOGLE_REDIRECT_URI must be set"),
+        google_client_id,
+        google_client_secret,
+        google_redirect_uri,
 
         // Github
-        github_client_id: env::var("GITHUB_CLIENT_ID").expect("GITHUB_CLIENT_ID must be set"),
-        github_client_secret: env::var("GITHUB_CLIENT_SECRET")
-            .expect("GITHUB_CLIENT_SECRET must be set"),
-        github_redirect_uri: env::var("GITHUB_REDIRECT_URI")
-            .expect("GITHUB_REDIRECT_URI must be set"),
+        github_client_id,
+        github_client_secret,
+        github_redirect_uri,
+
         // Cloudflare
-        r2_endpoint: env::var("R2_ENDPOINT").expect("R2_ENDPOINT must be set"),
-        r2_region: env::var("R2_REGION").expect("R2_REGION must be set"),
-        r2_public_domain: env::var("R2_PUBLIC_DOMAIN").expect("R2_PUBLIC_DOMAIN must be set"),
-        r2_bucket_name: env::var("R2_BUCKET_NAME").expect("R2_BUCKET_NAME must be set"),
-        r2_access_key_id: env::var("R2_ACCESS_KEY_ID").expect("R2_ACCESS_KEY_ID must be set"),
-        r2_secret_access_key: env::var("R2_SECRET_ACCESS_KEY")
-            .expect("R2_SECRET_ACCESS_KEY must be set"),
-        turnstile_secret_key: env::var("TURNSTILE_SECRET_KEY")
-            .expect("TURNSTILE_SECRET_KEY must be set"),
+        r2_endpoint,
+        r2_region,
+        r2_public_domain,
+        r2_bucket_name,
+        r2_access_key_id,
+        r2_secret_access_key,
+        turnstile_secret_key,
 
         // Write DB (Primary)
-        db_write_host: env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST must be set"),
-        db_write_port: env::var("POSTGRES_WRITE_PORT").expect("POSTGRES_WRITE_PORT must be set"),
-        db_write_name: env::var("POSTGRES_WRITE_NAME").expect("POSTGRES_WRITE_NAME must be set"),
-        db_write_user: env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER must be set"),
-        db_write_password: env::var("POSTGRES_WRITE_PASSWORD")
-            .expect("POSTGRES_WRITE_PASSWORD must be set"),
+        db_write_host,
+        db_write_port,
+        db_write_name,
+        db_write_user,
+        db_write_password,
         db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -227,12 +285,11 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
             .unwrap_or(10),
 
         // Read DB (Replica)
-        db_read_host: env::var("POSTGRES_READ_HOST").expect("POSTGRES_READ_HOST must be set"),
-        db_read_port: env::var("POSTGRES_READ_PORT").expect("POSTGRES_READ_PORT must be set"),
-        db_read_name: env::var("POSTGRES_READ_NAME").expect("POSTGRES_READ_NAME must be set"),
-        db_read_user: env::var("POSTGRES_READ_USER").expect("POSTGRES_READ_USER must be set"),
-        db_read_password: env::var("POSTGRES_READ_PASSWORD")
-            .expect("POSTGRES_READ_PASSWORD must be set"),
+        db_read_host,
+        db_read_port,
+        db_read_name,
+        db_read_user,
+        db_read_password,
         db_read_max_connection: env::var("POSTGRES_READ_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -256,8 +313,8 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
             .and_then(|v| v.parse().ok())
             .unwrap_or(3600),
 
-        server_host: env::var("HOST").expect("HOST must be set in .env file"),
-        server_port: env::var("PORT").expect("PORT must be set in .env file"),
+        server_host,
+        server_port,
 
         // NATS
         nats_url: env::var("NATS_URL").unwrap_or_else(|_| "nats://localhost:4222".to_string()),
@@ -276,7 +333,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         cookie_domain: env::var("COOKIE_DOMAIN").ok().filter(|d| !d.is_empty()),
 
         // SeaweedFS
-        seaweedfs_endpoint: env::var("SEAWEEDFS_ENDPOINT").expect("SEAWEEDFS_ENDPOINT must be set"),
+        seaweedfs_endpoint,
 
         // Stability Layer
         stability_concurrency_limit: env::var("STABILITY_CONCURRENCY_LIMIT")

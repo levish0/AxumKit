@@ -58,19 +58,61 @@ pub struct WorkerConfig {
 static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     dotenv().ok();
 
+    let mut errors: Vec<String> = Vec::new();
+
+    macro_rules! require {
+        ($name:expr) => {
+            env::var($name).unwrap_or_else(|_| {
+                errors.push(format!("  - {} (missing)", $name));
+                String::new()
+            })
+        };
+    }
+
+    // Required string vars
+    let smtp_host = require!("SMTP_HOST");
+    let smtp_user = require!("SMTP_USER");
+    let smtp_password = require!("SMTP_PASSWORD");
+    let emails_from_email = require!("EMAILS_FROM_EMAIL");
+    let frontend_host = require!("FRONTEND_HOST");
+    let project_name = require!("PROJECT_NAME");
+    let frontend_path_verify_email = require!("FRONTEND_PATH_VERIFY_EMAIL");
+    let frontend_path_reset_password = require!("FRONTEND_PATH_RESET_PASSWORD");
+    let frontend_path_confirm_email_change = require!("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE");
+    let db_write_host = require!("POSTGRES_WRITE_HOST");
+    let db_write_port = require!("POSTGRES_WRITE_PORT");
+    let db_write_name = require!("POSTGRES_WRITE_NAME");
+    let db_write_user = require!("POSTGRES_WRITE_USER");
+    let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
+    let seaweedfs_endpoint = require!("SEAWEEDFS_ENDPOINT");
+    let r2_endpoint = require!("R2_ENDPOINT");
+    let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
+    let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
+    let r2_bucket_name = require!("R2_BUCKET_NAME");
+    let r2_public_domain = require!("R2_PUBLIC_DOMAIN");
+
+    // Panic with all errors at once
+    if !errors.is_empty() {
+        panic!(
+            "\n\nMissing required environment variables ({} errors):\n{}\n",
+            errors.len(),
+            errors.join("\n")
+        );
+    }
+
     WorkerConfig {
         // SMTP
-        smtp_host: env::var("SMTP_HOST").expect("SMTP_HOST must be set"),
+        smtp_host,
         smtp_port: env::var("SMTP_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
             .unwrap_or(587),
-        smtp_user: env::var("SMTP_USER").expect("SMTP_USER must be set"),
-        smtp_password: env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD must be set"),
+        smtp_user,
+        smtp_password,
         smtp_tls: env::var("SMTP_TLS")
             .map(|v| v.to_lowercase() == "true")
             .unwrap_or(true),
-        emails_from_email: env::var("EMAILS_FROM_EMAIL").expect("EMAILS_FROM_EMAIL must be set"),
+        emails_from_email,
         emails_from_name: env::var("EMAILS_FROM_NAME").unwrap_or_else(|_| "SevenWiki".into()),
 
         // MeiliSearch
@@ -88,22 +130,18 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         redis_cache_port: env::var("REDIS_CACHE_PORT").unwrap_or_else(|_| "6380".into()),
 
         // Frontend & Project
-        frontend_host: env::var("FRONTEND_HOST").expect("FRONTEND_HOST must be set"),
-        project_name: env::var("PROJECT_NAME").expect("PROJECT_NAME must be set"),
-        frontend_path_verify_email: env::var("FRONTEND_PATH_VERIFY_EMAIL")
-            .expect("FRONTEND_PATH_VERIFY_EMAIL must be set"),
-        frontend_path_reset_password: env::var("FRONTEND_PATH_RESET_PASSWORD")
-            .expect("FRONTEND_PATH_RESET_PASSWORD must be set"),
-        frontend_path_confirm_email_change: env::var("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE")
-            .expect("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE must be set"),
+        frontend_host,
+        project_name,
+        frontend_path_verify_email,
+        frontend_path_reset_password,
+        frontend_path_confirm_email_change,
 
         // Database (Write only)
-        db_write_host: env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST must be set"),
-        db_write_port: env::var("POSTGRES_WRITE_PORT").expect("POSTGRES_WRITE_PORT must be set"),
-        db_write_name: env::var("POSTGRES_WRITE_NAME").expect("POSTGRES_WRITE_NAME must be set"),
-        db_write_user: env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER must be set"),
-        db_write_password: env::var("POSTGRES_WRITE_PASSWORD")
-            .expect("POSTGRES_WRITE_PASSWORD must be set"),
+        db_write_host,
+        db_write_port,
+        db_write_name,
+        db_write_user,
+        db_write_password,
         db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -117,16 +155,15 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         cron_timezone: env::var("CRON_TIMEZONE").unwrap_or_else(|_| "UTC".into()),
 
         // SeaweedFS
-        seaweedfs_endpoint: env::var("SEAWEEDFS_ENDPOINT").expect("SEAWEEDFS_ENDPOINT must be set"),
+        seaweedfs_endpoint,
 
         // R2
-        r2_endpoint: env::var("R2_ENDPOINT").expect("R2_ENDPOINT must be set"),
+        r2_endpoint,
         r2_region: env::var("R2_REGION").unwrap_or_else(|_| "auto".into()),
-        r2_access_key_id: env::var("R2_ACCESS_KEY_ID").expect("R2_ACCESS_KEY_ID must be set"),
-        r2_secret_access_key: env::var("R2_SECRET_ACCESS_KEY")
-            .expect("R2_SECRET_ACCESS_KEY must be set"),
-        r2_bucket_name: env::var("R2_BUCKET_NAME").expect("R2_BUCKET_NAME must be set"),
-        r2_public_domain: env::var("R2_PUBLIC_DOMAIN").expect("R2_PUBLIC_DOMAIN must be set"),
+        r2_access_key_id,
+        r2_secret_access_key,
+        r2_bucket_name,
+        r2_public_domain,
     }
 });
 
