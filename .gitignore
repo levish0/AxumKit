@@ -27,6 +27,7 @@ docker.env
 docker_env/
 logs
 reference
+!docs/reference/
 
 # k8s secrets (contains sensitive data)
 k8s/overlays/*/secrets/
