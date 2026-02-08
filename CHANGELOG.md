@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-02-08
+
+### Refactored
+
+- **OAuth provider trait extraction (`OAuthProviderConfig`)**
+  - Unified duplicate Google/GitHub OAuth logic (URL generation, token exchange, service layer) into `OAuthProviderConfig` trait with generic functions
+  - Added `generate_auth_url<P>()`, `exchange_code<P>()`, `service_generate_oauth_url<P>()` generic functions
+  - Reorganized provider-specific code into `google/` and `github/` folders (config, client, generate_url, sign_in, link)
+  - `provider/` now contains only shared infrastructure (trait + generic functions)
+  - Added `OAUTH_STATE_TTL_SECONDS` constant to `axumkit-constants` (replaced hardcoded value)
+  - Deleted 6 legacy flat service files and old provider subdirectories
+
+---
+
 ## [0.4.3] - 2026-02-06
 
 ### Improved

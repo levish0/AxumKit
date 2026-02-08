@@ -1,4 +1,4 @@
-use crate::service::oauth::github_sign_in::service_github_sign_in;
+use crate::service::oauth::github::service_github_sign_in;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
 use crate::utils::extract::extract_user_agent::extract_user_agent;

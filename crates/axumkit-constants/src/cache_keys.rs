@@ -1,5 +1,8 @@
-/// Redis cache key prefixes and helpers
-/// Centralized constants for cache key naming to ensure consistency across codebase
+//! Redis cache key prefixes and helpers
+//! Centralized constants for cache key naming to ensure consistency across codebase
+
+/// OAuth state TTL in seconds (5 minutes)
+pub const OAUTH_STATE_TTL_SECONDS: u64 = 300;
 
 /// OAuth state key prefix (stores PKCE verifier)
 /// Format: "oauth:state:{uuid}"

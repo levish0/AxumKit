@@ -1,11 +1,8 @@
 pub mod complete_signup;
 pub mod find_or_create_oauth_user;
-pub mod generate_github_oauth_url;
-pub mod generate_google_oauth_url;
-pub mod github_sign_in;
-pub mod google_sign_in;
-pub mod link_github;
-pub mod link_google;
+pub mod generate_oauth_url;
+pub mod github;
+pub mod google;
 pub mod list_connections;
 pub mod provider;
 pub mod types;

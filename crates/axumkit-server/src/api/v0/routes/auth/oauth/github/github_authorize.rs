@@ -1,4 +1,4 @@
-use crate::service::oauth::generate_github_oauth_url::service_generate_github_oauth_url;
+use crate::service::oauth::github::service_generate_github_oauth_url;
 use crate::state::AppState;
 use axum::extract::State;
 use axumkit_dto::oauth::response::OAuthUrlResponse;

@@ -1,4 +1,4 @@
-use crate::service::oauth::generate_google_oauth_url::service_generate_google_oauth_url;
+use crate::service::oauth::google::service_generate_google_oauth_url;
 use crate::state::AppState;
 use axum::extract::State;
 use axumkit_dto::oauth::response::OAuthUrlResponse;

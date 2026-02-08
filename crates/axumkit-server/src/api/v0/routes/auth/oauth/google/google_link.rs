@@ -1,5 +1,5 @@
 use crate::extractors::RequiredSession;
-use crate::service::oauth::link_google::service_link_google_oauth;
+use crate::service::oauth::google::service_link_google_oauth;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
