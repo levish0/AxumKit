@@ -1,10 +1,10 @@
 use crate::repository::oauth::count_oauth_connections::repository_count_oauth_connections;
 use crate::repository::oauth::delete_oauth_connection::repository_delete_oauth_connection;
 use crate::repository::user::get_by_id::repository_get_user_by_id;
-use sea_orm::ConnectionTrait;
-use uuid::Uuid;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
+use sea_orm::ConnectionTrait;
+use uuid::Uuid;
 
 /// OAuth 연결을 해제합니다.
 ///

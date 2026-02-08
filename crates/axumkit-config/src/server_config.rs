@@ -207,12 +207,9 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     let seaweedfs_endpoint = require!("SEAWEEDFS_ENDPOINT");
 
     // Required parsed vars
-    let auth_session_max_lifetime_hours =
-        require_parse!("AUTH_SESSION_MAX_LIFETIME_HOURS", i64);
-    let auth_session_sliding_ttl_hours =
-        require_parse!("AUTH_SESSION_SLIDING_TTL_HOURS", i64);
-    let auth_session_refresh_threshold =
-        require_parse!("AUTH_SESSION_REFRESH_THRESHOLD", u8);
+    let auth_session_max_lifetime_hours = require_parse!("AUTH_SESSION_MAX_LIFETIME_HOURS", i64);
+    let auth_session_sliding_ttl_hours = require_parse!("AUTH_SESSION_SLIDING_TTL_HOURS", i64);
+    let auth_session_refresh_threshold = require_parse!("AUTH_SESSION_REFRESH_THRESHOLD", u8);
 
     // Panic with all errors at once
     if !errors.is_empty() {

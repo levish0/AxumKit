@@ -4,9 +4,9 @@ use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::repository::user::find_by_handle::repository_find_user_by_handle;
 use crate::service::oauth::types::OAuthUserResult;
-use sea_orm::ConnectionTrait;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
+use sea_orm::ConnectionTrait;
 
 /// OAuth 제공자로부터 받은 정보로 사용자를 찾거나 생성합니다.
 ///

@@ -1,6 +1,6 @@
 use crate::service::oauth::types::{GithubEmail, GithubUserInfo};
-use reqwest::Client as HttpClient;
 use axumkit_errors::errors::Errors;
+use reqwest::Client as HttpClient;
 
 const GITHUB_USER_INFO_URL: &str = "https://api.github.com/user";
 const GITHUB_USER_EMAILS_URL: &str = "https://api.github.com/user/emails";

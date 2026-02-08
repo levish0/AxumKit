@@ -4,13 +4,13 @@ use crate::repository::oauth::find_oauth_connection::repository_find_oauth_conne
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::OAuthStateData;
+use axumkit_constants::oauth_state_key;
+use axumkit_entity::common::OAuthProvider;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use uuid::Uuid;
-use axumkit_constants::oauth_state_key;
-use axumkit_entity::common::OAuthProvider;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 /// Google OAuth를 기존 계정에 연결합니다.
 pub async fn service_link_google_oauth<C>(

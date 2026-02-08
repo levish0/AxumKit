@@ -1,6 +1,6 @@
 use crate::service::oauth::types::GoogleUserInfo;
-use reqwest::Client as HttpClient;
 use axumkit_errors::errors::Errors;
+use reqwest::Client as HttpClient;
 
 const GOOGLE_USER_INFO_URL: &str = "https://www.googleapis.com/oauth2/v2/userinfo";
 

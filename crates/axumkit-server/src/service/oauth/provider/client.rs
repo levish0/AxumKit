@@ -1,10 +1,10 @@
 use crate::service::oauth::provider::config::OAuthProviderConfig;
+use axumkit_errors::errors::Errors;
 use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
     PkceCodeVerifier, RedirectUrl, Scope, TokenResponse, TokenUrl, basic::BasicClient,
 };
 use reqwest::Client as HttpClient;
-use axumkit_errors::errors::Errors;
 
 /// OAuth 인증 URL을 생성합니다.
 /// Returns: (auth_url, state, pkce_verifier)

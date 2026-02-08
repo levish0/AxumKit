@@ -2,11 +2,11 @@ use crate::service::oauth::provider::client::generate_auth_url;
 use crate::service::oauth::provider::config::OAuthProviderConfig;
 use crate::service::oauth::types::OAuthStateData;
 use crate::utils::redis_cache::set_json_with_ttl;
-use redis::aio::ConnectionManager;
-use uuid::Uuid;
 use axumkit_constants::oauth_state_key;
 use axumkit_dto::oauth::response::OAuthUrlResponse;
 use axumkit_errors::errors::ServiceResult;
+use redis::aio::ConnectionManager;
+use uuid::Uuid;
 
 /// OAuth 인증 URL을 생성하고 state를 Redis에 저장합니다.
 pub async fn service_generate_oauth_url<P: OAuthProviderConfig>(

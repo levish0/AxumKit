@@ -214,16 +214,10 @@ fn docker_down() -> Result<()> {
     let names: Vec<&str> = SERVICES.iter().map(|s| s.name).collect();
 
     // Stop containers
-    let _ = Command::new("docker")
-        .arg("stop")
-        .args(&names)
-        .status();
+    let _ = Command::new("docker").arg("stop").args(&names).status();
 
     // Remove containers
-    let _ = Command::new("docker")
-        .arg("rm")
-        .args(&names)
-        .status();
+    let _ = Command::new("docker").arg("rm").args(&names).status();
 
     println!("\nAll services stopped and removed.");
     println!("Note: Volumes are preserved. Use 'docker volume rm <name>' to delete data.");
@@ -236,7 +230,14 @@ fn docker_status() -> Result<()> {
 
     for service in SERVICES {
         let output = Command::new("docker")
-            .args(["ps", "-a", "--format", "{{.Status}}", "-f", &format!("name=^{}$", service.name)])
+            .args([
+                "ps",
+                "-a",
+                "--format",
+                "{{.Status}}",
+                "-f",
+                &format!("name=^{}$", service.name),
+            ])
             .output()
             .context("Failed to check docker status")?;
 
