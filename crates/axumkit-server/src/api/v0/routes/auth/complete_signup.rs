@@ -45,6 +45,8 @@ pub async fn auth_complete_signup(
     let session_id = service_complete_signup(
         &state.write_db,
         &state.redis_session,
+        &state.http_client,
+        &state.r2_client,
         &payload.pending_token,
         &payload.handle,
         Some(user_agent_str),

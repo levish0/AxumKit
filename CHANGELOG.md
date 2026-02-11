@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2026-02-11
+
+### Fixed
+
+- **OAuth profile image upload to R2**
+  - OAuth sign-up previously stored the provider's external profile image URL (e.g. `https://lh3.googleusercontent.com/...`) directly in the database, which broke when passed through `build_r2_public_url()`
+  - Profile images are now downloaded from the OAuth provider, validated (4 MB limit), processed (WebP conversion, max 2000x2000), and uploaded to R2 during `complete_signup`
+  - Database stores the R2 storage key (`user-images/{hash}.webp`) instead of the external URL
+  - Gracefully falls back to no profile image if download/processing fails (sign-up still succeeds)
+
+---
+
 ## [0.4.4] - 2026-02-08
 
 ### Refactored
