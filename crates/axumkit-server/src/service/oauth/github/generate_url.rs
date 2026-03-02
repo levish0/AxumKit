@@ -1,12 +1,22 @@
 use super::GithubProvider;
 use crate::service::oauth::generate_oauth_url::service_generate_oauth_url;
+use axumkit_dto::oauth::request::OAuthAuthorizeFlow;
 use axumkit_dto::oauth::response::OAuthUrlResponse;
+use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 
 /// GitHub OAuth 인증 URL을 생성하고 state를 Redis에 저장합니다.
 pub async fn service_generate_github_oauth_url(
     redis_conn: &ConnectionManager,
+    anonymous_user_id: &str,
+    flow: OAuthAuthorizeFlow,
 ) -> ServiceResult<OAuthUrlResponse> {
-    service_generate_oauth_url::<GithubProvider>(redis_conn).await
+    service_generate_oauth_url::<GithubProvider>(
+        redis_conn,
+        anonymous_user_id,
+        flow,
+        OAuthProvider::Github,
+    )
+    .await
 }

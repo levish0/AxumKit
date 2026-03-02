@@ -3,15 +3,14 @@ use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
 use crate::service::oauth::provider::client::exchange_code;
-use crate::service::oauth::types::OAuthStateData;
-use crate::service::oauth::types::PendingSignupData;
-use crate::utils::redis_cache::set_json_with_ttl;
+use crate::service::oauth::types::{OAuthStateData, PendingSignupData};
+use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
 use axumkit_config::ServerConfig;
 use axumkit_constants::{oauth_pending_key, oauth_state_key};
 use axumkit_dto::oauth::internal::SignInResult;
+use axumkit_dto::oauth::request::OAuthAuthorizeFlow;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
-use redis::AsyncCommands;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 
@@ -25,6 +24,7 @@ pub async fn service_google_sign_in<C>(
     http_client: &reqwest::Client,
     code: &str,
     state: &str,
+    anonymous_user_id: &str,
     user_agent: Option<String>,
     ip_address: Option<String>,
 ) -> ServiceResult<SignInResult>
@@ -33,20 +33,22 @@ where
 {
     // 1. Redis에서 state 검증 및 PKCE verifier 조회 (get_del로 1회용)
     let state_key = oauth_state_key(state);
-    let mut redis_mut = redis_conn.clone();
-    let state_json: Option<String> = redis_mut
-        .get_del(&state_key)
-        .await
-        .map_err(|e| Errors::SysInternalError(format!("Redis error: {}", e)))?;
-
-    let state_data = match state_json {
-        Some(json) => {
-            serde_json::from_str::<OAuthStateData>(&json).map_err(|_| Errors::OauthInvalidState)?
-        }
-        None => return Err(Errors::OauthInvalidState),
-    };
+    let state_data: OAuthStateData = get_json_and_delete(
+        redis_conn,
+        &state_key,
+        || Errors::OauthInvalidState,
+        |_| Errors::OauthInvalidState,
+    )
+    .await?;
 
     // 2. Authorization code를 access token으로 교환
+    if state_data.provider != OAuthProvider::Google
+        || state_data.flow != OAuthAuthorizeFlow::Login
+        || state_data.anonymous_user_id != anonymous_user_id
+    {
+        return Err(Errors::OauthInvalidState);
+    }
+
     let access_token =
         exchange_code::<GoogleProvider>(http_client, code, &state_data.pkce_verifier).await?;
 
@@ -84,18 +86,24 @@ where
 
     // 6. 신규 사용자 - pending signup 데이터를 Redis에 저장
     let config = ServerConfig::get();
-    let pending_token = uuid::Uuid::new_v4().to_string();
     let pending_data = PendingSignupData {
         provider: OAuthProvider::Google,
         provider_user_id: user_info.id,
+        anonymous_user_id: anonymous_user_id.to_string(),
         email: user_info.email.clone(),
         display_name: user_info.name.clone(),
         profile_image: Some(user_info.picture),
     };
 
-    let pending_key = oauth_pending_key(&pending_token);
     let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
-    set_json_with_ttl(redis_conn, &pending_key, &pending_data, ttl_seconds).await?;
+    let pending_token = issue_token_and_store_json_with_ttl(
+        redis_conn,
+        || uuid::Uuid::new_v4().to_string(),
+        oauth_pending_key,
+        &pending_data,
+        ttl_seconds,
+    )
+    .await?;
 
     Ok(SignInResult::PendingSignup {
         pending_token,

@@ -1,7 +1,9 @@
+use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::google::service_google_sign_in;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
 use crate::utils::extract::extract_user_agent::extract_user_agent;
+use axum::Extension;
 use axum::{
     extract::{ConnectInfo, State},
     http::HeaderMap,
@@ -36,6 +38,7 @@ pub async fn auth_google_login(
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
+    Extension(anonymous): Extension<AnonymousUserContext>,
     ValidatedJson(payload): ValidatedJson<GoogleLoginRequest>,
 ) -> Result<Response, Errors> {
     let user_agent_str = extract_user_agent(user_agent);
@@ -48,6 +51,7 @@ pub async fn auth_google_login(
         &state.http_client,
         &payload.code,
         &payload.state,
+        &anonymous.anonymous_user_id,
         Some(user_agent_str),
         Some(ip_address),
     )

@@ -12,7 +12,7 @@ pub async fn fetch_github_user_info(
 ) -> Result<GithubUserInfo, Errors> {
     let response = http_client
         .get(GITHUB_USER_INFO_URL)
-        .header("User-Agent", "AxumKit")
+        .header("User-Agent", "AxumKit-server")
         .bearer_auth(access_token)
         .send()
         .await
@@ -40,7 +40,7 @@ pub async fn fetch_github_user_emails(
 ) -> Result<Vec<GithubEmail>, Errors> {
     let response = http_client
         .get(GITHUB_USER_EMAILS_URL)
-        .header("User-Agent", "AxumKit")
+        .header("User-Agent", "AxumKit-server")
         .bearer_auth(access_token)
         .send()
         .await

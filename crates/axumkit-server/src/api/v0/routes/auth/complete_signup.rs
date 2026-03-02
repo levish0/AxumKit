@@ -1,7 +1,9 @@
+use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::complete_signup::service_complete_signup;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
 use crate::utils::extract::extract_user_agent::extract_user_agent;
+use axum::Extension;
 use axum::http::HeaderMap;
 use axum::{
     extract::{ConnectInfo, State},
@@ -36,6 +38,7 @@ pub async fn auth_complete_signup(
     headers: HeaderMap,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
+    Extension(anonymous): Extension<AnonymousUserContext>,
     ValidatedJson(payload): ValidatedJson<CompleteSignupRequest>,
 ) -> Result<Response, Errors> {
     let user_agent_str = extract_user_agent(user_agent);
@@ -47,13 +50,15 @@ pub async fn auth_complete_signup(
         &state.redis_session,
         &state.http_client,
         &state.r2_client,
+        &state.worker,
         &payload.pending_token,
         &payload.handle,
+        &anonymous.anonymous_user_id,
         Some(user_agent_str),
         Some(ip_address),
     )
     .await?;
 
-    // 쿠키 설정하는 204 응답 반환 (OAuth는 항상 30일 유지)
+    // Return 204 with login cookie (session max lifetime is server-configured).
     create_login_response(session_id, true)
 }

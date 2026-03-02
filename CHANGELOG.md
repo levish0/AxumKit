@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-03-02
+
+### Added
+
+- **OAuth authorize flow query support**
+  - Added `OAuthAuthorizeFlow` (`login`/`link`) and `OAuthAuthorizeQuery` DTOs
+  - Added query validation and OpenAPI params for `/v0/auth/oauth/{provider}/authorize`
+- **OAuth pending signup lock primitives**
+  - Added `oauth_pending_lock_key` and `OAUTH_PENDING_LOCK_PREFIX` in `axumkit-constants`
+  - Added Lua script `release_pending_lock.lua` for safe lock-token-based unlock
+- **Session refresh tests**
+  - Added unit tests for `Session::needs_refresh` sliding TTL threshold behavior
+
+### Changed
+
+- **OAuth state hardening**
+  - OAuth state payload now stores `flow`, `provider`, and `anonymous_user_id`
+  - Google/GitHub `login` and `link` now validate provider/flow/browser binding before token exchange
+- **OAuth signup completion flow hardening**
+  - `complete_signup` now uses a per-pending-token Redis lock to serialize completion attempts
+  - Pending signup payload is now bound to `anonymous_user_id`
+  - Pending token is consumed only after successful DB commit
+- **OAuth unlink safety**
+  - Switched to row-level lock (`SELECT ... FOR UPDATE`) on user for unlink flow serialization
+  - Explicitly checks target provider exists before deletion
+- **Session index model**
+  - Replaced `user_sessions:{user_id}` set with TTL-synced `user_session_idx:{user_id}:{session_id}` keys
+  - Updated create/refresh/delete/delete-all/delete-other logic to manage index TTL with session TTL
+- **Session sliding window threshold calculation**
+  - `Session::needs_refresh` now uses configured `auth_session_sliding_ttl_hours`-based threshold instead of session-age ratio
+
+### Fixed
+
+- **OAuth race conditions**
+  - Reduced duplicate completion/race windows in pending OAuth signup completion
+- **Last authentication factor unlink race**
+  - Prevented concurrent unlink edge case that could remove the final login factor
+
+---
+
 ## [0.4.5] - 2026-02-11
 
 ### Fixed

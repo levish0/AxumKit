@@ -1,36 +1,43 @@
-use crate::repository::oauth::count_oauth_connections::repository_count_oauth_connections;
 use crate::repository::oauth::delete_oauth_connection::repository_delete_oauth_connection;
-use crate::repository::user::get_by_id::repository_get_user_by_id;
+use crate::repository::oauth::list_oauth_connections::repository_list_oauth_connections_by_user_id;
+use crate::repository::user::get_by_id::repository_get_user_by_id_for_update;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
-use sea_orm::ConnectionTrait;
+use sea_orm::{DatabaseConnection, TransactionTrait};
+use tracing::info;
 use uuid::Uuid;
 
-/// OAuth 연결을 해제합니다.
+/// Unlink an OAuth provider from a user account.
 ///
-/// 마지막 인증 수단 보호:
-/// - OAuth 연결이 1개뿐이고 비밀번호가 설정되지 않은 경우 해제 불가
-pub async fn service_unlink_oauth<C>(
-    conn: &C,
+/// Safety rule:
+/// - If the account has no password and only one OAuth connection left, unlink is denied.
+pub async fn service_unlink_oauth(
+    conn: &DatabaseConnection,
     user_id: Uuid,
     provider: OAuthProvider,
-) -> ServiceResult<()>
-where
-    C: ConnectionTrait,
-{
-    // 1. 사용자 정보 확인
-    let user = repository_get_user_by_id(conn, user_id).await?;
+) -> ServiceResult<()> {
+    let txn = conn.begin().await?;
 
-    // 2. OAuth 연결 개수 확인
-    let oauth_count = repository_count_oauth_connections(conn, user_id).await?;
+    // Serialize per-user unlink flow to prevent concurrent last-factor removal.
+    let user = repository_get_user_by_id_for_update(&txn, user_id).await?;
 
-    // 3. 마지막 인증 수단 보호: OAuth 1개 + 비밀번호 없음 = 해제 불가
+    let connections = repository_list_oauth_connections_by_user_id(&txn, user_id).await?;
+    let oauth_count = connections.len();
+    let has_target_provider = connections.iter().any(|c| c.provider == provider);
+
+    if !has_target_provider {
+        return Err(Errors::OauthConnectionNotFound);
+    }
+
     if oauth_count == 1 && user.password.is_none() {
         return Err(Errors::OauthCannotUnlinkLastConnection);
     }
 
-    // 4. OAuth 연결 삭제
-    repository_delete_oauth_connection(conn, user_id, provider).await?;
+    repository_delete_oauth_connection(&txn, user_id, provider.clone()).await?;
+
+    txn.commit().await?;
+
+    info!(user_id = %user_id, provider = ?provider, "OAuth connection unlinked");
 
     Ok(())
 }

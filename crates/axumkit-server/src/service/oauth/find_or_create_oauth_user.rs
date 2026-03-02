@@ -7,6 +7,7 @@ use crate::service::oauth::types::OAuthUserResult;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
 use sea_orm::ConnectionTrait;
+use tracing::info;
 
 /// OAuth 제공자로부터 받은 정보로 사용자를 찾거나 생성합니다.
 ///
@@ -67,7 +68,10 @@ where
         repository_create_oauth_user(conn, email, display_name, handle, profile_image).await?;
 
     // 5. OAuth 연결 생성
-    repository_create_oauth_connection(conn, &new_user.id, provider, provider_user_id).await?;
+    repository_create_oauth_connection(conn, &new_user.id, provider.clone(), provider_user_id)
+        .await?;
+
+    info!(user_id = %new_user.id, provider = ?provider, "OAuth user created");
 
     Ok(OAuthUserResult {
         user: new_user,

@@ -52,16 +52,64 @@ impl Session {
     }
 
     /// 세션 연장이 필요한지 확인 (TTL 임계값 체크)
-    pub fn needs_refresh(&self, threshold_percent: u8) -> bool {
+    pub fn needs_refresh(&self, threshold_percent: u8, sliding_ttl_hours: i64) -> bool {
         let now = Utc::now();
         let remaining = (self.expires_at - now).num_seconds();
-        let total_ttl = (self.expires_at - self.created_at).num_seconds();
 
-        if remaining <= 0 || total_ttl <= 0 {
+        if remaining <= 0 {
             return false;
         }
 
-        let remaining_percent = (remaining as f64 / total_ttl as f64 * 100.0) as u8;
-        remaining_percent <= threshold_percent
+        let sliding_ttl_seconds = Duration::hours(sliding_ttl_hours).num_seconds();
+        if sliding_ttl_seconds <= 0 {
+            return false;
+        }
+
+        let threshold_percent = threshold_percent.min(100) as i64;
+        let threshold_seconds = (sliding_ttl_seconds * threshold_percent) / 100;
+
+        remaining <= threshold_seconds
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Duration;
+
+    fn make_session(expires_in_hours: i64) -> Session {
+        let now = Utc::now();
+        Session {
+            session_id: "test-session".to_string(),
+            user_id: "test-user".to_string(),
+            created_at: now,
+            expires_at: now + Duration::hours(expires_in_hours),
+            max_expires_at: now + Duration::hours(720),
+            user_agent: None,
+            ip_address: None,
+        }
+    }
+
+    #[test]
+    fn needs_refresh_uses_sliding_ttl_threshold() {
+        let session = make_session(168);
+        assert!(!session.needs_refresh(50, 168));
+
+        let near_expiry = make_session(80);
+        assert!(near_expiry.needs_refresh(50, 168));
+    }
+
+    #[test]
+    fn needs_refresh_is_not_affected_by_session_age() {
+        let mut session = make_session(160);
+        session.created_at = Utc::now() - Duration::days(20);
+
+        assert!(!session.needs_refresh(50, 168));
+    }
+
+    #[test]
+    fn needs_refresh_returns_false_for_invalid_sliding_ttl() {
+        let session = make_session(10);
+        assert!(!session.needs_refresh(50, 0));
     }
 }

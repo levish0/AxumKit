@@ -1,6 +1,8 @@
 use crate::extractors::RequiredSession;
+use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::google::service_link_google_oauth;
 use crate::state::AppState;
+use axum::Extension;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axumkit_dto::oauth::request::link::GoogleLinkRequest;
@@ -27,6 +29,7 @@ use axumkit_errors::errors::Errors;
 pub async fn auth_google_link(
     State(state): State<AppState>,
     RequiredSession(session_context): RequiredSession,
+    Extension(anonymous): Extension<AnonymousUserContext>,
     ValidatedJson(payload): ValidatedJson<GoogleLinkRequest>,
 ) -> Result<StatusCode, Errors> {
     service_link_google_oauth(
@@ -36,6 +39,7 @@ pub async fn auth_google_link(
         session_context.user_id,
         &payload.code,
         &payload.state,
+        &anonymous.anonymous_user_id,
     )
     .await?;
 
