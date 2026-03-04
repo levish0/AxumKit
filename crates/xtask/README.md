@@ -21,7 +21,6 @@ cargo xtask migrate-fresh  # Drop & recreate DB
 | Redis Cache   | 6380 | Cache               |
 | NATS          | 4222 | Message queue       |
 | MeiliSearch   | 7700 | Search engine       |
-| SeaweedFS     | 8333 | File storage (S3)   |
 
 > PostgreSQL runs locally (not in Docker)
 

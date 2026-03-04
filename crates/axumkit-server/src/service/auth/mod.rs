@@ -1,4 +1,4 @@
-pub mod change_email;
+﻿pub mod change_email;
 pub mod change_password;
 pub mod confirm_email_change;
 pub mod forgot_password;
@@ -13,3 +13,4 @@ pub mod verify_email;
 
 pub use login::LoginResult;
 pub use session_types::{Session, SessionContext};
+

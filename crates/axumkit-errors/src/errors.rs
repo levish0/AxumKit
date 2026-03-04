@@ -1,7 +1,7 @@
 use crate::handlers::{
     email_handler, eventstream_handler, file_handler, general_handler, meilisearch_handler,
-    oauth_handler, password_handler, post_handler, rate_limit_handler, session_handler,
-    system_handler, token_handler, totp_handler, turnstile_handler, user_handler, worker_handler,
+    oauth_handler, password_handler, rate_limit_handler, session_handler, system_handler,
+    token_handler, totp_handler, turnstile_handler, user_handler, worker_handler,
 };
 use axum::Json;
 use axum::http::StatusCode;
@@ -42,6 +42,9 @@ impl From<TransactionError<DbErr>> for Errors {
 
 #[derive(Debug)]
 pub enum Errors {
+    // Auth errors
+    InvalidCredentials,
+
     // User errors
     UserInvalidPassword,
     UserPasswordNotSet,
@@ -70,9 +73,6 @@ pub enum Errors {
 
     // Permission errors
     ForbiddenError(String),
-
-    // Post
-    PostNotFound,
 
     // Document
     DocumentNotFound,
@@ -187,7 +187,6 @@ impl IntoResponse for Errors {
         totp_handler::log_error(&self);
         email_handler::log_error(&self);
         file_handler::log_error(&self);
-        post_handler::log_error(&self);
         worker_handler::log_error(&self);
         eventstream_handler::log_error(&self);
         rate_limit_handler::log_error(&self);
@@ -205,7 +204,6 @@ impl IntoResponse for Errors {
             .or_else(|| totp_handler::map_response(&self))
             .or_else(|| email_handler::map_response(&self))
             .or_else(|| file_handler::map_response(&self))
-            .or_else(|| post_handler::map_response(&self))
             .or_else(|| worker_handler::map_response(&self))
             .or_else(|| eventstream_handler::map_response(&self))
             .or_else(|| rate_limit_handler::map_response(&self))

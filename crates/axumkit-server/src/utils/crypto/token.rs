@@ -1,5 +1,5 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use rand::Rng;
+use rand::RngExt;
 
 /// 암호학적으로 안전한 토큰 생성 (32바이트 = 256비트)
 /// URL-safe Base64 인코딩으로 반환 (43자)

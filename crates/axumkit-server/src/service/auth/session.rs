@@ -1,10 +1,10 @@
-use crate::service::auth::session_types::Session;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::Errors;
+﻿use crate::service::auth::session_types::Session;
 use chrono::Utc;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager as RedisClient;
 use std::collections::HashSet;
+use axumkit_config::ServerConfig;
+use axumkit_errors::errors::Errors;
 
 pub struct SessionService;
 
@@ -116,7 +116,6 @@ impl SessionService {
             Errors::SysInternalError(format!("Redis session retrieval failed: {}", e))
         })?;
 
-        // Redis TTL이 만료를 처리하므로 키가 존재하면 유효한 세션
         match session_data {
             Some(data) => {
                 let session: Session = serde_json::from_str(&data).map_err(|e| {
@@ -164,7 +163,6 @@ impl SessionService {
         Ok(())
     }
 
-    /// 세션 TTL 연장 (최대 수명 체크 포함)
     pub async fn refresh_session(
         redis: &RedisClient,
         session: &Session,
@@ -172,12 +170,10 @@ impl SessionService {
         let config = ServerConfig::get();
         let now = Utc::now();
 
-        // 최대 수명 초과 시 연장 불가
         if now >= session.max_expires_at {
             return Ok(None);
         }
 
-        // 새 만료 시간 = min(now + sliding_ttl, max_expires_at)
         let sliding_expiry = now + chrono::Duration::hours(config.auth_session_sliding_ttl_hours);
         let new_expires_at = sliding_expiry.min(session.max_expires_at);
 
@@ -211,7 +207,6 @@ impl SessionService {
         Ok(Some(refreshed_session))
     }
 
-    /// 조건부 세션 연장 (임계값 체크 + 최대 수명 체크)
     pub async fn maybe_refresh_session(
         redis: &RedisClient,
         session: &Session,
@@ -230,7 +225,6 @@ impl SessionService {
         }
     }
 
-    /// 특정 사용자의 모든 세션 삭제 (비밀번호 재설정 시 사용)
     pub async fn delete_all_user_sessions(
         redis: &RedisClient,
         user_id: &str,
@@ -255,7 +249,6 @@ impl SessionService {
         Ok(count)
     }
 
-    /// 현재 세션을 제외한 모든 세션 삭제 (비밀번호 변경 시 사용)
     pub async fn delete_other_sessions(
         redis: &RedisClient,
         user_id: &str,
@@ -290,3 +283,4 @@ impl SessionService {
         Ok(count)
     }
 }
+

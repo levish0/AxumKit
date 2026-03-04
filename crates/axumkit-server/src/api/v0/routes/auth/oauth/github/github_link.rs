@@ -1,4 +1,4 @@
-use crate::extractors::RequiredSession;
+﻿use crate::extractors::RequiredSession;
 use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::github::service_link_github_oauth;
 use crate::state::AppState;
@@ -9,7 +9,6 @@ use axumkit_dto::oauth::request::link::GithubLinkRequest;
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 
-/// GitHub OAuth를 현재 계정에 연결합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/github/link",
@@ -45,3 +44,4 @@ pub async fn auth_github_link(
 
     Ok(StatusCode::NO_CONTENT)
 }
+

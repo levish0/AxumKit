@@ -62,8 +62,3 @@ dependencies:
     version: "0.21.0"
     repository: "https://meilisearch.github.io/meilisearch-kubernetes"
     condition: meilisearch.enabled
-
-  - name: seaweedfs
-    version: "4.0.407"
-    repository: "https://seaweedfs.github.io/seaweedfs/helm"
-    condition: seaweedfs.enabled

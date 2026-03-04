@@ -2,7 +2,7 @@ use redis::aio::ConnectionManager as RedisClient;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
-use crate::connection::{MeilisearchClient, R2Client, SeaweedFsClient};
+use crate::connection::{MeilisearchClient, R2Client};
 use axumkit_dto::action_logs::ActionLogResponse;
 use reqwest::Client as HttpClient;
 use sea_orm::DatabaseConnection as PostgresqlClient;
@@ -21,7 +21,6 @@ pub struct AppState {
     pub write_db: PostgresqlClient,
     pub read_db: PostgresqlClient,
     pub r2_client: R2Client,
-    pub seaweedfs_client: SeaweedFsClient,
     /// Redis for sessions, tokens, rate-limiting (persistent, AOF)
     pub redis_session: RedisClient,
     /// Redis for document cache (volatile, LRU eviction)

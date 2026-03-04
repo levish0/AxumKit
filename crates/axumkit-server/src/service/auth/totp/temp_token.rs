@@ -1,15 +1,13 @@
-use crate::utils::redis_cache::set_json_with_ttl;
-use axumkit_errors::errors::Errors;
+﻿use crate::utils::redis_cache::{get_optional_json_and_delete, set_json_with_ttl};
 use chrono::{DateTime, Utc};
-use rand::RngCore;
-use redis::AsyncCommands;
+use rand::Rng;
 use redis::aio::ConnectionManager as RedisClient;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use axumkit_errors::errors::Errors;
 
-const TEMP_TOKEN_TTL_SECONDS: u64 = 120; // 2분
+const TEMP_TOKEN_TTL_SECONDS: u64 = 120; // 2 minutes
 
-/// TOTP 검증용 임시 토큰 (Redis 저장용)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TotpTempToken {
     pub token: String,
@@ -27,7 +25,6 @@ impl TotpTempToken {
         ip_address: Option<String>,
         remember_me: bool,
     ) -> Self {
-        // 암호학적으로 안전한 랜덤 토큰 생성 (32 bytes = 256 bits)
         let mut bytes = [0u8; 32];
         rand::rng().fill_bytes(&mut bytes);
         let token = hex::encode(bytes);
@@ -46,7 +43,6 @@ impl TotpTempToken {
         format!("totp_temp:{}", self.token)
     }
 
-    /// 임시 토큰 생성 및 Redis 저장
     pub async fn create(
         redis: &RedisClient,
         user_id: Uuid,
@@ -67,27 +63,13 @@ impl TotpTempToken {
         Ok(temp_token)
     }
 
-    /// 임시 토큰 조회 및 삭제 (일회용)
     pub async fn get_and_delete(redis: &RedisClient, token: &str) -> Result<Option<Self>, Errors> {
-        let mut conn = redis.clone();
         let key = format!("totp_temp:{}", token);
 
-        // GETDEL: 조회 + 삭제 원자적 수행
-        let data: Option<String> = conn.get_del(&key).await.map_err(|e| {
-            Errors::SysInternalError(format!("Redis TOTP temp token retrieval failed: {}", e))
-        })?;
-
-        match data {
-            Some(json) => {
-                let temp_token: Self = serde_json::from_str(&json).map_err(|e| {
-                    Errors::SysInternalError(format!(
-                        "TOTP temp token deserialization failed: {}",
-                        e
-                    ))
-                })?;
-                Ok(Some(temp_token))
-            }
-            None => Ok(None),
-        }
+        get_optional_json_and_delete(redis, &key, |e| {
+            Errors::SysInternalError(format!("TOTP temp token deserialization failed: {}", e))
+        })
+        .await
     }
 }
+

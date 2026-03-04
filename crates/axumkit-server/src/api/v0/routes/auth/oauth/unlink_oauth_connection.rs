@@ -1,4 +1,4 @@
-use crate::extractors::RequiredSession;
+﻿use crate::extractors::RequiredSession;
 use crate::service::oauth::unlink_connection::service_unlink_oauth;
 use crate::state::AppState;
 use axum::extract::State;
@@ -7,7 +7,6 @@ use axumkit_dto::oauth::request::unlink::UnlinkOAuthRequest;
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 
-/// OAuth 연결을 해제합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/connections/unlink",
@@ -33,3 +32,4 @@ pub async fn unlink_oauth_connection(
 
     Ok(StatusCode::NO_CONTENT)
 }
+

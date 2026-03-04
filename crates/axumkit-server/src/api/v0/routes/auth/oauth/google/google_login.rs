@@ -1,4 +1,4 @@
-use crate::middleware::anonymous_user::AnonymousUserContext;
+﻿use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::google::service_google_sign_in;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
@@ -10,16 +10,13 @@ use axum::{
     response::Response,
 };
 use axum_extra::{TypedHeader, headers::UserAgent};
+use std::net::SocketAddr;
 use axumkit_dto::oauth::request::google::GoogleLoginRequest;
 use axumkit_dto::oauth::response::{OAuthPendingSignupResponse, OAuthSignInResponse};
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
-use std::net::SocketAddr;
 
-/// Google OAuth 로그인을 처리합니다.
 ///
-/// - 기존 사용자: 204 No Content + Set-Cookie
-/// - 신규 사용자: 200 OK + pending signup 정보 (complete-signup 필요)
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/google/login",
@@ -44,7 +41,6 @@ pub async fn auth_google_login(
     let user_agent_str = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
-    // Google OAuth 로그인 처리
     let result = service_google_sign_in(
         &state.write_db,
         &state.redis_session,
@@ -57,6 +53,6 @@ pub async fn auth_google_login(
     )
     .await?;
 
-    // SignInResult를 HTTP 응답으로 변환
     OAuthSignInResponse::from_result(result).into_response_result()
 }
+

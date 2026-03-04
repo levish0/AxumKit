@@ -2,13 +2,11 @@ mod cache;
 mod email;
 mod index;
 mod reindex;
-mod storage;
 
 // Re-export all functions for backwards compatibility
 pub use email::*;
 pub use index::*;
 pub use reindex::*;
-pub use storage::*;
 
 use crate::state::WorkerClient;
 use axumkit_errors::errors::Errors;

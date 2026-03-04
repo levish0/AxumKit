@@ -144,8 +144,8 @@ pub async fn establish_r2_connection() -> Result<R2Client, Box<dyn std::error::E
     let client = Client::from_conf(s3_config);
     let r2_client = R2Client::new(
         client,
-        config.r2_bucket_name.clone(),
-        config.r2_public_domain.clone(),
+        config.r2_assets_bucket_name.clone(),
+        config.r2_assets_public_domain.clone(),
     );
 
     info!("Successfully connected to R2");

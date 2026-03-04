@@ -161,8 +161,8 @@ pub async fn establish_r2_connection(config: &WorkerConfig) -> anyhow::Result<R2
     let client = Client::from_conf(s3_config);
     let r2_client = R2Client::new(
         client,
-        config.r2_bucket_name.clone(),
-        config.r2_public_domain.clone(),
+        config.r2_assets_bucket_name.clone(),
+        config.r2_assets_public_domain.clone(),
     );
 
     info!("Successfully connected to R2");

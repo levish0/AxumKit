@@ -1,4 +1,4 @@
-use crate::extractors::RequiredSession;
+﻿use crate::extractors::RequiredSession;
 use crate::service::auth::change_email::service_change_email;
 use crate::state::AppState;
 use axum::extract::State;
@@ -39,3 +39,4 @@ pub async fn auth_change_email(
 
     Ok(StatusCode::NO_CONTENT)
 }
+

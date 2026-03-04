@@ -1,4 +1,5 @@
 use crate::errors::Errors;
+use crate::protocol::auth::*;
 use crate::protocol::user::*;
 use axum::http::StatusCode;
 use tracing::{debug, warn};
@@ -12,7 +13,8 @@ pub fn log_error(error: &Errors) {
         }
 
         // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
-        Errors::UserInvalidPassword
+        Errors::InvalidCredentials
+        | Errors::UserInvalidPassword
         | Errors::UserPasswordNotSet
         | Errors::UserInvalidSession
         | Errors::UserNotVerified
@@ -44,6 +46,9 @@ pub fn log_error(error: &Errors) {
 /// Returns: (StatusCode, error_code, details)
 pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<String>)> {
     match error {
+        Errors::InvalidCredentials => {
+            Some((StatusCode::UNAUTHORIZED, AUTH_INVALID_CREDENTIALS, None))
+        }
         Errors::UserInvalidPassword => {
             Some((StatusCode::UNAUTHORIZED, USER_INVALID_PASSWORD, None))
         }

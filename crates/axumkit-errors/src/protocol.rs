@@ -1,5 +1,9 @@
 //! Error code constants
 
+pub mod auth {
+    pub const AUTH_INVALID_CREDENTIALS: &str = "auth:invalid_credentials";
+}
+
 pub mod user {
     pub const USER_INVALID_PASSWORD: &str = "user:invalid_password";
     pub const USER_PASSWORD_NOT_SET: &str = "user:password_not_set";
@@ -14,10 +18,6 @@ pub mod user {
     pub const USER_TOKEN_EXPIRED: &str = "user:token_expired";
     pub const USER_NO_REFRESH_TOKEN: &str = "user:no_refresh_token";
     pub const USER_INVALID_TOKEN: &str = "user:invalid_token";
-}
-
-pub mod post {
-    pub const POST_NOT_FOUND: &str = "post:not_found";
 }
 
 pub mod oauth {

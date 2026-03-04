@@ -1,8 +1,5 @@
 //! R2 storage key prefixes and image size limits
 
-/// Prefix for post content in SeaweedFS
-pub const POST_CONTENT_PREFIX: &str = "posts";
-
 /// Prefix for user profile/banner images
 pub const USER_IMAGES_PREFIX: &str = "user-images";
 

@@ -1,6 +1,6 @@
-# API Endpoints
+﻿# API Endpoints
 
-All versioned endpoints are prefixed with `/v0`. Authentication is session-based via the `session_id` cookie.
+All versioned endpoints are prefixed with `/v0`.
 
 ## Health
 
@@ -29,11 +29,11 @@ All versioned endpoints are prefixed with `/v0`. Authentication is session-based
 |--------|------|------|-------------|
 | GET | `/v0/auth/oauth/google/authorize` | No | Get Google OAuth URL |
 | POST | `/v0/auth/oauth/google/login` | No | Exchange Google code for session |
-| POST | `/v0/auth/oauth/google/link` | Yes | Link Google to existing account |
+| POST | `/v0/auth/oauth/google/link` | Yes | Link Google account |
 | GET | `/v0/auth/oauth/github/authorize` | No | Get GitHub OAuth URL |
 | POST | `/v0/auth/oauth/github/login` | No | Exchange GitHub code for session |
-| POST | `/v0/auth/oauth/github/link` | Yes | Link GitHub to existing account |
-| GET | `/v0/auth/oauth/connections` | Yes | List OAuth connections |
+| POST | `/v0/auth/oauth/github/link` | Yes | Link GitHub account |
+| GET | `/v0/auth/oauth/connections` | Yes | List linked OAuth connections |
 | POST | `/v0/auth/oauth/connections/unlink` | Yes | Unlink OAuth connection |
 
 ## TOTP 2FA
@@ -41,9 +41,9 @@ All versioned endpoints are prefixed with `/v0`. Authentication is session-based
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | POST | `/v0/auth/totp/setup` | Yes | Generate TOTP secret + QR code |
-| POST | `/v0/auth/totp/enable` | Yes | Enable TOTP with verification code |
-| POST | `/v0/auth/totp/verify` | No | Verify TOTP code (login step 2) |
-| GET | `/v0/auth/totp/status` | Yes | Check if TOTP is enabled |
+| POST | `/v0/auth/totp/enable` | Yes | Enable TOTP |
+| POST | `/v0/auth/totp/verify` | No | Verify TOTP during login |
+| GET | `/v0/auth/totp/status` | Yes | Check TOTP status |
 | POST | `/v0/auth/totp/disable` | Yes | Disable TOTP |
 | POST | `/v0/auth/totp/backup-codes/regenerate` | Yes | Regenerate backup codes |
 
@@ -51,32 +51,21 @@ All versioned endpoints are prefixed with `/v0`. Authentication is session-based
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/v0/users` | No | Create user (register) |
+| POST | `/v0/users` | No | Register user |
 | GET | `/v0/users/profile` | No | Get user profile by handle |
 | GET | `/v0/users/profile/id` | No | Get user profile by UUID |
 | GET | `/v0/users/handle/{handle}/available` | No | Check handle availability |
 | GET | `/v0/user/me` | Yes | Get my profile |
 | PATCH | `/v0/user/me` | Yes | Update my profile |
-| POST | `/v0/user/me/profile-image` | Yes | Upload profile image (4MB max) |
+| POST | `/v0/user/me/profile-image` | Yes | Upload profile image |
 | DELETE | `/v0/user/me/profile-image` | Yes | Delete profile image |
-| POST | `/v0/user/me/banner-image` | Yes | Upload banner image (8MB max) |
+| POST | `/v0/user/me/banner-image` | Yes | Upload banner image |
 | DELETE | `/v0/user/me/banner-image` | Yes | Delete banner image |
-
-## Posts
-
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/v0/posts` | Yes | Create post |
-| GET | `/v0/posts` | No | List posts (paginated) |
-| GET | `/v0/posts/{id}` | No | Get post by ID |
-| PATCH | `/v0/posts/{id}` | Yes | Update post (owner only) |
-| DELETE | `/v0/posts/{id}` | Yes | Delete post (owner only) |
 
 ## Search
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/v0/search/posts` | No | Search posts |
 | GET | `/v0/search/users` | No | Search users |
 
 ## Action Logs
@@ -91,20 +80,14 @@ All versioned endpoints are prefixed with `/v0`. Authentication is session-based
 |--------|------|------|-------------|
 | GET | `/v0/eventstream/actions` | No | SSE stream of action log events |
 
-## OpenAPI Documentation
+## OpenAPI
 
 | Path | Description |
 |------|-------------|
 | `/docs` | Swagger UI (debug builds only) |
-| `/swagger.json` | OpenAPI JSON spec (debug builds only) |
-
-::: info
-Swagger UI and the OpenAPI spec are only available in debug builds. In release builds, these endpoints do not exist.
-:::
+| `/swagger.json` | OpenAPI JSON (debug builds only) |
 
 ## Error Response Format
-
-All errors return a consistent JSON format:
 
 ```json
 {
@@ -114,6 +97,6 @@ All errors return a consistent JSON format:
 }
 ```
 
-- `status` — HTTP status code
-- `code` — Machine-readable error code (see [Error Codes](/reference/error-codes))
-- `details` — Human-readable message (**only in dev mode**)
+- `status`: HTTP status code
+- `code`: machine-readable code
+- `details`: dev-only details

@@ -1,5 +1,4 @@
-use crate::extractors::RequiredSession;
-use crate::repository::user::repository_get_user_by_id;
+﻿use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_enable;
 use crate::state::AppState;
 use axum::extract::State;
@@ -29,6 +28,6 @@ pub async fn totp_enable(
     RequiredSession(session): RequiredSession,
     ValidatedJson(payload): ValidatedJson<TotpEnableRequest>,
 ) -> Result<TotpEnableResponse, Errors> {
-    let user = repository_get_user_by_id(&state.write_db, session.user_id).await?;
-    service_totp_enable(&state.write_db, session.user_id, &user.email, &payload.code).await
+    service_totp_enable(&state.write_db, session.user_id, &payload.code).await
 }
+

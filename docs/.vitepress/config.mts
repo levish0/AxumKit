@@ -36,7 +36,6 @@ export default defineConfig({
             { text: 'Authentication', link: '/features/authentication' },
             { text: 'OAuth2', link: '/features/oauth' },
             { text: 'TOTP 2FA', link: '/features/totp' },
-            { text: 'Posts', link: '/features/posts' },
             { text: 'Search', link: '/features/search' },
             { text: 'Background Worker', link: '/features/worker' },
             { text: 'Rate Limiting', link: '/features/rate-limiting' },

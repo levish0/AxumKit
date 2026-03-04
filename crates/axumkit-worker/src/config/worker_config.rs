@@ -43,16 +43,14 @@ pub struct WorkerConfig {
     // Cron
     pub cron_timezone: String,
 
-    // SeaweedFS (revision content storage)
-    pub seaweedfs_endpoint: String,
-
-    // R2 (Sitemap storage)
+    // Cloudflare R2 (shared credentials)
     pub r2_endpoint: String,
     pub r2_region: String,
     pub r2_access_key_id: String,
     pub r2_secret_access_key: String,
-    pub r2_bucket_name: String,
-    pub r2_public_domain: String,
+    // R2 Assets (public bucket - images, sitemap)
+    pub r2_assets_bucket_name: String,
+    pub r2_assets_public_domain: String,
 }
 
 static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
@@ -84,12 +82,11 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     let db_write_name = require!("POSTGRES_WRITE_NAME");
     let db_write_user = require!("POSTGRES_WRITE_USER");
     let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
-    let seaweedfs_endpoint = require!("SEAWEEDFS_ENDPOINT");
     let r2_endpoint = require!("R2_ENDPOINT");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
-    let r2_bucket_name = require!("R2_BUCKET_NAME");
-    let r2_public_domain = require!("R2_PUBLIC_DOMAIN");
+    let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
+    let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
 
     // Panic with all errors at once
     if !errors.is_empty() {
@@ -154,16 +151,14 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         // Cron
         cron_timezone: env::var("CRON_TIMEZONE").unwrap_or_else(|_| "UTC".into()),
 
-        // SeaweedFS
-        seaweedfs_endpoint,
-
-        // R2
+        // Cloudflare R2 (shared credentials)
         r2_endpoint,
         r2_region: env::var("R2_REGION").unwrap_or_else(|_| "auto".into()),
         r2_access_key_id,
         r2_secret_access_key,
-        r2_bucket_name,
-        r2_public_domain,
+        // R2 Assets (public bucket)
+        r2_assets_bucket_name,
+        r2_assets_public_domain,
     }
 });
 

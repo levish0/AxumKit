@@ -1,5 +1,4 @@
-use crate::extractors::RequiredSession;
-use crate::repository::user::repository_get_user_by_id;
+﻿use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_disable;
 use crate::state::AppState;
 use axum::extract::State;
@@ -28,7 +27,7 @@ pub async fn totp_disable(
     RequiredSession(session): RequiredSession,
     ValidatedJson(payload): ValidatedJson<TotpDisableRequest>,
 ) -> Result<StatusCode, Errors> {
-    let user = repository_get_user_by_id(&state.write_db, session.user_id).await?;
-    service_totp_disable(&state.write_db, session.user_id, &user.email, &payload.code).await?;
+    service_totp_disable(&state.write_db, session.user_id, &payload.code).await?;
     Ok(StatusCode::NO_CONTENT)
 }
+

@@ -1,4 +1,4 @@
-use crate::middleware::anonymous_user::AnonymousUserContext;
+﻿use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::google::service_generate_google_oauth_url;
 use crate::state::AppState;
 use axum::Extension;
@@ -8,7 +8,6 @@ use axumkit_dto::oauth::response::OAuthUrlResponse;
 use axumkit_dto::validator::query_validator::ValidatedQuery;
 use axumkit_errors::errors::Errors;
 
-/// Google OAuth 인증 URL을 생성합니다.
 #[utoipa::path(
     get,
     path = "/v0/auth/oauth/google/authorize",
@@ -29,3 +28,4 @@ pub async fn auth_google_authorize(
     service_generate_google_oauth_url(&state.redis_session, &anonymous.anonymous_user_id, flow)
         .await
 }
+

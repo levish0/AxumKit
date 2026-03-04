@@ -29,8 +29,8 @@ axumkit-server:
     GITHUB_REDIRECT_URI: "http://localhost:8000/v0/auth/github/callback"
 
     R2_ENDPOINT: ""
-    R2_PUBLIC_DOMAIN: ""
-    R2_BUCKET_NAME: ""
+    R2_ASSETS_PUBLIC_DOMAIN: ""
+    R2_ASSETS_BUCKET_NAME: ""
     R2_ACCESS_KEY_ID: ""
     R2_SECRET_ACCESS_KEY: ""
 
@@ -55,8 +55,8 @@ axumkit-worker:
     POSTGRES_WRITE_PASSWORD: "axumkit_secret"
 
     R2_ENDPOINT: ""
-    R2_PUBLIC_DOMAIN: ""
-    R2_BUCKET_NAME: ""
+    R2_ASSETS_PUBLIC_DOMAIN: ""
+    R2_ASSETS_BUCKET_NAME: ""
     R2_ACCESS_KEY_ID: ""
     R2_SECRET_ACCESS_KEY: ""
 

@@ -1,11 +1,10 @@
-use crate::extractors::RequiredSession;
+﻿use crate::extractors::RequiredSession;
 use crate::service::oauth::list_connections::service_list_oauth_connections;
 use crate::state::AppState;
 use axum::extract::State;
 use axumkit_dto::oauth::response::OAuthConnectionListResponse;
 use axumkit_errors::errors::Errors;
 
-/// 현재 사용자의 OAuth 연결 목록을 조회합니다.
 #[utoipa::path(
     get,
     path = "/v0/auth/oauth/connections",
@@ -27,3 +26,4 @@ pub async fn list_oauth_connections(
 
     Ok(result)
 }
+

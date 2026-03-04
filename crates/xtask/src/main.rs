@@ -82,14 +82,6 @@ const SERVICES: &[DockerService] = &[
         volumes: &["meili_data:/meili_data"],
         extra_args: &[],
     },
-    DockerService {
-        name: "seaweedfs",
-        image: "chrislusf/seaweedfs:4.04",
-        ports: &["8333:8333", "9333:9333", "8888:8888"],
-        env: &[],
-        volumes: &["seaweedfs-data:/data"],
-        extra_args: &["server", "-filer", "-s3"],
-    },
 ];
 
 fn main() -> Result<()> {

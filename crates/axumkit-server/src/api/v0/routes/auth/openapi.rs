@@ -1,3 +1,4 @@
+﻿use utoipa::OpenApi;
 use axumkit_dto::auth::request::{
     ChangeEmailRequest, ChangePasswordRequest, CompleteSignupRequest, ConfirmEmailChangeRequest,
     ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, TotpDisableRequest,
@@ -9,13 +10,12 @@ use axumkit_dto::auth::response::{
 };
 use axumkit_dto::oauth::request::{
     GithubLinkRequest, GithubLoginRequest, GoogleLinkRequest, GoogleLoginRequest,
-    UnlinkOAuthRequest,
+    OAuthAuthorizeFlow, OAuthAuthorizeQuery, UnlinkOAuthRequest,
 };
 use axumkit_dto::oauth::response::OAuthPendingSignupResponse;
 use axumkit_dto::oauth::response::{
     OAuthConnectionListResponse, OAuthConnectionResponse, OAuthUrlResponse,
 };
-use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -54,6 +54,8 @@ use utoipa::OpenApi;
             CompleteSignupRequest,
             OAuthUrlResponse,
             OAuthPendingSignupResponse,
+            OAuthAuthorizeFlow,
+            OAuthAuthorizeQuery,
             GoogleLoginRequest,
             GithubLoginRequest,
             GoogleLinkRequest,
@@ -80,3 +82,4 @@ use utoipa::OpenApi;
     )
 )]
 pub struct AuthApiDoc;
+
