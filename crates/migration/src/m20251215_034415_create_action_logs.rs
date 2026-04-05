@@ -23,7 +23,6 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(ActionLogs::Action).text().not_null())
                     .col(ColumnDef::new(ActionLogs::ActorId).uuid().null())
-                    .col(ColumnDef::new(ActionLogs::ActorIp).inet().null())
                     .col(
                         ColumnDef::new(ActionLogs::ResourceType)
                             .enumeration(
@@ -75,19 +74,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Index: Anonymous contributions (filter by actor_ip)
-        // Using SP-GiST for INET type
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_action_logs_actor_ip")
-                    .table(ActionLogs::Table)
-                    .col(ActionLogs::ActorIp)
-                    .index_type(IndexType::Custom(Alias::new("spgist").into()))
-                    .to_owned(),
-            )
-            .await?;
-
         // Index: Resource lookup (filter by resource_id)
         manager
             .create_index(
@@ -127,7 +113,6 @@ pub enum ActionLogs {
     Id,
     Action,
     ActorId,
-    ActorIp,
     ResourceType,
     ResourceId,
     Summary,
