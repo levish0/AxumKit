@@ -81,8 +81,5 @@ fn test_require_not_banned_passes_for_unbanned() {
 #[test]
 fn test_require_not_banned_fails_for_banned() {
     let ctx = make_context(vec![], true, true);
-    assert!(matches!(
-        ctx.require_not_banned(),
-        Err(Errors::UserBanned)
-    ));
+    assert!(matches!(ctx.require_not_banned(), Err(Errors::UserBanned)));
 }

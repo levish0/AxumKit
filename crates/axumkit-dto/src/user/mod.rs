@@ -8,5 +8,6 @@ pub use request::{
 };
 pub use response::{
     BanUserResponse, CheckHandleAvailableResponse, CreateUserResponse, GrantRoleResponse,
-    PublicUserProfile, RevokeRoleResponse, UnbanUserResponse, UploadUserImageResponse, UserResponse,
+    PublicUserProfile, RevokeRoleResponse, UnbanUserResponse, UploadUserImageResponse,
+    UserResponse,
 };

@@ -168,7 +168,10 @@ async fn main() -> Result<()> {
 
                 match exit.outcome {
                     ConsumerExitOutcome::Completed(Ok(())) => {
-                        error!(consumer = name, "Consumer exited unexpectedly without error");
+                        error!(
+                            consumer = name,
+                            "Consumer exited unexpectedly without error"
+                        );
                     }
                     ConsumerExitOutcome::Completed(Err(e)) => {
                         error!(consumer = name, error = %e, "Consumer exited with error");

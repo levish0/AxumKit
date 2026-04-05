@@ -8,10 +8,10 @@ use tracing::warn;
 pub struct ServerConfig {
     pub is_dev: bool,
 
-    pub totp_secret: String,                  // Secret for hashing TOTP backup codes
+    pub totp_secret: String, // Secret for hashing TOTP backup codes
     pub auth_session_max_lifetime_hours: i64, // Maximum session lifetime (hours)
-    pub auth_session_sliding_ttl_hours: i64,  // Sliding TTL extended on activity (hours)
-    pub auth_session_refresh_threshold: u8,   // TTL refresh threshold (%)
+    pub auth_session_sliding_ttl_hours: i64, // Sliding TTL extended on activity (hours)
+    pub auth_session_refresh_threshold: u8, // TTL refresh threshold (%)
     pub auth_email_verification_token_expire_time: i64, // minutes
     pub auth_password_reset_token_expire_time: i64, // minutes
     pub auth_email_change_token_expire_time: i64, // minutes
