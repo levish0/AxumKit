@@ -1,3 +1,4 @@
+pub mod datetime_validator;
 pub mod json_validator;
 pub mod multipart_validator;
 pub mod path_validator;

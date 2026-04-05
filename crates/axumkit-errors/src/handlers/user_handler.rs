@@ -30,6 +30,7 @@ pub fn log_error(error: &Errors) {
         | Errors::UserAlreadyBanned
         | Errors::UserDoesNotHaveRole
         | Errors::UserAlreadyHasRole
+        | Errors::CannotManageSelf
         | Errors::CannotManageHigherOrEqualRole => {
             debug!("Client error: {:?}", error);
         }
@@ -70,6 +71,21 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::UserTokenExpired => Some((StatusCode::UNAUTHORIZED, USER_TOKEN_EXPIRED, None)),
         Errors::UserNoRefreshToken => Some((StatusCode::UNAUTHORIZED, USER_NO_REFRESH_TOKEN, None)),
         Errors::UserInvalidToken => Some((StatusCode::UNAUTHORIZED, USER_INVALID_TOKEN, None)),
+
+        Errors::UserNotBanned => Some((StatusCode::BAD_REQUEST, USER_NOT_BANNED, None)),
+        Errors::UserAlreadyBanned => Some((StatusCode::CONFLICT, USER_ALREADY_BANNED, None)),
+        Errors::UserDoesNotHaveRole => {
+            Some((StatusCode::BAD_REQUEST, USER_DOES_NOT_HAVE_ROLE, None))
+        }
+        Errors::UserAlreadyHasRole => Some((StatusCode::CONFLICT, USER_ALREADY_HAS_ROLE, None)),
+        Errors::CannotManageSelf => {
+            Some((StatusCode::FORBIDDEN, USER_CANNOT_MANAGE_SELF, None))
+        }
+        Errors::CannotManageHigherOrEqualRole => Some((
+            StatusCode::FORBIDDEN,
+            USER_CANNOT_MANAGE_HIGHER_OR_EQUAL_ROLE,
+            None,
+        )),
 
         _ => None, // 다른 도메인의 에러는 None 반환
     }

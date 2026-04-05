@@ -61,6 +61,7 @@ pub enum Errors {
     UserAlreadyBanned,
     UserDoesNotHaveRole,
     UserAlreadyHasRole,
+    CannotManageSelf,
     CannotManageHigherOrEqualRole,
     UserTokenExpired,
     UserNoRefreshToken,

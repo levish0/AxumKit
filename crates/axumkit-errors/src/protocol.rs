@@ -18,6 +18,13 @@ pub mod user {
     pub const USER_TOKEN_EXPIRED: &str = "user:token_expired";
     pub const USER_NO_REFRESH_TOKEN: &str = "user:no_refresh_token";
     pub const USER_INVALID_TOKEN: &str = "user:invalid_token";
+    pub const USER_NOT_BANNED: &str = "user:not_banned";
+    pub const USER_ALREADY_BANNED: &str = "user:already_banned";
+    pub const USER_DOES_NOT_HAVE_ROLE: &str = "user:does_not_have_role";
+    pub const USER_ALREADY_HAS_ROLE: &str = "user:already_has_role";
+    pub const USER_CANNOT_MANAGE_SELF: &str = "user:cannot_manage_self";
+    pub const USER_CANNOT_MANAGE_HIGHER_OR_EQUAL_ROLE: &str =
+        "user:cannot_manage_higher_or_equal_role";
 }
 
 pub mod oauth {
