@@ -33,6 +33,7 @@ pub async fn service_complete_signup<C>(
     worker: &WorkerClient,
     pending_token: &str,
     handle: &str,
+    display_name: &str,
     anonymous_user_id: &str,
     user_agent: Option<String>,
     ip_address: Option<String>,
@@ -130,7 +131,7 @@ where
             let new_user = repository_create_oauth_user(
                 &txn,
                 &pending_data.email,
-                &pending_data.display_name,
+                display_name,
                 handle,
                 profile_image_key.clone(),
             )

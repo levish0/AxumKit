@@ -18,4 +18,13 @@ pub struct CompleteSignupRequest {
     ))]
     #[validate(custom(function = "validate_not_blank"))]
     pub handle: String,
+
+    /// 화면에 표시될 이름
+    #[validate(length(
+        min = 1,
+        max = 50,
+        message = "Display name must be between 1 and 50 characters"
+    ))]
+    #[validate(custom(function = "validate_not_blank"))]
+    pub display_name: String,
 }

@@ -49,6 +49,7 @@ pub async fn auth_complete_signup(
         &state.worker,
         &payload.pending_token,
         &payload.handle,
+        &payload.display_name,
         &anonymous.anonymous_user_id,
         Some(user_agent_str),
         Some(ip_address),

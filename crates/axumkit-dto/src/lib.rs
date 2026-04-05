@@ -4,6 +4,7 @@
 
 pub mod action_logs;
 pub mod auth;
+pub mod moderation;
 pub mod oauth;
 pub mod pagination;
 pub mod search;

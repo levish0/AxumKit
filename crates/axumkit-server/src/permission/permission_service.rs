@@ -2,7 +2,7 @@ use crate::repository::user::repository_find_user_by_id;
 use crate::repository::user::user_bans::repository_find_user_ban;
 use crate::repository::user::user_roles::repository_find_user_roles;
 use crate::service::auth::session_types::SessionContext;
-use axumkit_entity::common::{AccessLevel, Role};
+use axumkit_entity::common::Role;
 use axumkit_errors::errors::Errors;
 use sea_orm::ConnectionTrait;
 use uuid::Uuid;
@@ -19,21 +19,6 @@ impl UserContext {
         self.roles.contains(&role)
     }
 
-    pub fn access_level(&self) -> AccessLevel {
-        let implicit = if self.is_authenticated {
-            AccessLevel::User
-        } else {
-            AccessLevel::Everyone
-        };
-
-        let explicit = self.roles.iter().map(|role| match role {
-            Role::Admin => AccessLevel::Admin,
-            Role::Mod => AccessLevel::Mod,
-        });
-
-        explicit.fold(implicit, |acc, level| acc.max(level))
-    }
-
     pub fn require_role(&self, role: Role) -> Result<(), Errors> {
         self.require_not_banned()?;
         if !self.is_admin() && !self.has_role(role) {
@@ -45,14 +30,6 @@ impl UserContext {
     pub fn require_not_banned(&self) -> Result<(), Errors> {
         if self.is_banned {
             return Err(Errors::UserBanned);
-        }
-        Ok(())
-    }
-
-    pub fn require_access_level(&self, level: AccessLevel) -> Result<(), Errors> {
-        self.require_not_banned()?;
-        if self.access_level() < level {
-            return Err(Errors::UserPermissionInsufficient);
         }
         Ok(())
     }
@@ -103,19 +80,6 @@ impl PermissionService {
         Ok(ctx)
     }
 
-    pub async fn require_access_level<C>(
-        conn: &C,
-        session: Option<&SessionContext>,
-        level: AccessLevel,
-    ) -> Result<UserContext, Errors>
-    where
-        C: ConnectionTrait,
-    {
-        let ctx = Self::get_context(conn, session).await?;
-        ctx.require_access_level(level)?;
-        Ok(ctx)
-    }
-
     pub async fn require_admin_for_target<C>(
         conn: &C,
         session: Option<&SessionContext>,
@@ -130,7 +94,7 @@ impl PermissionService {
         if let Some(session) = session
             && session.user_id == target_user_id
         {
-            return Err(Errors::CannotManageSelf);
+            return Err(Errors::CannotManageHigherOrEqualRole);
         }
 
         repository_find_user_by_id(conn, target_user_id)
