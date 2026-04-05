@@ -142,6 +142,54 @@ where
     }
 }
 
+/// SET a JSON value only if the key does not exist (NX). Returns true if set.
+pub async fn set_json_nx_with_ttl<T: Serialize>(
+    redis_client: &RedisClient,
+    key: &str,
+    value: &T,
+    ttl_seconds: u64,
+) -> Result<bool, Errors> {
+    let json = serde_json::to_string(value).map_err(|e| {
+        Errors::SysInternalError(format!(
+            "JSON serialization failed for Redis key '{}': {}",
+            key, e
+        ))
+    })?;
+
+    let mut conn = redis_client.clone();
+    let result: Option<String> = redis::cmd("SET")
+        .arg(key)
+        .arg(json)
+        .arg("NX")
+        .arg("EX")
+        .arg(ttl_seconds)
+        .query_async(&mut conn)
+        .await
+        .map_err(|e| {
+            Errors::SysInternalError(format!("Redis SET NX failed for key '{}': {}", key, e))
+        })?;
+
+    Ok(matches!(result, Some(v) if v == "OK"))
+}
+
+/// Get the remaining TTL of a key in seconds. Returns None if key doesn't exist.
+pub async fn get_ttl_seconds(redis_client: &RedisClient, key: &str) -> Result<Option<u64>, Errors> {
+    let mut conn = redis_client.clone();
+    let ttl: i64 = redis::cmd("TTL")
+        .arg(key)
+        .query_async(&mut conn)
+        .await
+        .map_err(|e| {
+            Errors::SysInternalError(format!("Redis TTL failed for key '{}': {}", key, e))
+        })?;
+
+    if ttl < 0 {
+        Ok(None)
+    } else {
+        Ok(Some(ttl as u64))
+    }
+}
+
 /// Delete a key from Redis
 pub async fn delete_key(redis_client: &RedisClient, key: &str) -> Result<(), Errors> {
     let mut conn = redis_client.clone();

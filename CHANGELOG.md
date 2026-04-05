@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-04-05
+
+### Added
+
+- **Two-stage email signup flow** (ported from V7)
+  - `POST /v0/auth/signup` stores pending signup in Redis and queues a verification email (returns 202 Accepted)
+  - `POST /v0/auth/verify-email` now creates the user account after token verification, not before
+  - Atomic Redis reservation via Lua script (`reserve_pending_signup.lua`) — prevents concurrent email/handle collision
+  - `PendingEmailSignupData` stored with email, handle, display name, and pre-hashed password
+  - `POST /v0/auth/resend-verification-email` is now a **public** endpoint (email-based, no session required) with email enumeration prevention
+  - `ResendVerificationEmailRequest` DTO with email validation
+  - `repository_create_user_with_password_hash` for deferred user creation
+  - `get_ttl_seconds` Redis utility for remaining token TTL lookup
+
+- **Google One Tap OAuth sign-in**
+  - `POST /v0/auth/oauth/google/one-tap/login` — validates Google ID token server-side via JWKS
+  - JWKS caching with `Cache-Control` max-age parsing and forced refresh on key rotation
+  - `GoogleOneTapLoginRequest` DTO
+  - `GoogleInvalidIdToken`, `GoogleJwksFetchFailed`, `GoogleJwksParseFailed` error variants with protocol codes
+  - `jsonwebtoken` v9 workspace dependency
+
+- **User management system** (ported from V7)
+  - `POST /v0/users/ban` — ban a user with optional expiration
+  - `POST /v0/users/unban` — remove an active ban
+  - `POST /v0/users/roles/grant` — grant Mod/Admin role with optional expiration
+  - `POST /v0/users/roles/revoke` — revoke a granted role
+  - All management actions create moderation logs and require admin permission
+  - `CannotManageSelf` error variant prevents self-management
+  - 9 permission unit tests
+
+- **Worker supervisor pattern**
+  - JoinSet-based supervisor loop with `catch_unwind` auto-restart for consumer panics
+  - `ConsumerKind` enum with `ConsumerExitOutcome` for structured exit tracking
+
+- **Handle and display name validation** (V7 exact match)
+  - `validate_handle`: ASCII alphanumeric + underscore, 4–15 chars, no leading/trailing `_`, no `__`
+  - `validate_display_name`: blocks control characters, emoji, and Zalgo text (consecutive `NonspacingMark` limit)
+  - `RESERVED_HANDLES`: 26 reserved words (e.g. `admin`, `support`, `system`)
+  - `unicode-general-category` crate dependency
+
+- **Pending email signup constants**
+  - `EMAIL_SIGNUP_EMAIL_PREFIX`, `EMAIL_SIGNUP_HANDLE_PREFIX` with key generators in `axumkit-constants`
+
+### Changed
+
+- **Database connection simplified** (matches V7)
+  - Merged separate `write_db` + `read_db` into single `db` field in `AppState`
+  - Environment variables changed from `POSTGRES_WRITE_*` / `POSTGRES_READ_*` to `POSTGRES_*`
+  - Single `establish_connection()` replaces `establish_write_connection()` + `establish_read_connection()`
+
+- **Signup endpoint moved from User to Auth module**
+  - Removed `POST /v0/users` (immediate user creation)
+  - Replaced with `POST /v0/auth/signup` (deferred creation after email verification)
+  - `CreateUserResponse` now returns 202 Accepted instead of 201 Created
+
+- **OAuth pending signup collision checks**
+  - `find_or_create_oauth_user` now checks pending email/password signups before creating OAuth users
+  - `complete_signup` pre-checks pending signups for email and handle collisions
+  - Google, GitHub, and Google One Tap sign-in flows reject emails held by pending signups
+
+- **All Korean comments translated to English** across 85+ source files
+
+### Fixed
+
+- **`CannotManageSelf` permission bug** — was incorrectly returning `CannotManageHigherOrEqualRole`
+
+---
+
 ## [0.5.0] - 2026-03-02
 
 ### Added

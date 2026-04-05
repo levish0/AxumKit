@@ -108,6 +108,9 @@ pub enum Errors {
     OauthHandleRequired,
     OauthEmailAlreadyExists,
     OauthEmailNotVerified,
+    GoogleInvalidIdToken,
+    GoogleJwksFetchFailed,
+    GoogleJwksParseFailed,
 
     // Password errors
     PasswordRequiredForUpdate,

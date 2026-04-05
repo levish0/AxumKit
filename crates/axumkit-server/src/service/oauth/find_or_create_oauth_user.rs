@@ -3,9 +3,13 @@ use crate::repository::oauth::create_oauth_user::repository_create_oauth_user;
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::repository::user::find_by_handle::repository_find_user_by_handle;
+use crate::service::auth::verify_email::{
+    find_pending_email_signup_by_email, find_pending_email_signup_by_handle,
+};
 use crate::service::oauth::types::OAuthUserResult;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
+use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use tracing::info;
 
@@ -24,6 +28,7 @@ use tracing::info;
 /// * `OAuthUserResult` - User model and whether the user is new
 pub async fn service_find_or_create_oauth_user<C>(
     conn: &C,
+    redis_conn: &ConnectionManager,
     provider: OAuthProvider,
     provider_user_id: &str,
     email: &str,
@@ -52,11 +57,27 @@ where
         return Err(Errors::OauthEmailAlreadyExists);
     }
 
+    // 2b. Check if a pending email/password signup holds this email
+    if find_pending_email_signup_by_email(redis_conn, email)
+        .await?
+        .is_some()
+    {
+        return Err(Errors::OauthEmailAlreadyExists);
+    }
+
     // 3. New user - handle required
     let handle = handle.ok_or(Errors::OauthHandleRequired)?;
 
     // 3. Check handle uniqueness
     if repository_find_user_by_handle(conn, handle.to_string())
+        .await?
+        .is_some()
+    {
+        return Err(Errors::UserHandleAlreadyExists);
+    }
+
+    // 3b. Check if a pending email/password signup holds this handle
+    if find_pending_email_signup_by_handle(redis_conn, handle)
         .await?
         .is_some()
     {

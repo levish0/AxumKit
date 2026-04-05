@@ -43,6 +43,11 @@ pub mod oauth {
     pub const OAUTH_HANDLE_REQUIRED: &str = "oauth:handle_required";
     pub const OAUTH_EMAIL_ALREADY_EXISTS: &str = "oauth:email_already_exists";
     pub const OAUTH_EMAIL_NOT_VERIFIED: &str = "oauth:email_not_verified";
+
+    // Google One Tap
+    pub const GOOGLE_INVALID_ID_TOKEN: &str = "google:invalid_id_token";
+    pub const GOOGLE_JWKS_FETCH_FAILED: &str = "google:jwks_fetch_failed";
+    pub const GOOGLE_JWKS_PARSE_FAILED: &str = "google:jwks_parse_failed";
 }
 
 pub mod general {

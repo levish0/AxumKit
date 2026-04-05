@@ -6,6 +6,9 @@ use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::repository::user::find_by_handle::repository_find_user_by_handle;
 use crate::service::auth::session::SessionService;
+use crate::service::auth::verify_email::{
+    find_pending_email_signup_by_email, find_pending_email_signup_by_handle,
+};
 use crate::service::oauth::download_profile_image::download_and_upload_profile_image;
 use crate::service::oauth::types::PendingSignupData;
 use crate::state::WorkerClient;
@@ -90,7 +93,23 @@ where
             return Err(Errors::OauthEmailAlreadyExists);
         }
 
+        // Check if a pending email/password signup holds this email
+        if find_pending_email_signup_by_email(redis_conn, &email)
+            .await?
+            .is_some()
+        {
+            return Err(Errors::OauthEmailAlreadyExists);
+        }
+
         if repository_find_user_by_handle(conn, handle.to_string())
+            .await?
+            .is_some()
+        {
+            return Err(Errors::UserHandleAlreadyExists);
+        }
+
+        // Check if a pending email/password signup holds this handle
+        if find_pending_email_signup_by_handle(redis_conn, handle)
             .await?
             .is_some()
         {

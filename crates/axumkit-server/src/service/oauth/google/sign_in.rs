@@ -2,6 +2,7 @@ use super::{GoogleProvider, fetch_google_user_info};
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
+use crate::service::auth::verify_email::find_pending_email_signup_by_email;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::{OAuthStateData, PendingSignupData};
 use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
@@ -78,6 +79,14 @@ where
 
     // 5. New user - check for email duplication
     if repository_find_user_by_email(conn, user_info.email.clone())
+        .await?
+        .is_some()
+    {
+        return Err(Errors::OauthEmailAlreadyExists);
+    }
+
+    // 5b. Check if a pending email/password signup holds this email
+    if find_pending_email_signup_by_email(redis_conn, &user_info.email)
         .await?
         .is_some()
     {

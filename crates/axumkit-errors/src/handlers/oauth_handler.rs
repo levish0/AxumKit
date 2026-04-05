@@ -11,6 +11,19 @@ pub fn log_error(error: &Errors) {
             error!("OAuth user info parse failed: {}", msg);
         }
 
+        // Google One Tap - warn! level (invalid tokens)
+        Errors::GoogleInvalidIdToken => {
+            warn!("Google One Tap: invalid ID token");
+        }
+
+        // Google One Tap - error! level (JWKS failures)
+        Errors::GoogleJwksFetchFailed => {
+            error!("Google One Tap: failed to fetch JWKS");
+        }
+        Errors::GoogleJwksParseFailed => {
+            error!("Google One Tap: failed to parse JWKS");
+        }
+
         // OAuth errors - warn! level (external service related)
         Errors::OauthInvalidAuthUrl
         | Errors::OauthInvalidTokenUrl
@@ -83,6 +96,20 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::OauthEmailNotVerified => {
             Some((StatusCode::BAD_REQUEST, OAUTH_EMAIL_NOT_VERIFIED, None))
         }
+
+        Errors::GoogleInvalidIdToken => {
+            Some((StatusCode::BAD_REQUEST, GOOGLE_INVALID_ID_TOKEN, None))
+        }
+        Errors::GoogleJwksFetchFailed => Some((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            GOOGLE_JWKS_FETCH_FAILED,
+            None,
+        )),
+        Errors::GoogleJwksParseFailed => Some((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            GOOGLE_JWKS_PARSE_FAILED,
+            None,
+        )),
 
         _ => None, // Return None for errors from other domains
     }

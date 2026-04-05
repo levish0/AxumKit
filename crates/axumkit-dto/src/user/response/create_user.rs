@@ -13,6 +13,6 @@ pub struct CreateUserResponse {
 
 impl IntoResponse for CreateUserResponse {
     fn into_response(self) -> Response {
-        (StatusCode::CREATED, Json(self)).into_response()
+        (StatusCode::ACCEPTED, Json(self)).into_response()
     }
 }

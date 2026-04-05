@@ -1,66 +1,45 @@
 use crate::bridge::worker_client;
-use crate::repository::user::repository_get_user_by_id;
-use crate::service::auth::verify_email::EmailVerificationData;
+use crate::service::auth::verify_email::{
+    find_pending_email_signup_by_email, get_pending_signup_remaining_minutes,
+};
 use crate::state::WorkerClient;
-use crate::utils::crypto::token::generate_secure_token;
-use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::{Errors, ServiceResult};
+use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
-use sea_orm::ConnectionTrait;
 use tracing::info;
-use uuid::Uuid;
 
+/// Resend a verification email for a pending email/password signup.
 ///
-/// # Arguments
-///
-/// # Returns
-pub async fn service_resend_verification_email<C>(
-    conn: &C,
+/// Re-sends the **existing** token with its actual remaining TTL so the email
+/// template shows the real validity window. Returns `Ok(())` silently if no
+/// pending signup exists (prevents email enumeration).
+pub async fn service_resend_verification_email(
     redis_conn: &ConnectionManager,
     worker: &WorkerClient,
-    user_id: Uuid,
-) -> ServiceResult<()>
-where
-    C: ConnectionTrait,
-{
-    let config = ServerConfig::get();
-
-    let user = repository_get_user_by_id(conn, user_id).await?;
-
-    if user.verified_at.is_some() {
-        return Err(Errors::EmailAlreadyVerified);
-    }
-
-    if user.password.is_none() {
-        return Err(Errors::UserPasswordNotSet);
-    }
-
-    let verification_data = EmailVerificationData {
-        user_id: user.id.to_string(),
-        email: user.email.clone(),
+    email: &str,
+) -> ServiceResult<()> {
+    let Some((existing_token, signup_data)) =
+        find_pending_email_signup_by_email(redis_conn, email).await?
+    else {
+        return Ok(());
     };
 
-    let ttl_seconds = (config.auth_email_verification_token_expire_time * 60) as u64;
-    let token = issue_token_and_store_json_with_ttl(
-        redis_conn,
-        generate_secure_token,
-        axumkit_constants::email_verification_key,
-        &verification_data,
-        ttl_seconds,
-    )
-    .await?;
+    let remaining_minutes =
+        get_pending_signup_remaining_minutes(redis_conn, &existing_token).await?;
+
+    if remaining_minutes == 0 {
+        return Ok(());
+    }
 
     worker_client::send_verification_email(
         worker,
-        &user.email,
-        &user.handle,
-        &token,
-        config.auth_email_verification_token_expire_time as u64,
+        &signup_data.email,
+        &signup_data.handle,
+        &existing_token,
+        remaining_minutes,
     )
     .await?;
 
-    info!(user_id = %user_id, "Verification email resent");
+    info!(email = %signup_data.email, handle = %signup_data.handle, "Pending signup verification email resent");
 
     Ok(())
 }

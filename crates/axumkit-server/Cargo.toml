@@ -62,3 +62,4 @@ futures.workspace = true
 similar.workspace = true
 async-nats.workspace = true
 tokio-stream.workspace = true
+jsonwebtoken.workspace = true

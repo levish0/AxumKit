@@ -9,7 +9,6 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        super::create_user::create_user,
         super::get_my_profile::get_my_profile,
         super::update_my_profile::update_my_profile,
         super::upload_profile_image::upload_profile_image,

@@ -1,5 +1,4 @@
 pub mod check_handle_available;
-pub mod create_user;
 pub mod delete_banner_image;
 pub mod delete_profile_image;
 pub mod get_my_profile;

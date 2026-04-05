@@ -13,3 +13,12 @@ pub struct GoogleLoginRequest {
     #[validate(length(min = 1, message = "State is required"))]
     pub state: String,
 }
+
+/// Google One Tap login request.
+#[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for signing in with Google One Tap.")]
+pub struct GoogleOneTapLoginRequest {
+    /// Google One Tap credential JWT
+    #[validate(length(min = 1, message = "Credential is required"))]
+    pub credential: String,
+}

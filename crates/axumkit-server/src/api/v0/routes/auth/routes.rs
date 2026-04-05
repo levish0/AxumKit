@@ -7,6 +7,7 @@ use super::login::auth_login;
 use super::logout::auth_logout;
 use super::resend_verification_email::auth_resend_verification_email;
 use super::reset_password::auth_reset_password;
+use super::signup::auth_signup;
 use super::totp::disable::totp_disable;
 use super::totp::enable::totp_enable;
 use super::totp::regenerate_backup_codes::totp_regenerate_backup_codes;
@@ -20,6 +21,7 @@ use crate::api::v0::routes::auth::oauth::github::github_login::auth_github_login
 use crate::api::v0::routes::auth::oauth::google::google_authorize::auth_google_authorize;
 use crate::api::v0::routes::auth::oauth::google::google_link::auth_google_link;
 use crate::api::v0::routes::auth::oauth::google::google_login::auth_google_login;
+use crate::api::v0::routes::auth::oauth::google::google_one_tap_login::auth_google_one_tap_login;
 use crate::api::v0::routes::auth::oauth::list_oauth_connections::list_oauth_connections;
 use crate::api::v0::routes::auth::oauth::unlink_oauth_connection::unlink_oauth_connection;
 use crate::state::AppState;
@@ -34,10 +36,6 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
             "/auth/oauth/connections/unlink",
             post(unlink_oauth_connection),
         )
-        .route(
-            "/auth/resend-verification-email",
-            post(auth_resend_verification_email),
-        )
         // TOTP protected routes (require session)
         .route("/auth/totp/status", get(totp_status))
         .route("/auth/totp/disable", post(totp_disable))
@@ -46,6 +44,10 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         .route("/auth/oauth/github/authorize", get(auth_github_authorize))
         // OAuth login routes (code exchange)
         .route("/auth/oauth/google/login", post(auth_google_login))
+        .route(
+            "/auth/oauth/google/one-tap/login",
+            post(auth_google_one_tap_login),
+        )
         .route("/auth/oauth/github/login", post(auth_github_login))
         // OAuth complete signup (pending token + handle)
         .route("/auth/complete-signup", post(auth_complete_signup))
@@ -54,8 +56,15 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         .route("/auth/oauth/github/link", post(auth_github_link))
         // Email/password login route
         .route("/auth/login", post(auth_login))
+        // Email signup route (public, deferred creation)
+        .route("/auth/signup", post(auth_signup))
         // Email verification route (public)
         .route("/auth/verify-email", post(auth_verify_email))
+        // Resend verification email (public, email-based)
+        .route(
+            "/auth/resend-verification-email",
+            post(auth_resend_verification_email),
+        )
         // TOTP setup/enable routes (require session)
         .route("/auth/totp/setup", post(totp_setup))
         .route("/auth/totp/enable", post(totp_enable))

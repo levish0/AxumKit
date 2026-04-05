@@ -1,7 +1,8 @@
 use axumkit_dto::auth::request::{
     ChangeEmailRequest, ChangePasswordRequest, CompleteSignupRequest, ConfirmEmailChangeRequest,
-    ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, TotpDisableRequest,
-    TotpEnableRequest, TotpRegenerateBackupCodesRequest, TotpVerifyRequest, VerifyEmailRequest,
+    ForgotPasswordRequest, LoginRequest, ResendVerificationEmailRequest, ResetPasswordRequest,
+    TotpDisableRequest, TotpEnableRequest, TotpRegenerateBackupCodesRequest, TotpVerifyRequest,
+    VerifyEmailRequest,
 };
 use axumkit_dto::auth::response::{
     TotpBackupCodesResponse, TotpEnableResponse, TotpRequiredResponse, TotpSetupResponse,
@@ -9,17 +10,19 @@ use axumkit_dto::auth::response::{
 };
 use axumkit_dto::oauth::request::{
     GithubLinkRequest, GithubLoginRequest, GoogleLinkRequest, GoogleLoginRequest,
-    OAuthAuthorizeFlow, OAuthAuthorizeQuery, UnlinkOAuthRequest,
+    GoogleOneTapLoginRequest, OAuthAuthorizeFlow, OAuthAuthorizeQuery, UnlinkOAuthRequest,
 };
 use axumkit_dto::oauth::response::OAuthPendingSignupResponse;
 use axumkit_dto::oauth::response::{
     OAuthConnectionListResponse, OAuthConnectionResponse, OAuthUrlResponse,
 };
+use axumkit_dto::user::{CreateUserRequest, CreateUserResponse};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
     paths(
+        super::signup::auth_signup,
         super::login::auth_login,
         super::logout::auth_logout,
         super::forgot_password::auth_forgot_password,
@@ -33,6 +36,7 @@ use utoipa::OpenApi;
         super::totp::regenerate_backup_codes::totp_regenerate_backup_codes,
         super::oauth::google::google_authorize::auth_google_authorize,
         super::oauth::google::google_login::auth_google_login,
+        super::oauth::google::google_one_tap_login::auth_google_one_tap_login,
         super::oauth::google::google_link::auth_google_link,
         super::oauth::github::github_authorize::auth_github_authorize,
         super::oauth::github::github_login::auth_github_login,
@@ -47,8 +51,11 @@ use utoipa::OpenApi;
     ),
     components(
         schemas(
+            CreateUserRequest,
+            CreateUserResponse,
             LoginRequest,
             VerifyEmailRequest,
+            ResendVerificationEmailRequest,
             ForgotPasswordRequest,
             ResetPasswordRequest,
             CompleteSignupRequest,
@@ -57,6 +64,7 @@ use utoipa::OpenApi;
             OAuthAuthorizeFlow,
             OAuthAuthorizeQuery,
             GoogleLoginRequest,
+            GoogleOneTapLoginRequest,
             GithubLoginRequest,
             GoogleLinkRequest,
             GithubLinkRequest,

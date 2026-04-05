@@ -1,5 +1,4 @@
 use super::check_handle_available::check_handle_available;
-use super::create_user::create_user;
 use super::delete_banner_image::delete_banner_image;
 use super::delete_profile_image::delete_profile_image;
 use super::get_my_profile::get_my_profile;
@@ -48,7 +47,6 @@ pub fn user_routes() -> Router<AppState> {
 
     // Public routes (no authentication required)
     let public_routes = Router::new()
-        .route("/users", post(create_user))
         .route("/users/profile", get(get_user_profile))
         .route("/users/profile/id", get(get_user_profile_by_id))
         .route(
