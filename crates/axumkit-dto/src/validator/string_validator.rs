@@ -1,5 +1,7 @@
+use unicode_general_category::{GeneralCategory, get_general_category};
 use validator::ValidationError;
 
+/// Validates that a string is not blank (not empty after trimming whitespace)
 pub fn validate_not_blank(s: &str) -> Result<(), ValidationError> {
     if s.trim().is_empty() {
         return Err(ValidationError::new("blank_string"));
@@ -7,6 +9,7 @@ pub fn validate_not_blank(s: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
+/// Reserved handles that cannot be registered
 const RESERVED_HANDLES: &[&str] = &[
     "admin",
     "administrator",
@@ -44,6 +47,9 @@ const RESERVED_HANDLES: &[&str] = &[
 /// - No consecutive underscores (`__`)
 /// - Cannot be a reserved word (case-insensitive)
 pub fn validate_handle(handle: &str) -> Result<(), ValidationError> {
+    // Only allow ASCII alphanumeric + underscore.
+    // This implicitly rejects: control chars, invisible Unicode, homoglyphs,
+    // combining chars (Zalgo), RTL/LTR overrides, zero-width chars, etc.
     if !handle
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || c == '_')
@@ -67,24 +73,42 @@ pub fn validate_handle(handle: &str) -> Result<(), ValidationError> {
     Ok(())
 }
 
-/// Validates a display name.
+/// Validates a display name (Twitter-style policy, no emoji).
 ///
 /// Rules:
-/// - Only Unicode letters, spaces, and common punctuation are allowed
-/// - Rejects emoji, control characters, and invisible Unicode
+/// - No control characters (`Cc`), format/invisible characters (`Cf`),
+///   surrogates (`Cs`), private-use characters (`Co`), line separators (`Zl`),
+///   or paragraph separators (`Zp`)
+/// - No emoji or miscellaneous symbols (`So` — covers 😀, 🎉, ©, ®, ™, etc.)
+/// - No more than 2 consecutive non-spacing marks (blocks Zalgo text)
+///
+/// Unicode letters, spaces, and punctuation are permitted.
 pub fn validate_display_name(name: &str) -> Result<(), ValidationError> {
-    for c in name.chars() {
-        if c.is_alphanumeric() || c.is_ascii_punctuation() || c == ' ' {
-            continue;
+    let mut consecutive_combining: u32 = 0;
+
+    for ch in name.chars() {
+        let category = get_general_category(ch);
+
+        match category {
+            GeneralCategory::Control
+            | GeneralCategory::Format
+            | GeneralCategory::Surrogate
+            | GeneralCategory::PrivateUse
+            | GeneralCategory::LineSeparator
+            | GeneralCategory::ParagraphSeparator
+            | GeneralCategory::OtherSymbol => {
+                return Err(ValidationError::new("display_name_invalid_chars"));
+            }
+            GeneralCategory::NonspacingMark => {
+                consecutive_combining += 1;
+                if consecutive_combining > 2 {
+                    return Err(ValidationError::new("display_name_combining_chars"));
+                }
+            }
+            _ => {
+                consecutive_combining = 0;
+            }
         }
-        if c.is_control() {
-            return Err(ValidationError::new("display_name_control_chars"));
-        }
-        // Allow general Unicode letters/marks (accented characters, CJK, etc.)
-        if c.is_alphabetic() {
-            continue;
-        }
-        return Err(ValidationError::new("display_name_invalid_chars"));
     }
 
     Ok(())
