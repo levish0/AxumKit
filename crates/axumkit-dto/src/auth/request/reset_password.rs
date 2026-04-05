@@ -4,11 +4,11 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct ResetPasswordRequest {
-    /// 비밀번호 재설정 토큰 (이메일 링크의 ?token= 값)
+    /// Password reset token (?token= value from the email link)
     #[validate(length(min = 1))]
     pub token: String,
 
-    /// 새 비밀번호
+    /// New password
     #[validate(length(
         min = 6,
         max = 20,

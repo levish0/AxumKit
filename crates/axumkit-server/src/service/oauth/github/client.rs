@@ -5,7 +5,7 @@ use reqwest::Client as HttpClient;
 const GITHUB_USER_INFO_URL: &str = "https://api.github.com/user";
 const GITHUB_USER_EMAILS_URL: &str = "https://api.github.com/user/emails";
 
-/// Access token으로 GitHub 사용자 정보를 가져옵니다.
+/// Fetches GitHub user info using an access token.
 pub async fn fetch_github_user_info(
     http_client: &HttpClient,
     access_token: &str,
@@ -33,7 +33,7 @@ pub async fn fetch_github_user_info(
     Ok(user_info)
 }
 
-/// Access token으로 GitHub 사용자의 이메일 목록을 가져옵니다.
+/// Fetches the GitHub user's email list using an access token.
 pub async fn fetch_github_user_emails(
     http_client: &HttpClient,
     access_token: &str,

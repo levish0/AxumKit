@@ -6,7 +6,7 @@ use axumkit_errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-/// 특정 사용자의 특정 provider OAuth 연결을 삭제합니다.
+/// Deletes a specific provider's OAuth connection for a user.
 pub async fn repository_delete_oauth_connection<C>(
     conn: &C,
     user_id: Uuid,

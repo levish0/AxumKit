@@ -9,20 +9,20 @@ use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
 
-/// OAuth 인증 URL을 생성하고 state를 Redis에 저장합니다.
+/// Generates an OAuth authorization URL and stores the state in Redis.
 pub async fn service_generate_oauth_url<P: OAuthProviderConfig>(
     redis_conn: &ConnectionManager,
     anonymous_user_id: &str,
     flow: OAuthAuthorizeFlow,
     provider: OAuthProvider,
 ) -> ServiceResult<OAuthUrlResponse> {
-    // 1. State 생성
+    // 1. Generate state
     let state = Uuid::now_v7().to_string();
 
-    // 2. OAuth 인증 URL 생성 (PKCE 포함)
+    // 2. Generate OAuth authorization URL (with PKCE)
     let (auth_url, _state, pkce_verifier) = generate_auth_url::<P>(state.clone())?;
 
-    // 3. State와 PKCE verifier를 Redis에 저장
+    // 3. Store state and PKCE verifier in Redis
     let state_data = OAuthStateData {
         pkce_verifier,
         flow,

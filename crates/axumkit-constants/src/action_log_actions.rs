@@ -3,45 +3,45 @@ use std::fmt;
 use std::str::FromStr;
 use utoipa::ToSchema;
 
-/// Action Log Action enum (action_logs.action 필드에 저장됨)
-/// 포맷: "{resource}:{operation}"
+/// Action Log Action enum (stored in action_logs.action field)
+/// Format: "{resource}:{operation}"
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 pub enum ActionLogAction {
     // ==================== Post Actions ====================
-    /// 포스트 생성
+    /// Post created
     #[serde(rename = "post:create")]
     PostCreate,
-    /// 포스트 편집
+    /// Post edited
     #[serde(rename = "post:edit")]
     PostEdit,
-    /// 포스트 삭제
+    /// Post deleted
     #[serde(rename = "post:delete")]
     PostDelete,
 
     // ==================== User Actions ====================
-    /// 유저 생성
+    /// User created
     #[serde(rename = "user:create")]
     UserCreate,
-    /// 유저 프로필 편집
+    /// User profile edited
     #[serde(rename = "user:edit")]
     UserEdit,
 
     // ==================== Auth Actions ====================
-    /// 로그인
+    /// Login
     #[serde(rename = "auth:login")]
     AuthLogin,
-    /// 로그아웃
+    /// Logout
     #[serde(rename = "auth:logout")]
     AuthLogout,
-    /// OAuth 로그인
+    /// OAuth login
     #[serde(rename = "auth:oauth_login")]
     AuthOAuthLogin,
 
     // ==================== OAuth Actions ====================
-    /// OAuth 연결
+    /// OAuth connected
     #[serde(rename = "oauth:link")]
     OAuthLink,
-    /// OAuth 연결 해제
+    /// OAuth disconnected
     #[serde(rename = "oauth:unlink")]
     OAuthUnlink,
 }

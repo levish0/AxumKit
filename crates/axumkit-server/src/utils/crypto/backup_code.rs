@@ -1,7 +1,7 @@
 use axumkit_config::ServerConfig;
 
-/// 백업 코드를 Blake3 keyed hash로 해시
-/// TOTP_SECRET을 키로 사용하여 암호학적으로 안전한 해시 생성
+/// Hash backup codes using Blake3 keyed hash
+/// Uses TOTP_SECRET as the key to generate a cryptographically secure hash
 pub fn hash_backup_code(code: &str) -> String {
     let config = ServerConfig::get();
     let key = blake3::derive_key("axumkit totp backup code v1", config.totp_secret.as_bytes());
@@ -10,13 +10,13 @@ pub fn hash_backup_code(code: &str) -> String {
     hasher.finalize().to_hex().to_string()
 }
 
-/// 백업 코드 목록을 해시하여 반환
+/// Hash and return a list of backup codes
 pub fn hash_backup_codes(codes: &[String]) -> Vec<String> {
     codes.iter().map(|c| hash_backup_code(c)).collect()
 }
 
-/// 입력된 코드가 저장된 해시 목록 중 하나와 일치하는지 확인
-/// 일치하면 해당 인덱스 반환, 없으면 None
+/// Check if the input code matches any of the stored hashes
+/// Returns the matching index if found, None otherwise
 pub fn verify_backup_code(code: &str, stored_hashes: &[String]) -> Option<usize> {
     let input_hash = hash_backup_code(code);
     stored_hashes.iter().position(|h| h == &input_hash)

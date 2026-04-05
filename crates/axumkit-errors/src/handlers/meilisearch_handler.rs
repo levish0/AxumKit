@@ -3,7 +3,7 @@ use crate::protocol::meilisearch::*;
 use axum::http::StatusCode;
 use tracing::error;
 
-/// MeiliSearch 에러 로깅 처리
+/// MeiliSearch error logging handler
 pub fn log_error(err: &Errors) {
     match err {
         Errors::MeiliSearchQueryFailed => {

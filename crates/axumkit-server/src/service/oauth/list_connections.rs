@@ -4,7 +4,7 @@ use axumkit_errors::errors::ServiceResult;
 use sea_orm::ConnectionTrait;
 use uuid::Uuid;
 
-/// 사용자의 모든 OAuth 연결 목록을 조회합니다.
+/// Queries all OAuth connection entries for a user.
 pub async fn service_list_oauth_connections<C>(
     conn: &C,
     user_id: Uuid,

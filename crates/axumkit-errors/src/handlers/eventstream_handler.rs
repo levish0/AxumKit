@@ -3,7 +3,7 @@ use crate::protocol::eventstream::*;
 use axum::http::StatusCode;
 use tracing::warn;
 
-/// EventStream 관련 에러 로깅 처리
+/// EventStream error logging handler
 pub fn log_error(error: &Errors) {
     match error {
         Errors::EventStreamPublishFailed => {

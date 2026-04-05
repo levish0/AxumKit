@@ -2,7 +2,7 @@ use sea_orm::{DeriveActiveEnum, EnumIter};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-/// OAuth 제공자: 소셜 로그인 제공 업체
+/// OAuth provider: social login provider
 #[derive(
     Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Deserialize, Serialize, ToSchema,
 )]

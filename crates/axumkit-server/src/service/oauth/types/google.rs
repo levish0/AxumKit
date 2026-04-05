@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-/// Google OAuth API에서 받는 유저 정보
+/// User info received from the Google OAuth API
 #[derive(Debug, Deserialize)]
 pub struct GoogleUserInfo {
     /// Google user ID (v2 API uses 'id')

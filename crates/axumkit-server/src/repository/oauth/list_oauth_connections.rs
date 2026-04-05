@@ -6,7 +6,7 @@ use axumkit_errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, Order, QueryFilter, QueryOrder};
 use uuid::Uuid;
 
-/// 사용자의 모든 OAuth 연결을 조회합니다.
+/// Queries all OAuth connections for a user.
 pub async fn repository_list_oauth_connections_by_user_id<C>(
     conn: &C,
     user_id: Uuid,

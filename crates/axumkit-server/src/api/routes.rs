@@ -6,7 +6,7 @@ use axum::Router;
 use axumkit_errors::errors::handler_404;
 use utoipa_swagger_ui::SwaggerUi;
 
-/// 최상위 API 라우터 (health + versioned APIs)
+/// Top-level API router (health + versioned APIs)
 pub fn api_routes(state: AppState) -> Router<AppState> {
     let mut router = Router::new();
 

@@ -4,7 +4,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct ForgotPasswordRequest {
-    /// 비밀번호 재설정을 요청할 이메일 주소
+    /// Email address to request password reset for
     #[validate(email)]
     pub email: String,
 }

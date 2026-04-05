@@ -7,13 +7,13 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// OAuth 연결 정보 응답
+/// OAuth connection info response
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OAuthConnectionResponse {
     /// OAuth provider (Google, Github)
     pub provider: OAuthProvider,
 
-    /// 연결 생성 시각
+    /// Connection creation time
     pub created_at: DateTime<Utc>,
 }
 
@@ -26,7 +26,7 @@ impl From<OAuthConnectionModel> for OAuthConnectionResponse {
     }
 }
 
-/// OAuth 연결 목록 응답
+/// OAuth connection list response
 #[derive(Debug, Serialize, ToSchema)]
 pub struct OAuthConnectionListResponse {
     pub connections: Vec<OAuthConnectionResponse>,

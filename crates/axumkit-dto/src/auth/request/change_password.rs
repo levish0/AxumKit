@@ -4,11 +4,11 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct ChangePasswordRequest {
-    /// 현재 비밀번호
+    /// Current password
     #[validate(length(min = 1))]
     pub current_password: String,
 
-    /// 새 비밀번호
+    /// New password
     #[validate(length(
         min = 6,
         max = 20,

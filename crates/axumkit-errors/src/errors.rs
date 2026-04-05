@@ -220,11 +220,11 @@ impl IntoResponse for Errors {
         // Only include details in dev mode
         let is_dev = ServerConfig::get().is_dev;
 
-        // 오류 응답 구성
+        // Construct error response
         let body = ErrorResponse {
             status: status.as_u16(),
             code: code.to_string(),
-            details: if is_dev { details } else { None }, // 개발 환경에서만 상세 정보 표시
+            details: if is_dev { details } else { None }, // Show details only in dev environment
         };
 
         (status, Json(body)).into_response()

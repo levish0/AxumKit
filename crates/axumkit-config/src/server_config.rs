@@ -8,10 +8,10 @@ use tracing::warn;
 pub struct ServerConfig {
     pub is_dev: bool,
 
-    pub totp_secret: String,                  // TOTP 백업 코드 해시용 시크릿
-    pub auth_session_max_lifetime_hours: i64, // 세션 최대 수명 (시간)
-    pub auth_session_sliding_ttl_hours: i64,  // 활동 시 연장 TTL (시간)
-    pub auth_session_refresh_threshold: u8,   // TTL 갱신 임계값 (%)
+    pub totp_secret: String,                  // Secret for hashing TOTP backup codes
+    pub auth_session_max_lifetime_hours: i64, // Maximum session lifetime (hours)
+    pub auth_session_sliding_ttl_hours: i64,  // Sliding TTL extended on activity (hours)
+    pub auth_session_refresh_threshold: u8,   // TTL refresh threshold (%)
     pub auth_email_verification_token_expire_time: i64, // minutes
     pub auth_password_reset_token_expire_time: i64, // minutes
     pub auth_email_change_token_expire_time: i64, // minutes
@@ -89,13 +89,13 @@ pub struct ServerConfig {
     pub stability_timeout_secs: u64,        // Request timeout in seconds (default: 30)
 }
 
-// LazyLock으로 자동 초기화
+// Auto-initialized via LazyLock
 static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     dotenv().ok();
 
     let mut errors: Vec<String> = Vec::new();
 
-    // 필수 환경변수 (누락 시 에러 수집, panic하지 않음)
+    // Required env vars (collects errors on missing, does not panic)
     macro_rules! require {
         ($name:expr) => {
             env::var($name).unwrap_or_else(|_| {
@@ -105,7 +105,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         };
     }
 
-    // 필수 환경변수 + 파싱 (누락/파싱 실패 시 에러 수집)
+    // Required env vars + parsing (collects errors on missing/parse failure)
     macro_rules! require_parse {
         ($name:expr, $ty:ty) => {{
             match env::var($name) {
@@ -235,22 +235,22 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         .ok()
         .and_then(|v| v.parse::<i64>().ok())
         .unwrap_or(1)
-        .max(0), // 기본값 1시간 (minutes)
+        .max(0), // Default 1 hour (minutes)
         auth_password_reset_token_expire_time: env::var("AUTH_PASSWORD_RESET_TOKEN_EXPIRE_TIME")
             .ok()
             .and_then(|v| v.parse::<i64>().ok())
             .unwrap_or(15)
-            .max(0), // 기본값 15분
+            .max(0), // Default 15 minutes
         auth_email_change_token_expire_time: env::var("AUTH_EMAIL_CHANGE_TOKEN_EXPIRE_TIME")
             .ok()
             .and_then(|v| v.parse::<i64>().ok())
             .unwrap_or(15)
-            .max(0), // 기본값 15분
+            .max(0), // Default 15 minutes
         oauth_pending_signup_ttl_minutes: env::var("OAUTH_PENDING_SIGNUP_TTL_MINUTES")
             .ok()
             .and_then(|v| v.parse::<i64>().ok())
             .unwrap_or(10)
-            .max(0), // 기본값 10분
+            .max(0), // Default 10 minutes
 
         // Google
         google_client_id,
@@ -354,7 +354,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 });
 
 impl ServerConfig {
-    // 이제 단순히 CONFIG에 접근만 하면 됨
+    // Simply access the CONFIG static
     pub fn get() -> &'static ServerConfig {
         &CONFIG
     }

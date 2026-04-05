@@ -1,10 +1,10 @@
 use axumkit_entity::users::Model as UserModel;
 
-/// OAuth 로그인 결과 (내부 서비스 로직용)
+/// OAuth sign-in result (for internal service logic)
 #[derive(Debug)]
 pub struct OAuthUserResult {
     /// User model
     pub user: UserModel,
-    /// 신규 생성된 유저인지 여부
+    /// Whether the user was newly created
     pub is_new_user: bool,
 }

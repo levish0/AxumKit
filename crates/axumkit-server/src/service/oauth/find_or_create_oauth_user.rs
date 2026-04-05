@@ -9,19 +9,19 @@ use axumkit_errors::errors::{Errors, ServiceResult};
 use sea_orm::ConnectionTrait;
 use tracing::info;
 
-/// OAuth 제공자로부터 받은 정보로 사용자를 찾거나 생성합니다.
+/// Finds or creates a user using information from an OAuth provider.
 ///
 /// # Arguments
-/// * `conn` - 데이터베이스 연결 (트랜잭션 내부에서 호출되어야 함)
-/// * `provider` - OAuth 제공자 (Google, GitHub 등)
-/// * `provider_user_id` - OAuth 제공자에서의 사용자 ID
-/// * `email` - 사용자 이메일
-/// * `display_name` - 사용자 표시 이름
-/// * `handle` - 사용자 핸들 (신규 사용자 생성 시 필수)
-/// * `profile_image` - 프로필 이미지 URL (선택사항)
+/// * `conn` - Database connection (must be called within a transaction)
+/// * `provider` - OAuth provider (Google, GitHub, etc.)
+/// * `provider_user_id` - User ID from the OAuth provider
+/// * `email` - User email
+/// * `display_name` - User display name
+/// * `handle` - User handle (required for new user creation)
+/// * `profile_image` - Profile image URL (optional)
 ///
 /// # Returns
-/// * `OAuthUserResult` - 사용자 모델과 신규 사용자 여부
+/// * `OAuthUserResult` - User model and whether the user is new
 pub async fn service_find_or_create_oauth_user<C>(
     conn: &C,
     provider: OAuthProvider,
@@ -34,7 +34,7 @@ pub async fn service_find_or_create_oauth_user<C>(
 where
     C: ConnectionTrait,
 {
-    // 1. 기존 OAuth 연결이 있는지 확인
+    // 1. Check if an existing OAuth connection exists
     if let Some(user) =
         repository_find_user_by_oauth(conn, provider.clone(), provider_user_id).await?
     {
@@ -44,7 +44,7 @@ where
         });
     }
 
-    // 2. 같은 이메일의 기존 계정이 있는지 확인 (보안: 자동 연결 방지)
+    // 2. Check if an existing account with the same email exists (security: prevent automatic linking)
     if repository_find_user_by_email(conn, email.to_string())
         .await?
         .is_some()
@@ -52,10 +52,10 @@ where
         return Err(Errors::OauthEmailAlreadyExists);
     }
 
-    // 3. 신규 사용자 - handle 필수
+    // 3. New user - handle required
     let handle = handle.ok_or(Errors::OauthHandleRequired)?;
 
-    // 3. handle 중복 확인
+    // 3. Check handle uniqueness
     if repository_find_user_by_handle(conn, handle.to_string())
         .await?
         .is_some()
@@ -63,11 +63,11 @@ where
         return Err(Errors::UserHandleAlreadyExists);
     }
 
-    // 4. 새 사용자 생성
+    // 4. Create new user
     let new_user =
         repository_create_oauth_user(conn, email, display_name, handle, profile_image).await?;
 
-    // 5. OAuth 연결 생성
+    // 5. Create OAuth connection
     repository_create_oauth_connection(conn, &new_user.id, provider.clone(), provider_user_id)
         .await?;
 

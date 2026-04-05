@@ -46,7 +46,7 @@ pub async fn service_create_user(
 
     txn.commit().await?;
 
-    // 이메일 인증 토큰 생성 및 발송 (암호학적으로 안전한 랜덤 토큰)
+    // Generate and send email verification token (cryptographically secure random token)
     let token = generate_secure_token();
     let token_key = format!("email_verification:{}", token);
 
@@ -55,11 +55,11 @@ pub async fn service_create_user(
         email: user.email.clone(),
     };
 
-    // Redis에 토큰 저장 (분 단위 → 초 단위 변환)
+    // Store token in Redis (convert minutes to seconds)
     let ttl_seconds = (config.auth_email_verification_token_expire_time * 60) as u64;
     set_json_with_ttl(redis_conn, &token_key, &verification_data, ttl_seconds).await?;
 
-    // Worker 서비스에 이메일 발송 요청
+    // Request email delivery via Worker service
     worker_client::send_verification_email(
         worker,
         &user.email,
@@ -69,7 +69,7 @@ pub async fn service_create_user(
     )
     .await?;
 
-    // MeiliSearch에 유저 인덱싱 (멘션 검색용)
+    // Index user in MeiliSearch (for mention search)
     worker_client::index_user(worker, user.id).await.ok();
 
     Ok(CreateUserResponse {

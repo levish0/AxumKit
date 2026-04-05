@@ -1,7 +1,8 @@
 use axumkit_dto::user::{
-    CheckHandleAvailablePath, CheckHandleAvailableResponse, GetUserProfileByIdRequest,
-    GetUserProfileRequest, PublicUserProfile, UpdateMyProfileRequest, UploadUserImageRequest,
-    UploadUserImageResponse, UserResponse,
+    BanUserRequest, BanUserResponse, CheckHandleAvailablePath, CheckHandleAvailableResponse,
+    GetUserProfileByIdRequest, GetUserProfileRequest, GrantRoleRequest, GrantRoleResponse,
+    PublicUserProfile, RevokeRoleRequest, RevokeRoleResponse, UnbanUserRequest, UnbanUserResponse,
+    UpdateMyProfileRequest, UploadUserImageRequest, UploadUserImageResponse, UserResponse,
 };
 use utoipa::OpenApi;
 
@@ -18,6 +19,10 @@ use utoipa::OpenApi;
         super::get_user_profile::get_user_profile,
         super::get_user_profile_by_id::get_user_profile_by_id,
         super::check_handle_available::check_handle_available,
+        super::management::ban_user::ban_user,
+        super::management::unban_user::unban_user,
+        super::management::grant_role::grant_role,
+        super::management::revoke_role::revoke_role,
     ),
     components(
         schemas(
@@ -30,10 +35,19 @@ use utoipa::OpenApi;
             PublicUserProfile,
             CheckHandleAvailablePath,
             CheckHandleAvailableResponse,
+            BanUserRequest,
+            BanUserResponse,
+            UnbanUserRequest,
+            UnbanUserResponse,
+            GrantRoleRequest,
+            GrantRoleResponse,
+            RevokeRoleRequest,
+            RevokeRoleResponse,
         )
     ),
     tags(
-        (name = "User", description = "User endpoints")
+        (name = "User", description = "User endpoints"),
+        (name = "User Management", description = "User management endpoints (admin only)")
     )
 )]
 pub struct UserApiDoc;

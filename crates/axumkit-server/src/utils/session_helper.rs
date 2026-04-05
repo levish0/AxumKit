@@ -3,16 +3,16 @@ use axumkit_errors::errors::Errors;
 use sea_orm::prelude::IpNetwork;
 use uuid::Uuid;
 
-/// SessionContext에서 user_id와 IP를 추출
+/// Extract user_id and IP from SessionContext
 ///
 /// # Returns
-/// - 로그인 사용자: `(Some(user_id), Some(ip_network))`
-/// - 익명 사용자: `(None, Some(ip_network))`
+/// - Logged-in user: `(Some(user_id), Some(ip_network))`
+/// - Anonymous user: `(None, Some(ip_network))`
 ///
-/// IP는 항상 기록됨 (다중 계정 탐지, 차단 회피 추적용)
+/// IP is always recorded (for multi-account detection, ban evasion tracking)
 ///
 /// # Errors
-/// - `Errors::InvalidIpAddress` - IP 주소 파싱 실패 시
+/// - `Errors::InvalidIpAddress` - When IP address parsing fails
 pub fn extract_user_or_ip(
     session: Option<&SessionContext>,
     ip_address: &str,

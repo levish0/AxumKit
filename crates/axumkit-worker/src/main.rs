@@ -6,8 +6,83 @@ use axumkit_worker::jobs::{self, WorkerContext};
 use axumkit_worker::nats::streams::initialize_all_streams;
 use axumkit_worker::utils;
 use axumkit_worker::{CacheClient, DbPool};
+use futures::FutureExt;
+use std::any::Any;
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
-use tracing::info;
+use std::time::Duration;
+use tokio::task::JoinSet;
+use tracing::{error, info};
+
+const CONSUMER_RESTART_DELAY: Duration = Duration::from_secs(1);
+
+#[derive(Debug, Clone, Copy)]
+enum ConsumerKind {
+    Email,
+    IndexUser,
+    ReindexUsers,
+}
+
+impl ConsumerKind {
+    const ALL: [ConsumerKind; 3] = [
+        ConsumerKind::Email,
+        ConsumerKind::IndexUser,
+        ConsumerKind::ReindexUsers,
+    ];
+
+    fn name(self) -> &'static str {
+        match self {
+            ConsumerKind::Email => "email",
+            ConsumerKind::IndexUser => "index_user",
+            ConsumerKind::ReindexUsers => "reindex_users",
+        }
+    }
+}
+
+enum ConsumerExitOutcome {
+    Completed(Result<()>),
+    Panicked(String),
+}
+
+struct ConsumerExit {
+    kind: ConsumerKind,
+    outcome: ConsumerExitOutcome,
+}
+
+fn panic_message(payload: Box<dyn Any + Send>) -> String {
+    if let Some(s) = payload.downcast_ref::<&str>() {
+        s.to_string()
+    } else if let Some(s) = payload.downcast_ref::<String>() {
+        s.clone()
+    } else {
+        "unknown panic payload".to_string()
+    }
+}
+
+async fn run_consumer(kind: ConsumerKind, ctx: WorkerContext) -> Result<()> {
+    match kind {
+        ConsumerKind::Email => jobs::email::run_consumer(ctx).await,
+        ConsumerKind::IndexUser => jobs::index::user::run_consumer(ctx).await,
+        ConsumerKind::ReindexUsers => jobs::reindex::users::run_consumer(ctx).await,
+    }
+}
+
+fn spawn_consumer(consumers: &mut JoinSet<ConsumerExit>, kind: ConsumerKind, ctx: WorkerContext) {
+    consumers.spawn(async move {
+        let result = AssertUnwindSafe(run_consumer(kind, ctx))
+            .catch_unwind()
+            .await;
+
+        let outcome = match result {
+            Ok(result) => ConsumerExitOutcome::Completed(result),
+            Err(panic_payload) => ConsumerExitOutcome::Panicked(panic_message(panic_payload)),
+        };
+
+        ConsumerExit { kind, outcome }
+    });
+
+    info!(consumer = kind.name(), "Consumer task started");
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -67,12 +142,11 @@ async fn main() -> Result<()> {
 
     info!("Starting job consumers...");
 
-    // Spawn all job consumers
-    let email_handle = tokio::spawn(jobs::email::run_consumer(ctx.clone()));
-    let index_user_handle = tokio::spawn(jobs::index::user::run_consumer(ctx.clone()));
-    let reindex_users_handle = tokio::spawn(jobs::reindex::users::run_consumer(ctx.clone()));
-
-    info!("Job consumers started");
+    // Spawn all job consumers with supervisor pattern
+    let mut consumers = JoinSet::new();
+    for kind in ConsumerKind::ALL {
+        spawn_consumer(&mut consumers, kind, ctx.clone());
+    }
 
     // Start cron scheduler (tokio-cron-scheduler)
     info!("Starting cron scheduler...");
@@ -86,25 +160,41 @@ async fn main() -> Result<()> {
 
     info!("All workers running");
 
-    // Wait for all tasks (they run indefinitely)
-    tokio::select! {
-        result = email_handle => {
-            if let Err(e) = result {
-                tracing::error!("Email consumer panicked: {:?}", e);
+    // Supervisor loop: automatically restart crashed consumers
+    loop {
+        match consumers.join_next().await {
+            Some(Ok(exit)) => {
+                let name = exit.kind.name();
+
+                match exit.outcome {
+                    ConsumerExitOutcome::Completed(Ok(())) => {
+                        error!(consumer = name, "Consumer exited unexpectedly without error");
+                    }
+                    ConsumerExitOutcome::Completed(Err(e)) => {
+                        error!(consumer = name, error = %e, "Consumer exited with error");
+                    }
+                    ConsumerExitOutcome::Panicked(msg) => {
+                        error!(consumer = name, panic = %msg, "Consumer panicked");
+                    }
+                }
+
+                info!(
+                    consumer = name,
+                    delay_secs = CONSUMER_RESTART_DELAY.as_secs(),
+                    "Restarting consumer"
+                );
+                tokio::time::sleep(CONSUMER_RESTART_DELAY).await;
+                spawn_consumer(&mut consumers, exit.kind, ctx.clone());
             }
-        }
-        result = index_user_handle => {
-            if let Err(e) = result {
-                tracing::error!("Index user consumer panicked: {:?}", e);
+            Some(Err(e)) => {
+                error!("JoinSet error: {:?}", e);
             }
-        }
-        result = reindex_users_handle => {
-            if let Err(e) = result {
-                tracing::error!("Reindex users consumer panicked: {:?}", e);
+            None => {
+                error!("All consumers exited — this should never happen");
+                break;
             }
         }
     }
 
-    tracing::error!("Worker terminated unexpectedly");
     Ok(())
 }

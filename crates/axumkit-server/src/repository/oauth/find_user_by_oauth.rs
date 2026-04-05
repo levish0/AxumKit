@@ -6,7 +6,7 @@ use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, JoinType, QueryFilter, QuerySelect, RelationTrait,
 };
 
-/// OAuth provider와 provider_user_id로 유저 조회
+/// Find a user by OAuth provider and provider_user_id
 pub async fn repository_find_user_by_oauth<C>(
     conn: &C,
     provider: OAuthProvider,

@@ -3,14 +3,14 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
-/// OAuth pending signup 완료 요청
+/// OAuth pending signup completion request
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
 pub struct CompleteSignupRequest {
-    /// Pending signup 토큰 (OAuth 로그인 시 반환됨)
+    /// Pending signup token (returned during OAuth sign-in)
     #[validate(length(min = 1, message = "Pending token is required"))]
     pub pending_token: String,
 
-    /// 사용자 핸들 (고유 식별자)
+    /// User handle (unique identifier)
     #[validate(length(
         min = 3,
         max = 20,
@@ -19,7 +19,7 @@ pub struct CompleteSignupRequest {
     #[validate(custom(function = "validate_not_blank"))]
     pub handle: String,
 
-    /// 화면에 표시될 이름
+    /// Display name
     #[validate(length(
         min = 1,
         max = 50,

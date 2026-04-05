@@ -7,7 +7,7 @@ use super::user::routes::user_routes as UserRoutes;
 use crate::state::AppState;
 use axum::Router;
 
-/// v0 API 라우터
+/// v0 API router
 pub fn v0_routes(state: AppState) -> Router<AppState> {
     Router::new()
         .merge(UserRoutes())

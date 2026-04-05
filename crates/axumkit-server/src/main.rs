@@ -153,7 +153,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
-    // tracing 초기화
+    // Initialize tracing
     init_tracing();
 
     if let Err(err) = run_server().await {

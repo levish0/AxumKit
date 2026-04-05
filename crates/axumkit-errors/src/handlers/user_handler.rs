@@ -4,15 +4,15 @@ use crate::protocol::user::*;
 use axum::http::StatusCode;
 use tracing::{debug, warn};
 
-/// 사용자 관련 에러 로깅 처리
+/// User-related error logging handler
 pub fn log_error(error: &Errors) {
     match error {
-        // 리소스 찾을 수 없음 - warn! 레벨
+        // Resource not found - warn! level
         Errors::UserNotFound => {
             warn!("Resource not found: {:?}", error);
         }
 
-        // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
+        // Business logic errors - debug! level (client mistakes)
         Errors::InvalidCredentials
         | Errors::UserInvalidPassword
         | Errors::UserPasswordNotSet
@@ -35,7 +35,7 @@ pub fn log_error(error: &Errors) {
             debug!("Client error: {:?}", error);
         }
 
-        // ACL 에러 - debug! 레벨 (ACL 규칙에 의해 거부됨)
+        // ACL errors - debug! level (denied by ACL rules)
         Errors::AclDenied(_) => {
             debug!("ACL denied: {:?}", error);
         }
@@ -78,15 +78,13 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             Some((StatusCode::BAD_REQUEST, USER_DOES_NOT_HAVE_ROLE, None))
         }
         Errors::UserAlreadyHasRole => Some((StatusCode::CONFLICT, USER_ALREADY_HAS_ROLE, None)),
-        Errors::CannotManageSelf => {
-            Some((StatusCode::FORBIDDEN, USER_CANNOT_MANAGE_SELF, None))
-        }
+        Errors::CannotManageSelf => Some((StatusCode::FORBIDDEN, USER_CANNOT_MANAGE_SELF, None)),
         Errors::CannotManageHigherOrEqualRole => Some((
             StatusCode::FORBIDDEN,
             USER_CANNOT_MANAGE_HIGHER_OR_EQUAL_ROLE,
             None,
         )),
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        _ => None, // Return None for errors from other domains
     }
 }

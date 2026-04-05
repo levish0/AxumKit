@@ -94,7 +94,7 @@ impl PermissionService {
         if let Some(session) = session
             && session.user_id == target_user_id
         {
-            return Err(Errors::CannotManageHigherOrEqualRole);
+            return Err(Errors::CannotManageSelf);
         }
 
         repository_find_user_by_id(conn, target_user_id)

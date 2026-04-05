@@ -29,8 +29,8 @@ pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Re
         }
     }
 
-    // remember_me=true: persistent cookie (최대 세션 수명)
-    // remember_me=false: session cookie (브라우저 닫으면 삭제)
+    // remember_me=true: persistent cookie (maximum session lifetime)
+    // remember_me=false: session cookie (deleted when browser is closed)
     if remember_me {
         cookie_builder =
             cookie_builder.max_age(Duration::hours(config.auth_session_max_lifetime_hours));

@@ -4,29 +4,29 @@ use serde::{Deserialize, Serialize};
 
 const TURNSTILE_VERIFY_URL: &str = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
-/// Cloudflare Turnstile 검증 응답
+/// Cloudflare Turnstile verification response
 #[derive(Debug, Deserialize)]
 pub struct TurnstileResponse {
-    /// 검증 성공 여부
+    /// Whether verification succeeded
     pub success: bool,
-    /// 에러 코드 목록 (실패 시)
+    /// Error code list (on failure)
     #[serde(rename = "error-codes", default)]
     pub error_codes: Vec<String>,
-    /// 챌린지 완료 시간 (ISO 8601)
+    /// Challenge completion time (ISO 8601)
     #[serde(default)]
     pub challenge_ts: Option<String>,
-    /// 챌린지가 표시된 호스트
+    /// Host where the challenge was displayed
     #[serde(default)]
     pub hostname: Option<String>,
-    /// 클라이언트에서 전달한 action
+    /// Action passed from the client
     #[serde(default)]
     pub action: Option<String>,
-    /// 클라이언트에서 전달한 cdata
+    /// cdata passed from the client
     #[serde(default)]
     pub cdata: Option<String>,
 }
 
-/// Cloudflare Turnstile API 요청
+/// Cloudflare Turnstile API request
 #[derive(Debug, Serialize)]
 struct TurnstileRequest<'a> {
     secret: &'a str,
@@ -35,17 +35,17 @@ struct TurnstileRequest<'a> {
     remoteip: Option<&'a str>,
 }
 
-/// Cloudflare Turnstile 토큰 검증
+/// Cloudflare Turnstile token verification
 ///
 /// # Arguments
-/// * `http_client` - HTTP 클라이언트
-/// * `secret_key` - Turnstile 시크릿 키
-/// * `token` - 클라이언트에서 받은 토큰
-/// * `remote_ip` - 클라이언트 IP (선택)
+/// * `http_client` - HTTP client
+/// * `secret_key` - Turnstile secret key
+/// * `token` - Token received from the client
+/// * `remote_ip` - Client IP (optional)
 ///
 /// # Returns
-/// * `Ok(TurnstileResponse)` - 검증 응답 (success 필드 확인 필요)
-/// * `Err(Errors::TurnstileServiceError)` - API 호출 실패
+/// * `Ok(TurnstileResponse)` - Verification response (check the success field)
+/// * `Err(Errors::TurnstileServiceError)` - API call failed
 pub async fn verify_turnstile_token(
     http_client: &HttpClient,
     secret_key: &str,
