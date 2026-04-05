@@ -7,6 +7,5 @@ pub enum SignInResult {
     PendingSignup {
         pending_token: String,
         email: String,
-        display_name: String,
     },
 }

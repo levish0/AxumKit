@@ -5,14 +5,14 @@ use crate::service::auth::session::SessionService;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::{OAuthStateData, PendingSignupData};
 use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
+use redis::aio::ConnectionManager;
+use sea_orm::ConnectionTrait;
 use axumkit_config::ServerConfig;
 use axumkit_constants::{oauth_pending_key, oauth_state_key};
 use axumkit_dto::oauth::internal::SignInResult;
 use axumkit_dto::oauth::request::OAuthAuthorizeFlow;
 use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::{Errors, ServiceResult};
-use redis::aio::ConnectionManager;
-use sea_orm::ConnectionTrait;
 
 /// GitHub OAuth 로그인을 처리합니다.
 ///
@@ -39,7 +39,7 @@ where
         || Errors::OauthInvalidState,
         |_| Errors::OauthInvalidState,
     )
-    .await?;
+        .await?;
 
     // 2. Authorization code를 access token으로 교환
     if state_data.provider != OAuthProvider::Github
@@ -55,7 +55,6 @@ where
     // 3. Access token으로 사용자 정보 가져오기
     let user_info = fetch_github_user_info(http_client, &access_token).await?;
 
-    let display_name = user_info.name.unwrap_or_else(|| user_info.login.clone());
     let email = if let Some(email) = user_info.email {
         email
     } else {
@@ -81,7 +80,7 @@ where
             user_agent,
             ip_address,
         )
-        .await?;
+            .await?;
 
         return Ok(SignInResult::Success(session.session_id));
     }
@@ -101,7 +100,6 @@ where
         provider_user_id: user_info.id.to_string(),
         anonymous_user_id: anonymous_user_id.to_string(),
         email: email.clone(),
-        display_name: display_name.clone(),
         profile_image: Some(user_info.avatar_url),
     };
 
@@ -113,11 +111,10 @@ where
         &pending_data,
         ttl_seconds,
     )
-    .await?;
+        .await?;
 
     Ok(SignInResult::PendingSignup {
         pending_token,
         email,
-        display_name,
     })
 }

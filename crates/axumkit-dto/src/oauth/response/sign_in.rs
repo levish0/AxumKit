@@ -9,13 +9,12 @@ use axumkit_errors::errors::Errors;
 
 /// 신규 사용자가 handle 없이 OAuth 로그인 시 반환되는 pending signup 응답
 #[derive(Debug, Serialize, ToSchema)]
+#[schema(description = "Response body returned when OAuth sign-in requires profile completion.")]
 pub struct OAuthPendingSignupResponse {
     /// Pending signup 완료를 위한 일회용 토큰
     pub pending_token: String,
     /// OAuth provider로부터 받은 이메일
     pub email: String,
-    /// OAuth provider로부터 받은 표시 이름
-    pub display_name: String,
 }
 
 impl IntoResponse for OAuthPendingSignupResponse {
@@ -40,11 +39,9 @@ impl OAuthSignInResponse {
             SignInResult::PendingSignup {
                 pending_token,
                 email,
-                display_name,
             } => OAuthSignInResponse::PendingSignup(OAuthPendingSignupResponse {
                 pending_token,
                 email,
-                display_name,
             }),
         }
     }
