@@ -30,3 +30,48 @@ pub fn oauth_pending_key(token: &str) -> String {
 pub fn oauth_pending_lock_key(token: &str) -> String {
     format!("{}{}", OAUTH_PENDING_LOCK_PREFIX, token)
 }
+
+/// Email verification token prefix.
+/// Format: "email_verification:{token}"
+pub const EMAIL_VERIFICATION_PREFIX: &str = "email_verification:";
+
+/// Password reset token prefix.
+/// Format: "password_reset:{token}"
+pub const PASSWORD_RESET_PREFIX: &str = "password_reset:";
+
+/// Email change token prefix.
+/// Format: "email_change:{token}"
+pub const EMAIL_CHANGE_PREFIX: &str = "email_change:";
+
+/// Build email verification key.
+pub fn email_verification_key(token: &str) -> String {
+    format!("{}{}", EMAIL_VERIFICATION_PREFIX, token)
+}
+
+/// Build password reset key.
+pub fn password_reset_key(token: &str) -> String {
+    format!("{}{}", PASSWORD_RESET_PREFIX, token)
+}
+
+/// Build email change key.
+pub fn email_change_key(token: &str) -> String {
+    format!("{}{}", EMAIL_CHANGE_PREFIX, token)
+}
+
+/// Pending email signup email index prefix
+/// Format: "email_signup:email:{email}"
+pub const EMAIL_SIGNUP_EMAIL_PREFIX: &str = "email_signup:email:";
+
+/// Pending email signup handle index prefix
+/// Format: "email_signup:handle:{handle}"
+pub const EMAIL_SIGNUP_HANDLE_PREFIX: &str = "email_signup:handle:";
+
+/// Pending email signup email index key generation
+pub fn email_signup_email_key(email: &str) -> String {
+    format!("{}{}", EMAIL_SIGNUP_EMAIL_PREFIX, email)
+}
+
+/// Pending email signup handle index key generation
+pub fn email_signup_handle_key(handle: &str) -> String {
+    format!("{}{}", EMAIL_SIGNUP_HANDLE_PREFIX, handle)
+}

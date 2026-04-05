@@ -16,10 +16,7 @@ use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 use std::net::SocketAddr;
 
-/// OAuth pending signup을 완료합니다.
 ///
-/// OAuth 로그인 시 신규 사용자인 경우 반환된 pending_token과 함께
-/// handle을 제출하여 가입을 완료합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/complete-signup",
@@ -44,15 +41,15 @@ pub async fn auth_complete_signup(
     let user_agent_str = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
-    // OAuth pending signup 완료
     let session_id = service_complete_signup(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         &state.r2_client,
         &state.worker,
         &payload.pending_token,
         &payload.handle,
+        &payload.display_name,
         &anonymous.anonymous_user_id,
         Some(user_agent_str),
         Some(ip_address),

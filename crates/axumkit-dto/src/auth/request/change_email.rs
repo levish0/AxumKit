@@ -4,11 +4,11 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct ChangeEmailRequest {
-    /// 현재 비밀번호 (본인 확인용)
+    /// Current password (for identity verification)
     #[validate(length(min = 1))]
     pub password: String,
 
-    /// 새 이메일 주소
+    /// New email address
     #[validate(email(message = "Invalid email format."))]
     pub new_email: String,
 }

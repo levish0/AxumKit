@@ -5,7 +5,6 @@ use axum::extract::State;
 use axumkit_dto::oauth::response::OAuthConnectionListResponse;
 use axumkit_errors::errors::Errors;
 
-/// 현재 사용자의 OAuth 연결 목록을 조회합니다.
 #[utoipa::path(
     get,
     path = "/v0/auth/oauth/connections",
@@ -23,7 +22,7 @@ pub async fn list_oauth_connections(
     State(state): State<AppState>,
     RequiredSession(session_context): RequiredSession,
 ) -> Result<OAuthConnectionListResponse, Errors> {
-    let result = service_list_oauth_connections(&state.read_db, session_context.user_id).await?;
+    let result = service_list_oauth_connections(&state.db, session_context.user_id).await?;
 
     Ok(result)
 }

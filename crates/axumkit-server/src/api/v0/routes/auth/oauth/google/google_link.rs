@@ -9,7 +9,6 @@ use axumkit_dto::oauth::request::link::GoogleLinkRequest;
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 
-/// Google OAuth를 현재 계정에 연결합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/google/link",
@@ -33,7 +32,7 @@ pub async fn auth_google_link(
     ValidatedJson(payload): ValidatedJson<GoogleLinkRequest>,
 ) -> Result<StatusCode, Errors> {
     service_link_google_oauth(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         session_context.user_id,

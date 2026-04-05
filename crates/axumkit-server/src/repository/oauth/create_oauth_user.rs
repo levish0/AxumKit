@@ -3,7 +3,7 @@ use axumkit_errors::errors::Errors;
 use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 
-/// OAuth를 통한 새 유저 생성 (비밀번호 없음, 이메일 인증 완료 상태)
+/// Create a new user via OAuth (no password, email verified)
 pub async fn repository_create_oauth_user<C>(
     conn: &C,
     email: &str,
@@ -20,8 +20,8 @@ where
         handle: Set(handle.to_string()),
         bio: Set(None),
         email: Set(email.to_string()),
-        password: Set(None),                // OAuth 유저는 비밀번호 없음
-        verified_at: Set(Some(Utc::now())), // OAuth 제공자가 이미 이메일 검증함
+        password: Set(None),                // OAuth users have no password
+        verified_at: Set(Some(Utc::now())), // OAuth provider already verified email
         profile_image: Set(profile_image),
         banner_image: Set(None),
         totp_secret: Set(None),

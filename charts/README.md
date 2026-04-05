@@ -129,7 +129,6 @@ appVersion: "0.4.0"
 | redis       | 24.1.2  | bitnami     |
 | nats        | 2.12.3  | nats-io     |
 | meilisearch | 0.21.0  | meilisearch |
-| seaweedfs   | 4.0.407 | seaweedfs   |
 
 ## Troubleshooting
 

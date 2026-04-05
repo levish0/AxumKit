@@ -8,6 +8,7 @@ pub mod resend_verification_email;
 pub mod reset_password;
 pub mod session;
 pub mod session_types;
+pub mod signup;
 pub mod totp;
 pub mod verify_email;
 

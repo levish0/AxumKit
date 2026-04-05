@@ -9,7 +9,6 @@ use axumkit_dto::oauth::request::link::GithubLinkRequest;
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 
-/// GitHub OAuth를 현재 계정에 연결합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/github/link",
@@ -33,7 +32,7 @@ pub async fn auth_github_link(
     ValidatedJson(payload): ValidatedJson<GithubLinkRequest>,
 ) -> Result<StatusCode, Errors> {
     service_link_github_oauth(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         session_context.user_id,

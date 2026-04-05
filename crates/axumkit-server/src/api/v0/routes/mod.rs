@@ -1,7 +1,7 @@
 mod action_logs;
 mod auth;
+mod moderation;
 pub mod openapi;
-mod posts;
 pub mod routes;
 mod search;
 mod stream;

@@ -1,10 +1,10 @@
 pub mod check_handle_available;
-pub mod create_user;
 pub mod delete_banner_image;
 pub mod delete_profile_image;
 pub mod get_my_profile;
 pub mod get_user_profile;
 pub mod get_user_profile_by_id;
+pub mod management;
 pub mod openapi;
 pub mod routes;
 pub mod update_my_profile;

@@ -7,15 +7,14 @@ use crate::auth::response::create_login_response;
 use crate::oauth::internal::SignInResult;
 use axumkit_errors::errors::Errors;
 
-/// 신규 사용자가 handle 없이 OAuth 로그인 시 반환되는 pending signup 응답
+/// Pending signup response returned when a new user signs in via OAuth without a handle
 #[derive(Debug, Serialize, ToSchema)]
+#[schema(description = "Response body returned when OAuth sign-in requires profile completion.")]
 pub struct OAuthPendingSignupResponse {
-    /// Pending signup 완료를 위한 일회용 토큰
+    /// One-time token for completing pending signup
     pub pending_token: String,
-    /// OAuth provider로부터 받은 이메일
+    /// Email received from the OAuth provider
     pub email: String,
-    /// OAuth provider로부터 받은 표시 이름
-    pub display_name: String,
 }
 
 impl IntoResponse for OAuthPendingSignupResponse {
@@ -24,36 +23,34 @@ impl IntoResponse for OAuthPendingSignupResponse {
     }
 }
 
-/// OAuth 로그인 결과를 HTTP 응답으로 변환
+/// Converts OAuth sign-in result to HTTP response
 pub enum OAuthSignInResponse {
-    /// 로그인 성공 - 204 No Content + Set-Cookie
+    /// Sign-in success - 204 No Content + Set-Cookie
     Success { session_id: String },
     /// Pending signup - 200 OK + JSON body
     PendingSignup(OAuthPendingSignupResponse),
 }
 
 impl OAuthSignInResponse {
-    /// SignInResult를 OAuthSignInResponse로 변환
+    /// Converts SignInResult to OAuthSignInResponse
     pub fn from_result(result: SignInResult) -> Self {
         match result {
             SignInResult::Success(session_id) => OAuthSignInResponse::Success { session_id },
             SignInResult::PendingSignup {
                 pending_token,
                 email,
-                display_name,
             } => OAuthSignInResponse::PendingSignup(OAuthPendingSignupResponse {
                 pending_token,
                 email,
-                display_name,
             }),
         }
     }
 
-    /// HTTP 응답으로 변환 (remember_me=true for OAuth, 30일 세션)
+    /// Converts to HTTP response (remember_me=true for OAuth, 30-day session)
     pub fn into_response_result(self) -> Result<axum::response::Response, Errors> {
         match self {
             OAuthSignInResponse::Success { session_id } => {
-                // OAuth 로그인은 항상 30일 유지 (remember_me=true)
+                // OAuth sign-in always persists for 30 days (remember_me=true)
                 create_login_response(session_id, true)
             }
             OAuthSignInResponse::PendingSignup(response) => Ok(response.into_response()),

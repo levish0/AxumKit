@@ -6,6 +6,6 @@ pub mod unlink;
 
 pub use authorize::{OAuthAuthorizeFlow, OAuthAuthorizeQuery};
 pub use github::GithubLoginRequest;
-pub use google::GoogleLoginRequest;
+pub use google::{GoogleLoginRequest, GoogleOneTapLoginRequest};
 pub use link::{GithubLinkRequest, GoogleLinkRequest};
 pub use unlink::UnlinkOAuthRequest;

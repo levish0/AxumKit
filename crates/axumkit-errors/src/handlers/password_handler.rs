@@ -34,6 +34,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         }
         Errors::PasswordAlreadySet => Some((StatusCode::BAD_REQUEST, PASSWORD_ALREADY_SET, None)),
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        _ => None, // Return None for errors from other domains
     }
 }

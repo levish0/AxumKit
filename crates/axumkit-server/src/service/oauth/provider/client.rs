@@ -6,7 +6,7 @@ use oauth2::{
 };
 use reqwest::Client as HttpClient;
 
-/// OAuth 인증 URL을 생성합니다.
+/// Generates an OAuth authorization URL.
 /// Returns: (auth_url, state, pkce_verifier)
 pub fn generate_auth_url<P: OAuthProviderConfig>(
     state: String,
@@ -41,7 +41,7 @@ pub fn generate_auth_url<P: OAuthProviderConfig>(
     ))
 }
 
-/// Authorization code를 access token으로 교환합니다.
+/// Exchanges an authorization code for an access token.
 pub async fn exchange_code<P: OAuthProviderConfig>(
     http_client: &HttpClient,
     code: &str,

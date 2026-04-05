@@ -6,11 +6,11 @@ use sea_orm::prelude::DateTimeUtc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait, IntoActiveModel, Set};
 use uuid::Uuid;
 
-/// 사용자 업데이트 파라미터
-/// - `Option<T>`: None = 변경 안 함, Some(value) = 값으로 변경
-/// - `Option<Option<T>>`: None = 변경 안 함, Some(None) = NULL로 설정, Some(Some(value)) = 값으로 설정
+/// User update parameters
+/// - `Option<T>`: None = no change, Some(value) = change to value
+/// - `Option<Option<T>>`: None = no change, Some(None) = set to NULL, Some(Some(value)) = set to value
 ///
-/// # 사용 예시
+/// # Usage Example
 /// ```ignore
 /// repository_update_user(conn, user_id, UserUpdateParams {
 ///     totp_secret: Some(Some(secret)),
@@ -32,7 +32,7 @@ pub struct UserUpdateParams {
     pub totp_backup_codes: Option<Option<Vec<String>>>,
 }
 
-/// 범용 사용자 정보 업데이트
+/// General-purpose user information update
 pub async fn repository_update_user<C>(
     conn: &C,
     user_id: Uuid,

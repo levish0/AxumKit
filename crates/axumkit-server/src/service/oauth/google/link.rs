@@ -13,7 +13,7 @@ use redis::aio::ConnectionManager;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use uuid::Uuid;
 
-/// Google OAuth를 기존 계정에 연결합니다.
+/// Links Google OAuth to an existing account.
 pub async fn service_link_google_oauth(
     conn: &DatabaseConnection,
     redis_conn: &ConnectionManager,
@@ -23,7 +23,7 @@ pub async fn service_link_google_oauth(
     state: &str,
     anonymous_user_id: &str,
 ) -> ServiceResult<()> {
-    // 1. Redis에서 state 검증 및 PKCE verifier 조회 (get_del로 1회용)
+    // 1. Validate state and retrieve PKCE verifier from Redis (single-use via get_del)
     let state_key = oauth_state_key(state);
     let state_data: OAuthStateData = get_json_and_delete(
         redis_conn,
@@ -33,7 +33,7 @@ pub async fn service_link_google_oauth(
     )
     .await?;
 
-    // 2. Authorization code를 access token으로 교환
+    // 2. Exchange authorization code for access token
     if state_data.provider != OAuthProvider::Google
         || state_data.flow != OAuthAuthorizeFlow::Link
         || state_data.anonymous_user_id != anonymous_user_id
@@ -44,17 +44,17 @@ pub async fn service_link_google_oauth(
     let access_token =
         exchange_code::<GoogleProvider>(http_client, code, &state_data.pkce_verifier).await?;
 
-    // 3. Access token으로 사용자 정보 가져오기
+    // 3. Fetch user info with access token
     let user_info = fetch_google_user_info(http_client, &access_token).await?;
 
-    // 3-1. 이메일 검증 여부 확인
+    // 3-1. Check email verification status
     if !user_info.verified_email {
         return Err(Errors::OauthEmailNotVerified);
     }
 
     let txn = conn.begin().await?;
 
-    // 4. 이미 다른 계정에 연결되어 있는지 확인
+    // 4. Check if already linked to another account
     if repository_find_user_by_oauth(&txn, OAuthProvider::Google, &user_info.id)
         .await?
         .is_some()
@@ -62,7 +62,7 @@ pub async fn service_link_google_oauth(
         return Err(Errors::OauthAccountAlreadyLinked);
     }
 
-    // 5. 현재 유저에게 이미 Google이 연결되어 있는지 확인
+    // 5. Check if Google is already linked to the current user
     if repository_find_oauth_connection(&txn, user_id, OAuthProvider::Google)
         .await?
         .is_some()
@@ -70,7 +70,7 @@ pub async fn service_link_google_oauth(
         return Err(Errors::OauthAccountAlreadyLinked);
     }
 
-    // 6. OAuth 연결 생성
+    // 6. Create OAuth connection
     repository_create_oauth_connection(&txn, &user_id, OAuthProvider::Google, &user_info.id)
         .await?;
 

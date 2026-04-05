@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-/// GitHub OAuth API에서 받는 유저 정보
+/// User info received from the GitHub OAuth API
 #[derive(Debug, Deserialize)]
 pub struct GithubUserInfo {
     /// GitHub user ID
@@ -15,7 +15,7 @@ pub struct GithubUserInfo {
     pub avatar_url: String,
 }
 
-/// GitHub user email 정보 (별도 API 호출용)
+/// GitHub user email info (for separate API call)
 #[derive(Debug, Deserialize)]
 pub struct GithubEmail {
     pub email: String,

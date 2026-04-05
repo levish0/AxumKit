@@ -4,15 +4,15 @@ use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// TOTP 상태 응답
+/// TOTP status response
 #[derive(Debug, Serialize, ToSchema)]
 pub struct TotpStatusResponse {
-    /// TOTP 활성화 여부
+    /// Whether TOTP is enabled
     pub enabled: bool,
-    /// TOTP 활성화 시각 (활성화된 경우만)
+    /// TOTP activation time (only when enabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled_at: Option<DateTime<Utc>>,
-    /// 남은 백업 코드 수 (활성화된 경우만)
+    /// Remaining backup code count (only when enabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_codes_remaining: Option<usize>,
 }

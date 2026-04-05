@@ -38,7 +38,6 @@ axumkit-server:
     POSTGRES_READ_PASSWORD: ""
 
     NATS_URL: "nats://axumkit-nats:4222"
-    SEAWEEDFS_ENDPOINT: "http://axumkit-seaweedfs-filer:8888"
 
     GOOGLE_CLIENT_ID: ""
     GOOGLE_CLIENT_SECRET: ""
@@ -50,8 +49,8 @@ axumkit-server:
 
     R2_ENDPOINT: ""
     R2_REGION: "auto"
-    R2_PUBLIC_DOMAIN: ""
-    R2_BUCKET_NAME: ""
+    R2_ASSETS_PUBLIC_DOMAIN: ""
+    R2_ASSETS_BUCKET_NAME: ""
     R2_ACCESS_KEY_ID: ""
     R2_SECRET_ACCESS_KEY: ""
 
@@ -92,12 +91,11 @@ axumkit-worker:
     POSTGRES_WRITE_PASSWORD: ""
 
     NATS_URL: "nats://axumkit-nats:4222"
-    SEAWEEDFS_ENDPOINT: "http://axumkit-seaweedfs-filer:8888"
 
     R2_ENDPOINT: ""
     R2_REGION: "auto"
-    R2_PUBLIC_DOMAIN: ""
-    R2_BUCKET_NAME: ""
+    R2_ASSETS_PUBLIC_DOMAIN: ""
+    R2_ASSETS_BUCKET_NAME: ""
     R2_ACCESS_KEY_ID: ""
     R2_SECRET_ACCESS_KEY: ""
 
@@ -183,22 +181,3 @@ meilisearch:
     enabled: true
     size: 10Gi
 
-# =============================================================================
-# SeaweedFS
-# =============================================================================
-seaweedfs:
-  enabled: true
-
-  master:
-    replicas: 1
-    storage: 1Gi
-
-  volume:
-    replicas: 1
-    storage: 50Gi
-
-  filer:
-    replicas: 1
-    storage: 1Gi
-    s3:
-      enabled: true

@@ -1,13 +1,21 @@
+pub mod ban_user;
 pub mod check_handle_available;
 pub mod create_user;
 pub mod get_user_profile;
 pub mod get_user_profile_by_id;
+pub mod grant_role;
+pub mod revoke_role;
+pub mod unban_user;
 pub mod update_my_profile;
 pub mod upload_user_image;
 
+pub use ban_user::BanUserRequest;
 pub use check_handle_available::CheckHandleAvailablePath;
 pub use create_user::CreateUserRequest;
 pub use get_user_profile::GetUserProfileRequest;
 pub use get_user_profile_by_id::GetUserProfileByIdRequest;
+pub use grant_role::GrantRoleRequest;
+pub use revoke_role::RevokeRoleRequest;
+pub use unban_user::UnbanUserRequest;
 pub use update_my_profile::UpdateMyProfileRequest;
 pub use upload_user_image::UploadUserImageRequest;

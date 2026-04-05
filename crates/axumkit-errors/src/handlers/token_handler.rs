@@ -3,10 +3,10 @@ use crate::protocol::token::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// 토큰 관련 에러 로깅 처리
+/// Token-related error logging handler
 pub fn log_error(error: &Errors) {
     match error {
-        // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
+        // Business logic errors - debug! level (client mistakes)
         Errors::TokenInvalidVerification
         | Errors::TokenExpiredVerification
         | Errors::TokenEmailMismatch
@@ -36,6 +36,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             Some((StatusCode::BAD_REQUEST, TOKEN_INVALID_EMAIL_CHANGE, None))
         }
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        _ => None, // Return None for errors from other domains
     }
 }

@@ -41,9 +41,8 @@ pub async fn auth_login(
     let user_agent = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
-    // 로그인 처리
     let result = service_login(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         payload,
         Some(user_agent),
@@ -55,12 +54,8 @@ pub async fn auth_login(
         LoginResult::SessionCreated {
             session_id,
             remember_me,
-        } => {
-            // 쿠키 설정하는 204 응답 반환
-            create_login_response(session_id, remember_me)
-        }
+        } => create_login_response(session_id, remember_me),
         LoginResult::TotpRequired(temp_token) => {
-            // TOTP 필요: 202 + temp_token 반환
             Ok(TotpRequiredResponse { temp_token }.into_response())
         }
     }

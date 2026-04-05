@@ -3,15 +3,28 @@ use crate::protocol::oauth::*;
 use axum::http::StatusCode;
 use tracing::{debug, error, warn};
 
-/// OAuth 관련 에러 로깅 처리
+/// OAuth error logging handler
 pub fn log_error(error: &Errors) {
     match error {
-        // 시스템 심각도 에러 - error! 레벨
+        // Critical system errors - error! level
         Errors::OauthUserInfoParseFailed(msg) => {
             error!("OAuth user info parse failed: {}", msg);
         }
 
-        // OAuth 에러 - warn! 레벨 (외부 서비스 관련)
+        // Google One Tap - warn! level (invalid tokens)
+        Errors::GoogleInvalidIdToken => {
+            warn!("Google One Tap: invalid ID token");
+        }
+
+        // Google One Tap - error! level (JWKS failures)
+        Errors::GoogleJwksFetchFailed => {
+            error!("Google One Tap: failed to fetch JWKS");
+        }
+        Errors::GoogleJwksParseFailed => {
+            error!("Google One Tap: failed to parse JWKS");
+        }
+
+        // OAuth errors - warn! level (external service related)
         Errors::OauthInvalidAuthUrl
         | Errors::OauthInvalidTokenUrl
         | Errors::OauthInvalidRedirectUrl
@@ -20,7 +33,7 @@ pub fn log_error(error: &Errors) {
             warn!("OAuth error: {:?}", error);
         }
 
-        // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
+        // Business logic errors - debug! level (client mistakes)
         Errors::OauthAccountAlreadyLinked
         | Errors::OauthConnectionNotFound
         | Errors::OauthCannotUnlinkLastConnection
@@ -84,6 +97,20 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             Some((StatusCode::BAD_REQUEST, OAUTH_EMAIL_NOT_VERIFIED, None))
         }
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        Errors::GoogleInvalidIdToken => {
+            Some((StatusCode::BAD_REQUEST, GOOGLE_INVALID_ID_TOKEN, None))
+        }
+        Errors::GoogleJwksFetchFailed => Some((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            GOOGLE_JWKS_FETCH_FAILED,
+            None,
+        )),
+        Errors::GoogleJwksParseFailed => Some((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            GOOGLE_JWKS_PARSE_FAILED,
+            None,
+        )),
+
+        _ => None, // Return None for errors from other domains
     }
 }

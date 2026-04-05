@@ -4,7 +4,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct VerifyEmailRequest {
-    /// 이메일 인증 토큰
+    /// Email verification token
     #[validate(length(min = 1))]
     pub token: String,
 }

@@ -1,6 +1,4 @@
-//! Test helpers for creating test data (users, posts, etc.)
-mod posts;
+//! Test helpers for creating test data.
 mod users;
 
-pub use posts::TestPost;
 pub use users::TestUser;

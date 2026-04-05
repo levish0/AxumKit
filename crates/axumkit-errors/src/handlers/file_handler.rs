@@ -3,10 +3,10 @@ use crate::protocol::file::*;
 use axum::http::StatusCode;
 use tracing::warn;
 
-/// 파일 관련 에러 로깅 처리
+/// File-related error logging handler
 pub fn log_error(error: &Errors) {
     match error {
-        // 파일 관련 에러 - warn! 레벨
+        // File-related errors - warn! level
         Errors::FileUploadError(_) | Errors::FileNotFound | Errors::FileReadError(_) => {
             warn!("File/processing error: {:?}", error);
         }
@@ -28,6 +28,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             Some((StatusCode::BAD_REQUEST, FILE_READ_ERROR, Some(msg.clone())))
         }
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        _ => None, // Return None for errors from other domains
     }
 }

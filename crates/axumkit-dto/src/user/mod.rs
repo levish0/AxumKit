@@ -2,10 +2,12 @@ pub mod request;
 pub mod response;
 
 pub use request::{
-    CheckHandleAvailablePath, CreateUserRequest, GetUserProfileByIdRequest, GetUserProfileRequest,
+    BanUserRequest, CheckHandleAvailablePath, CreateUserRequest, GetUserProfileByIdRequest,
+    GetUserProfileRequest, GrantRoleRequest, RevokeRoleRequest, UnbanUserRequest,
     UpdateMyProfileRequest, UploadUserImageRequest,
 };
 pub use response::{
-    CheckHandleAvailableResponse, CreateUserResponse, PublicUserProfile, UploadUserImageResponse,
+    BanUserResponse, CheckHandleAvailableResponse, CreateUserResponse, GrantRoleResponse,
+    PublicUserProfile, RevokeRoleResponse, UnbanUserResponse, UploadUserImageResponse,
     UserResponse,
 };

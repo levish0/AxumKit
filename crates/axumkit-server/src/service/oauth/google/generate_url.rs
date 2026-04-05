@@ -6,7 +6,7 @@ use axumkit_entity::common::OAuthProvider;
 use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 
-/// Google OAuth 인증 URL을 생성하고 state를 Redis에 저장합니다.
+/// Generates a Google OAuth authorization URL and stores the state in Redis.
 pub async fn service_generate_google_oauth_url(
     redis_conn: &ConnectionManager,
     anonymous_user_id: &str,

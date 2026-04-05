@@ -84,10 +84,10 @@ impl R2Client {
         {
             Ok(_) => Ok(true),
             Err(err) => {
-                // SdkError를 사용하여 더 정확한 에러 처리
+                // Use SdkError for more precise error handling
                 match &err {
                     SdkError::ServiceError(service_err) => {
-                        // 404 Not Found 에러인지 확인
+                        // Check if it's a 404 Not Found error
                         if service_err.err().is_not_found() {
                             Ok(false)
                         } else {
@@ -100,7 +100,7 @@ impl R2Client {
         }
     }
 
-    // 추가: 스트림으로 업로드 (큰 파일용)
+    // Additional: stream upload (for large files)
     pub async fn upload_file(
         &self,
         key: &str,
@@ -144,8 +144,8 @@ pub async fn establish_r2_connection() -> Result<R2Client, Box<dyn std::error::E
     let client = Client::from_conf(s3_config);
     let r2_client = R2Client::new(
         client,
-        config.r2_bucket_name.clone(),
-        config.r2_public_domain.clone(),
+        config.r2_assets_bucket_name.clone(),
+        config.r2_assets_public_domain.clone(),
     );
 
     info!("Successfully connected to R2");

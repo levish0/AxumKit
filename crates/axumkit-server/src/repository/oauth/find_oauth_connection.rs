@@ -7,7 +7,7 @@ use axumkit_errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-/// 특정 사용자의 특정 provider OAuth 연결을 조회합니다.
+/// Queries a specific provider's OAuth connection for a user.
 pub async fn repository_find_oauth_connection<C>(
     conn: &C,
     user_id: Uuid,

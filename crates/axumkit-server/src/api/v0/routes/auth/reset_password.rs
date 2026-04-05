@@ -23,7 +23,7 @@ pub async fn auth_reset_password(
     ValidatedJson(payload): ValidatedJson<ResetPasswordRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     service_reset_password(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &payload.token,
         &payload.new_password,

@@ -9,13 +9,13 @@ name = "migration"
 path = "src/lib.rs"
 
 [dependencies]
-async-std = { version = "1", features = ["attributes", "tokio1"] }
+async-std = { version = "1.13.2", features = ["attributes", "tokio1"] }
 dotenvy = "0.15.7"
-strum = { version = "0.27.2", features = ["derive"] }
+strum = { version = "0.28.0", features = ["derive"] }
 
 
 [dependencies.sea-orm-migration]
-version = "2.0.0-rc.30"
+version = "2.0.0-rc.37"
 features = [
     # Enable at least one `ASYNC_RUNTIME` and `DATABASE_DRIVER` feature if you want to run migration via CLI.
     # View the list of supported features at https://www.sea-ql.org/SeaORM/docs/install-and-config/database-and-async-runtime.

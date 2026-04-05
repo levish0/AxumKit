@@ -4,23 +4,19 @@ use crate::repository::user::{
 };
 use crate::utils::crypto::backup_code::verify_backup_code;
 use axumkit_errors::errors::{Errors, ServiceResult};
-use sea_orm::ConnectionTrait;
+use sea_orm::{DatabaseConnection, TransactionTrait};
+use tracing::info;
 use uuid::Uuid;
 
-/// TOTP 비활성화: 현재 코드 검증 후 모든 TOTP 필드 초기화
-pub async fn service_totp_disable<C>(
-    conn: &C,
+pub async fn service_totp_disable(
+    conn: &DatabaseConnection,
     user_id: Uuid,
-    email: &str,
     code: &str,
-) -> ServiceResult<()>
-where
-    C: ConnectionTrait,
-{
-    // 사용자 조회
-    let user = repository_get_user_by_id(conn, user_id).await?;
+) -> ServiceResult<()> {
+    let txn = conn.begin().await?;
 
-    // TOTP가 활성화되어 있어야 함
+    let user = repository_get_user_by_id(&txn, user_id).await?;
+
     if user.totp_enabled_at.is_none() {
         return Err(Errors::TotpNotEnabled);
     }
@@ -28,13 +24,11 @@ where
     let secret_base32 = user.totp_secret.clone().ok_or(Errors::TotpNotEnabled)?;
     let backup_codes = user.totp_backup_codes.clone().unwrap_or_default();
 
-    // 코드 검증 (TOTP 6자리 또는 백업 코드 8자리)
     if code.len() == 6 {
-        if !verify_totp_code(&secret_base32, email, code)? {
+        if !verify_totp_code(&secret_base32, &user.email, code)? {
             return Err(Errors::TotpInvalidCode);
         }
     } else if code.len() == 8 {
-        // 해시 비교로 백업 코드 검증
         if verify_backup_code(code, &backup_codes).is_none() {
             return Err(Errors::TotpInvalidCode);
         }
@@ -42,9 +36,8 @@ where
         return Err(Errors::TotpInvalidCode);
     }
 
-    // TOTP 비활성화 (모든 필드 초기화)
     repository_update_user(
-        conn,
+        &txn,
         user_id,
         UserUpdateParams {
             totp_secret: Some(None),
@@ -54,6 +47,10 @@ where
         },
     )
     .await?;
+
+    txn.commit().await?;
+
+    info!(user_id = %user_id, "TOTP disabled");
 
     Ok(())
 }

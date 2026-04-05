@@ -6,26 +6,26 @@ use crate::state::AppState;
 use axumkit_config::ServerConfig;
 use axumkit_errors::errors::Errors;
 
-/// Turnstile 헤더 이름
+/// Turnstile header name
 pub const TURNSTILE_TOKEN_HEADER: &str = "X-Turnstile-Token";
 
-/// Cloudflare Turnstile 검증 완료를 나타내는 extractor
+/// Extractor indicating Cloudflare Turnstile verification is complete
 ///
-/// 핸들러에 이 extractor를 추가하면 Turnstile 토큰 검증이 자동으로 수행됩니다.
-/// 검증 실패 시 요청이 거부되고 핸들러 본문은 실행되지 않습니다.
+/// Adding this extractor to a handler automatically performs Turnstile token verification.
+/// On verification failure, the request is rejected and the handler body is not executed.
 ///
-/// # 사용 예시
+/// # Usage Example
 /// ```rust,ignore
 /// pub async fn create_document(
 ///     State(state): State<AppState>,
-///     _turnstile: TurnstileVerified,  // 이 줄 추가하면 검증됨
+///     _turnstile: TurnstileVerified,  // Adding this line enables verification
 ///     Json(req): Json<CreateDocumentRequest>,
 /// ) -> Result<impl IntoResponse, Errors> {
-///     // Turnstile 검증 통과한 요청만 여기 도달
+///     // Only requests that passed Turnstile verification reach here
 /// }
 /// ```
 ///
-/// # 클라이언트 사용법
+/// # Client Usage
 /// ```typescript
 /// const response = await fetch('/api/v0/document', {
 ///   method: 'POST',
@@ -49,20 +49,20 @@ where
     async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
         let app_state = AppState::from_ref(state);
 
-        // 1. 헤더에서 토큰 추출
+        // 1. Extract token from header
         let token = parts
             .headers
             .get(TURNSTILE_TOKEN_HEADER)
             .and_then(|v| v.to_str().ok())
             .ok_or(Errors::TurnstileTokenMissing)?;
 
-        // 2. 클라이언트 IP 추출 (Cloudflare 환경에서는 CF-Connecting-IP 사용)
+        // 2. Extract client IP (uses CF-Connecting-IP in Cloudflare environments)
         let remote_ip = parts
             .headers
             .get("CF-Connecting-IP")
             .and_then(|v| v.to_str().ok());
 
-        // 3. Cloudflare API로 검증
+        // 3. Verify via Cloudflare API
         let config = ServerConfig::get();
         let response = verify_turnstile_token(
             &app_state.http_client,
@@ -72,7 +72,7 @@ where
         )
         .await?;
 
-        // 4. 검증 결과 확인
+        // 4. Check verification result
         if !response.success {
             return Err(Errors::TurnstileVerificationFailed);
         }

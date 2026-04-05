@@ -7,6 +7,4 @@ pub enum ActionResourceType {
     Table,
     #[sea_orm(iden = "user")]
     User,
-    #[sea_orm(iden = "post")]
-    Post,
 }

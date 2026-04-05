@@ -72,18 +72,39 @@ services:
       timeout: 3s
       retries: 10
 
-  seaweedfs:
-    image: chrislusf/seaweedfs:4.04
-    container_name: e2e-seaweedfs
-    command: "server -filer -s3"
+  object-storage:
+    image: minio/minio:latest
+    container_name: e2e-object-storage
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
     networks:
       - e2e-network
     healthcheck:
-      test: ["CMD", "curl", "-s", "http://localhost:8333/"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 15
       start_period: 10s
+
+  object-storage-init:
+    image: minio/mc:latest
+    container_name: e2e-object-storage-init
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - >
+        mc alias set local http://object-storage:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/axumkit-assets-test &&
+        mc anonymous set download local/axumkit-assets-test
+    networks:
+      - e2e-network
+    depends_on:
+      object-storage:
+        condition: service_healthy
 
   server:
     image: e2e-server:latest
@@ -119,19 +140,17 @@ services:
       REDIS_CACHE_TTL: "3600"
       MEILISEARCH_HOST: http://meilisearch:7700
       NATS_URL: nats://nats:4222
-      R2_ENDPOINT: http://seaweedfs:8333
-      R2_ACCESS_KEY_ID: ""
-      R2_SECRET_ACCESS_KEY: ""
-      R2_BUCKET_NAME: axumkit-test
+      R2_ENDPOINT: http://object-storage:9000
+      R2_ACCESS_KEY_ID: minioadmin
+      R2_SECRET_ACCESS_KEY: minioadmin
+      R2_ASSETS_BUCKET_NAME: axumkit-assets-test
       R2_REGION: us-east-1
-      R2_PUBLIC_DOMAIN: ""
-      R2_ACCOUNT_ID: ""
+      R2_ASSETS_PUBLIC_DOMAIN: http://localhost:9000/axumkit-assets-test
       TOTP_SECRET: test-totp-secret-key-for-e2e
       AUTH_SESSION_MAX_LIFETIME_HOURS: "720"
       AUTH_SESSION_SLIDING_TTL_HOURS: "168"
       AUTH_SESSION_REFRESH_THRESHOLD: "50"
       TURNSTILE_SECRET_KEY: 1x0000000000000000000000000000000AA
-      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
       GOOGLE_CLIENT_ID: mock
       GOOGLE_CLIENT_SECRET: mock
       GOOGLE_REDIRECT_URI: http://localhost:8000/auth/google/callback
@@ -155,8 +174,8 @@ services:
         condition: service_healthy
       nats:
         condition: service_healthy
-      seaweedfs:
-        condition: service_healthy
+      object-storage-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
       interval: 5s
@@ -187,6 +206,9 @@ services:
       # Redis Cache
       REDIS_CACHE_HOST: redis-cache
       REDIS_CACHE_PORT: "6379"
+      # Redis Session (persistent store for cron locks)
+      REDIS_SESSION_HOST: redis-session
+      REDIS_SESSION_PORT: "6379"
       # SMTP (mock for e2e)
       SMTP_HOST: localhost
       SMTP_PORT: "25"
@@ -201,15 +223,13 @@ services:
       FRONTEND_PATH_VERIFY_EMAIL: /verify-email
       FRONTEND_PATH_RESET_PASSWORD: /reset-password
       FRONTEND_PATH_CONFIRM_EMAIL_CHANGE: /confirm-email-change
-      # SeaweedFS
-      SEAWEEDFS_ENDPOINT: http://seaweedfs:8333
-      # R2 (mock)
-      R2_ENDPOINT: http://seaweedfs:8333
+      # R2-compatible object storage (MinIO)
+      R2_ENDPOINT: http://object-storage:9000
       R2_REGION: us-east-1
-      R2_ACCESS_KEY_ID: ""
-      R2_SECRET_ACCESS_KEY: ""
-      R2_BUCKET_NAME: axumkit-test
-      R2_PUBLIC_DOMAIN: ""
+      R2_ACCESS_KEY_ID: minioadmin
+      R2_SECRET_ACCESS_KEY: minioadmin
+      R2_ASSETS_BUCKET_NAME: axumkit-assets-test
+      R2_ASSETS_PUBLIC_DOMAIN: http://localhost:9000/axumkit-assets-test
     networks:
       - e2e-network
     depends_on:
@@ -221,5 +241,7 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
-      seaweedfs:
+      redis-session:
         condition: service_healthy
+      object-storage-init:
+        condition: service_completed_successfully

@@ -4,7 +4,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate, ToSchema)]
 pub struct ConfirmEmailChangeRequest {
-    /// 이메일 변경 토큰 (이메일 링크의 ?token= 값)
+    /// Email change token (?token= value from the email link)
     #[validate(length(min = 1))]
     pub token: String,
 }

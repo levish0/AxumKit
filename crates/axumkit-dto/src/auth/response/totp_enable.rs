@@ -3,10 +3,10 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// TOTP 활성화 응답 (백업 코드 반환)
+/// TOTP enable response (returns backup codes)
 #[derive(Debug, Serialize, ToSchema)]
 pub struct TotpEnableResponse {
-    /// 백업 코드 목록 (10개, 8자리 영숫자)
+    /// List of backup codes (10 codes, 8-character alphanumeric)
     pub backup_codes: Vec<String>,
 }
 

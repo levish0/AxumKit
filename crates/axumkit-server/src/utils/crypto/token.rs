@@ -1,14 +1,14 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
-use rand::Rng;
+use rand::RngExt;
 
-/// 암호학적으로 안전한 토큰 생성 (32바이트 = 256비트)
-/// URL-safe Base64 인코딩으로 반환 (43자)
+/// Generate a cryptographically secure token (32 bytes = 256 bits)
+/// Returned as URL-safe Base64 encoding (43 characters)
 pub fn generate_secure_token() -> String {
     let token_bytes: [u8; 32] = rand::rng().random();
     URL_SAFE_NO_PAD.encode(token_bytes)
 }
 
-/// 지정된 길이의 암호학적으로 안전한 토큰 생성
+/// Generate a cryptographically secure token of specified length
 pub fn generate_secure_token_with_length(byte_length: usize) -> String {
     let token_bytes: Vec<u8> = (0..byte_length).map(|_| rand::rng().random()).collect();
     URL_SAFE_NO_PAD.encode(&token_bytes)
@@ -24,7 +24,7 @@ mod tests {
         // 32 bytes -> 43 chars in base64 (no padding)
         assert_eq!(token.len(), 43);
 
-        // 두 번 생성하면 다른 값
+        // Two generated tokens should be different
         let token2 = generate_secure_token();
         assert_ne!(token, token2);
     }

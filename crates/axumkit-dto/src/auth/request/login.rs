@@ -13,7 +13,7 @@ pub struct LoginRequest {
         message = "Password must be between 6 and 20 characters."
     ))]
     pub password: String,
-    /// 로그인 유지 여부 (체크 시 30일, 미체크 시 브라우저 닫으면 만료)
+    /// Remember me (checked: 30 days, unchecked: expires when browser is closed)
     #[serde(default)]
     #[schema(example = false)]
     pub remember_me: bool,

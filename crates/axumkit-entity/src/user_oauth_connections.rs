@@ -1,8 +1,7 @@
+use super::users::Entity as UsersEntity;
+use crate::common::OAuthProvider;
 use sea_orm::prelude::*;
 use uuid::Uuid;
-
-use super::common::OAuthProvider;
-use super::users::Entity as UsersEntity;
 
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "user_oauth_connections")]

@@ -54,7 +54,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // handle 컬럼 인덱스 생성 (로그인/검색 성능 최적화)
+        // Create index on handle column (optimize login/search performance)
         manager
             .create_index(
                 Index::create()
@@ -65,7 +65,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // email 컬럼 인덱스 생성 (로그인/검색 성능 최적화)
+        // Create index on email column (optimize login/search performance)
         manager
             .create_index(
                 Index::create()

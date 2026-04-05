@@ -7,8 +7,10 @@ pub mod get_by_email;
 pub mod get_by_handle;
 pub mod get_by_id;
 pub mod update;
+pub mod user_bans;
+pub mod user_roles;
 
-pub use create::repository_create_user;
+pub use create::{repository_create_user, repository_create_user_with_password_hash};
 pub use find_by_email::repository_find_user_by_email;
 pub use find_by_handle::repository_find_user_by_handle;
 pub use find_by_id::repository_find_user_by_id;

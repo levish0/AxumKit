@@ -145,9 +145,6 @@ secret:
   # NATS (optional, default: nats://localhost:4222)
   NATS_URL: ""
 
-  # SeaweedFS (required)
-  SEAWEEDFS_ENDPOINT: ""
-
   # Google OAuth (required)
   GOOGLE_CLIENT_ID: ""
   GOOGLE_CLIENT_SECRET: ""
@@ -161,8 +158,8 @@ secret:
   # Cloudflare R2 (required)
   R2_ENDPOINT: ""
   R2_REGION: "auto"
-  R2_PUBLIC_DOMAIN: ""
-  R2_BUCKET_NAME: ""
+  R2_ASSETS_PUBLIC_DOMAIN: ""
+  R2_ASSETS_BUCKET_NAME: ""
   R2_ACCESS_KEY_ID: ""
   R2_SECRET_ACCESS_KEY: ""
 

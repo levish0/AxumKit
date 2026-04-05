@@ -1,12 +1,11 @@
 use axum::error_handling::HandleErrorLayer;
-use axum::handler::Handler;
 use axum::{Router, extract::DefaultBodyLimit, middleware};
 use axumkit_config::ServerConfig;
 use axumkit_dto::action_logs::ActionLogResponse;
 use axumkit_server::api::routes::api_routes;
 use axumkit_server::connection::{
-    MeilisearchClient, create_http_client, establish_r2_connection, establish_read_connection,
-    establish_redis_connection, establish_seaweedfs_connection, establish_write_connection,
+    MeilisearchClient, create_http_client, establish_connection, establish_r2_connection,
+    establish_redis_connection,
 };
 use axumkit_server::eventstream::start_eventstream_subscriber;
 use axumkit_server::middleware::anonymous_user::anonymous_user_middleware;
@@ -30,15 +29,10 @@ use tower_http::trace::TraceLayer;
 use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {
-    let write_db = establish_write_connection().await;
-    let read_db = establish_read_connection().await;
+    let db = establish_connection().await;
     let r2_client = establish_r2_connection().await.map_err(|e| {
         error!("Failed to establish cloudflare_r2 connection: {}", e);
         anyhow::anyhow!("R2 connection failed: {}", e)
-    })?;
-    let seaweedfs_client = establish_seaweedfs_connection().await.map_err(|e| {
-        error!("Failed to establish SeaweedFS connection: {}", e);
-        anyhow::anyhow!("SeaweedFS connection failed: {}", e)
     })?;
     let redis_session = establish_redis_connection(
         &ServerConfig::get().redis_session_host,
@@ -99,10 +93,8 @@ pub async fn run_server() -> anyhow::Result<()> {
     );
 
     let state = AppState {
-        write_db,
-        read_db,
+        db,
         r2_client,
-        seaweedfs_client,
         redis_session,
         redis_cache,
         worker,
@@ -159,7 +151,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 #[tokio::main]
 async fn main() {
     dotenvy::dotenv().ok();
-    // tracing 초기화
+    // Initialize tracing
     init_tracing();
 
     if let Err(err) = run_server().await {

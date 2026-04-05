@@ -4,7 +4,7 @@ use reqwest::Client as HttpClient;
 
 const GOOGLE_USER_INFO_URL: &str = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-/// Access token으로 Google 사용자 정보를 가져옵니다.
+/// Fetches Google user info using an access token.
 pub async fn fetch_google_user_info(
     http_client: &HttpClient,
     access_token: &str,

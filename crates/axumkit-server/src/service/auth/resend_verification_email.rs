@@ -1,71 +1,45 @@
 use crate::bridge::worker_client;
-use crate::repository::user::repository_get_user_by_id;
-use crate::service::auth::verify_email::EmailVerificationData;
+use crate::service::auth::verify_email::{
+    find_pending_email_signup_by_email, get_pending_signup_remaining_minutes,
+};
 use crate::state::WorkerClient;
-use crate::utils::crypto::token::generate_secure_token;
-use crate::utils::redis_cache::set_json_with_ttl;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::{Errors, ServiceResult};
+use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
-use sea_orm::ConnectionTrait;
-use uuid::Uuid;
+use tracing::info;
 
-/// 이메일 인증 메일을 재발송합니다.
+/// Resend a verification email for a pending email/password signup.
 ///
-/// # Arguments
-/// * `conn` - 데이터베이스 연결
-/// * `redis_conn` - Redis 연결
-/// * `worker` - Worker Redis 연결
-/// * `user_id` - 사용자 ID
-///
-/// # Returns
-/// * `()` - 성공 시
-pub async fn service_resend_verification_email<C>(
-    conn: &C,
+/// Re-sends the **existing** token with its actual remaining TTL so the email
+/// template shows the real validity window. Returns `Ok(())` silently if no
+/// pending signup exists (prevents email enumeration).
+pub async fn service_resend_verification_email(
     redis_conn: &ConnectionManager,
     worker: &WorkerClient,
-    user_id: Uuid,
-) -> ServiceResult<()>
-where
-    C: ConnectionTrait,
-{
-    let config = ServerConfig::get();
-
-    // 1. 사용자 조회
-    let user = repository_get_user_by_id(conn, user_id).await?;
-
-    // 2. 이미 인증된 사용자인지 확인
-    if user.verified_at.is_some() {
-        return Err(Errors::EmailAlreadyVerified);
-    }
-
-    // 3. OAuth 전용 사용자인지 확인 (password가 없으면 OAuth 사용자)
-    if user.password.is_none() {
-        return Err(Errors::UserPasswordNotSet);
-    }
-
-    // 4. 새 토큰 생성 (암호학적으로 안전한 랜덤 토큰)
-    let token = generate_secure_token();
-    let token_key = format!("email_verification:{}", token);
-
-    let verification_data = EmailVerificationData {
-        user_id: user.id.to_string(),
-        email: user.email.clone(),
+    email: &str,
+) -> ServiceResult<()> {
+    let Some((existing_token, signup_data)) =
+        find_pending_email_signup_by_email(redis_conn, email).await?
+    else {
+        return Ok(());
     };
 
-    // 5. Redis에 토큰 저장 (분 단위 → 초 단위 변환)
-    let ttl_seconds = (config.auth_email_verification_token_expire_time * 60) as u64;
-    set_json_with_ttl(redis_conn, &token_key, &verification_data, ttl_seconds).await?;
+    let remaining_minutes =
+        get_pending_signup_remaining_minutes(redis_conn, &existing_token).await?;
 
-    // 6. Worker 서비스에 이메일 발송 요청
+    if remaining_minutes == 0 {
+        return Ok(());
+    }
+
     worker_client::send_verification_email(
         worker,
-        &user.email,
-        &user.handle,
-        &token,
-        config.auth_email_verification_token_expire_time as u64,
+        &signup_data.email,
+        &signup_data.handle,
+        &existing_token,
+        remaining_minutes,
     )
     .await?;
+
+    info!(email = %signup_data.email, handle = %signup_data.handle, "Pending signup verification email resent");
 
     Ok(())
 }

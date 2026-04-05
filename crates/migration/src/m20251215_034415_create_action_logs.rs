@@ -23,7 +23,6 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(ActionLogs::Action).text().not_null())
                     .col(ColumnDef::new(ActionLogs::ActorId).uuid().null())
-                    .col(ColumnDef::new(ActionLogs::ActorIp).inet().null())
                     .col(
                         ColumnDef::new(ActionLogs::ResourceType)
                             .enumeration(
@@ -54,15 +53,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // CHECK constraint: at least one of actor_id or actor_ip must be set
-        manager
-            .get_connection()
-            .execute_unprepared(
-                "ALTER TABLE action_logs ADD CONSTRAINT chk_action_logs_actor \
-                 CHECK (((actor_id IS NOT NULL)::int + (actor_ip IS NOT NULL)::int) >= 1)",
-            )
-            .await?;
-
         // Index: User actions (filter by actor_id)
         manager
             .create_index(
@@ -71,19 +61,6 @@ impl MigrationTrait for Migration {
                     .table(ActionLogs::Table)
                     .col(ActionLogs::ActorId)
                     .col(ActionLogs::Id)
-                    .to_owned(),
-            )
-            .await?;
-
-        // Index: Anonymous contributions (filter by actor_ip)
-        // Using SP-GiST for INET type
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_action_logs_actor_ip")
-                    .table(ActionLogs::Table)
-                    .col(ActionLogs::ActorIp)
-                    .index_type(IndexType::Custom(Alias::new("spgist").into()))
                     .to_owned(),
             )
             .await?;
@@ -127,7 +104,6 @@ pub enum ActionLogs {
     Id,
     Action,
     ActorId,
-    ActorIp,
     ResourceType,
     ResourceId,
     Summary,

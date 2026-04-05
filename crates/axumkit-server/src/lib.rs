@@ -4,6 +4,7 @@ pub mod connection;
 pub mod eventstream;
 pub mod extractors;
 pub mod middleware;
+pub mod permission;
 pub mod repository;
 pub mod service;
 pub mod state;

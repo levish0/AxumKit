@@ -3,12 +3,12 @@ use axum::response::{IntoResponse, Response};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// TOTP Setup 응답
+/// TOTP setup response
 #[derive(Debug, Serialize, ToSchema)]
 pub struct TotpSetupResponse {
-    /// QR 코드 PNG 이미지 (Base64 인코딩)
+    /// QR code PNG image (Base64 encoded)
     pub qr_code_base64: String,
-    /// otpauth:// URI (수동 입력용)
+    /// otpauth:// URI (for manual entry)
     pub qr_code_uri: String,
 }
 

@@ -6,15 +6,15 @@ use axumkit_constants::{PROFILE_IMAGE_MAX_SIZE, user_image_key};
 use reqwest::Client as HttpClient;
 use tracing::{error, warn};
 
-/// OAuth 프로필 이미지를 다운로드하여 R2에 업로드하고 storage key를 반환합니다.
+/// Downloads an OAuth profile image, uploads it to R2, and returns the storage key.
 ///
-/// 실패 시 None을 반환합니다 (프로필 이미지 없이 가입 진행).
+/// Returns None on failure (signup proceeds without profile image).
 pub async fn download_and_upload_profile_image(
     http_client: &HttpClient,
     r2_assets: &R2Client,
     image_url: &str,
 ) -> Option<String> {
-    // 1. 이미지 다운로드
+    // 1. Download image
     let response = match http_client.get(image_url).send().await {
         Ok(resp) => resp,
         Err(e) => {
@@ -36,7 +36,7 @@ pub async fn download_and_upload_profile_image(
         }
     };
 
-    // 2. 이미지 검증
+    // 2. Validate image
     let image_info = match validate_image(&image_bytes, PROFILE_IMAGE_MAX_SIZE) {
         Ok(info) => info,
         Err(e) => {
@@ -45,7 +45,7 @@ pub async fn download_and_upload_profile_image(
         }
     };
 
-    // 3. 이미지 처리 (WebP 변환, 리사이즈)
+    // 3. Process image (WebP conversion, resize)
     let processed = match process_image_for_upload(&image_bytes, &image_info.mime_type) {
         Ok(p) => p,
         Err(e) => {
@@ -54,7 +54,7 @@ pub async fn download_and_upload_profile_image(
         }
     };
 
-    // 4. R2 업로드
+    // 4. Upload to R2
     let hash = generate_image_hash(&processed.data);
     let storage_key = user_image_key(&hash, &processed.extension);
 

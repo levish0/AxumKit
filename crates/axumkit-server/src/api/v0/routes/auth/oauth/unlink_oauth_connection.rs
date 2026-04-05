@@ -7,7 +7,6 @@ use axumkit_dto::oauth::request::unlink::UnlinkOAuthRequest;
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
 
-/// OAuth 연결을 해제합니다.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/connections/unlink",
@@ -29,7 +28,7 @@ pub async fn unlink_oauth_connection(
     RequiredSession(session_context): RequiredSession,
     ValidatedJson(payload): ValidatedJson<UnlinkOAuthRequest>,
 ) -> Result<StatusCode, Errors> {
-    service_unlink_oauth(&state.write_db, session_context.user_id, payload.provider).await?;
+    service_unlink_oauth(&state.db, session_context.user_id, payload.provider).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

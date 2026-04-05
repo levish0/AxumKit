@@ -56,7 +56,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // 3. provider + provider_user_id 유니크 제약조건
+        // 3. Unique constraint on provider + provider_user_id
         manager
             .create_index(
                 Index::create()
@@ -69,7 +69,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // 4. user_id + provider 유니크 제약조건 (한 유저당 provider별 하나씩만)
+        // 4. Unique constraint on user_id + provider (one connection per provider per user)
         manager
             .create_index(
                 Index::create()
@@ -82,7 +82,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // 5. user_id 인덱스 (유저별 연동된 제공자 조회용)
+        // 5. Index on user_id (for querying linked providers per user)
         manager
             .create_index(
                 Index::create()

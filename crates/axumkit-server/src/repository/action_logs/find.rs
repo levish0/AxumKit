@@ -1,22 +1,11 @@
-use axumkit_constants::ActionLogAction;
+use super::filter::{ActionLogFilter, apply_action_log_filter};
 use axumkit_dto::pagination::CursorDirection;
 use axumkit_entity::action_logs::{
     Column as ActionLogColumn, Entity as ActionLogEntity, Model as ActionLogModel,
 };
-use axumkit_entity::common::ActionResourceType;
 use axumkit_errors::errors::Errors;
-use sea_orm::prelude::IpNetwork;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
-
-#[derive(Debug, Default, Clone)]
-pub struct ActionLogFilter {
-    pub actor_id: Option<Uuid>,
-    pub actor_ip: Option<IpNetwork>,
-    pub resource_id: Option<Uuid>,
-    pub resource_type: Option<ActionResourceType>,
-    pub actions: Option<Vec<ActionLogAction>>,
-}
 
 pub async fn repository_find_action_logs<C>(
     conn: &C,
@@ -28,30 +17,7 @@ pub async fn repository_find_action_logs<C>(
 where
     C: ConnectionTrait,
 {
-    let mut query = ActionLogEntity::find();
-
-    if let Some(actor_id) = filter.actor_id {
-        query = query.filter(ActionLogColumn::ActorId.eq(actor_id));
-    }
-
-    if let Some(actor_ip) = filter.actor_ip {
-        query = query.filter(ActionLogColumn::ActorIp.eq(actor_ip));
-    }
-
-    if let Some(resource_id) = filter.resource_id {
-        query = query.filter(ActionLogColumn::ResourceId.eq(resource_id));
-    }
-
-    if let Some(resource_type) = &filter.resource_type {
-        query = query.filter(ActionLogColumn::ResourceType.eq(resource_type.clone()));
-    }
-
-    if let Some(actions) = &filter.actions {
-        if !actions.is_empty() {
-            let action_strs: Vec<&str> = actions.iter().map(|a| a.as_str()).collect();
-            query = query.filter(ActionLogColumn::Action.is_in(action_strs));
-        }
-    }
+    let mut query = apply_action_log_filter(ActionLogEntity::find(), filter);
 
     // Apply cursor-based filtering (UUIDv7 is time-sortable)
     if let Some(id) = cursor_id {

@@ -2,6 +2,7 @@ use super::{GoogleProvider, fetch_google_user_info};
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
+use crate::service::auth::verify_email::find_pending_email_signup_by_email;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::{OAuthStateData, PendingSignupData};
 use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
@@ -14,10 +15,10 @@ use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 
-/// Google OAuth 로그인을 처리합니다.
+/// Handles Google OAuth sign-in.
 ///
-/// - 기존 사용자: 세션 생성 후 Success 반환
-/// - 신규 사용자: PendingSignup 반환 (complete-signup으로 가입 완료 필요)
+/// - Existing user: creates a session and returns Success
+/// - New user: returns PendingSignup (requires complete-signup to finish registration)
 pub async fn service_google_sign_in<C>(
     conn: &C,
     redis_conn: &ConnectionManager,
@@ -31,7 +32,7 @@ pub async fn service_google_sign_in<C>(
 where
     C: ConnectionTrait,
 {
-    // 1. Redis에서 state 검증 및 PKCE verifier 조회 (get_del로 1회용)
+    // 1. Validate state and retrieve PKCE verifier from Redis (single-use via get_del)
     let state_key = oauth_state_key(state);
     let state_data: OAuthStateData = get_json_and_delete(
         redis_conn,
@@ -41,7 +42,7 @@ where
     )
     .await?;
 
-    // 2. Authorization code를 access token으로 교환
+    // 2. Exchange authorization code for access token
     if state_data.provider != OAuthProvider::Google
         || state_data.flow != OAuthAuthorizeFlow::Login
         || state_data.anonymous_user_id != anonymous_user_id
@@ -52,19 +53,19 @@ where
     let access_token =
         exchange_code::<GoogleProvider>(http_client, code, &state_data.pkce_verifier).await?;
 
-    // 3. Access token으로 사용자 정보 가져오기
+    // 3. Fetch user info with access token
     let user_info = fetch_google_user_info(http_client, &access_token).await?;
 
-    // 3-1. 이메일 검증 여부 확인
+    // 3-1. Check email verification status
     if !user_info.verified_email {
         return Err(Errors::OauthEmailNotVerified);
     }
 
-    // 4. 기존 OAuth 연결 확인
+    // 4. Check for existing OAuth connection
     if let Some(existing_user) =
         repository_find_user_by_oauth(conn, OAuthProvider::Google, &user_info.id).await?
     {
-        // 기존 사용자 - 세션 생성 후 Success 반환
+        // Existing user - create session and return Success
         let session = SessionService::create_session(
             redis_conn,
             existing_user.id.to_string(),
@@ -76,7 +77,7 @@ where
         return Ok(SignInResult::Success(session.session_id));
     }
 
-    // 5. 신규 사용자 - 이메일 중복 확인
+    // 5. New user - check for email duplication
     if repository_find_user_by_email(conn, user_info.email.clone())
         .await?
         .is_some()
@@ -84,14 +85,21 @@ where
         return Err(Errors::OauthEmailAlreadyExists);
     }
 
-    // 6. 신규 사용자 - pending signup 데이터를 Redis에 저장
+    // 5b. Check if a pending email/password signup holds this email
+    if find_pending_email_signup_by_email(redis_conn, &user_info.email)
+        .await?
+        .is_some()
+    {
+        return Err(Errors::OauthEmailAlreadyExists);
+    }
+
+    // 6. New user - store pending signup data in Redis
     let config = ServerConfig::get();
     let pending_data = PendingSignupData {
         provider: OAuthProvider::Google,
         provider_user_id: user_info.id,
         anonymous_user_id: anonymous_user_id.to_string(),
         email: user_info.email.clone(),
-        display_name: user_info.name.clone(),
         profile_image: Some(user_info.picture),
     };
 
@@ -108,6 +116,5 @@ where
     Ok(SignInResult::PendingSignup {
         pending_token,
         email: user_info.email,
-        display_name: user_info.name,
     })
 }

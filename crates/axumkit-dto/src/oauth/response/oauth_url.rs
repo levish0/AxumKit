@@ -6,10 +6,10 @@ use axum::{
 use serde::Serialize;
 use utoipa::ToSchema;
 
-/// OAuth authorization URL 응답
+/// OAuth authorization URL response
 #[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct OAuthUrlResponse {
-    /// Google/GitHub OAuth authorization URL (state parameter 포함)
+    /// Google/GitHub OAuth authorization URL (includes state parameter)
     pub auth_url: String,
 }
 

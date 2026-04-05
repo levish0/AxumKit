@@ -3,10 +3,10 @@ use crate::protocol::totp::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// TOTP 관련 에러 로깅 처리
+/// TOTP error logging handler
 pub fn log_error(error: &Errors) {
     match error {
-        // 비즈니스 로직 에러 - debug! 레벨 (클라이언트 실수)
+        // Business logic errors - debug! level (client mistakes)
         Errors::TotpAlreadyEnabled
         | Errors::TotpNotEnabled
         | Errors::TotpInvalidCode
@@ -16,7 +16,7 @@ pub fn log_error(error: &Errors) {
             debug!("TOTP client error: {:?}", error);
         }
 
-        // 시스템 에러 - error! 레벨
+        // System errors - error! level
         Errors::TotpSecretGenerationFailed | Errors::TotpQrGenerationFailed => {
             tracing::error!("TOTP system error: {:?}", error);
         }
@@ -51,6 +51,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             None,
         )),
 
-        _ => None, // 다른 도메인의 에러는 None 반환
+        _ => None, // Return None for errors from other domains
     }
 }

@@ -8,10 +8,10 @@ use tracing::warn;
 pub struct ServerConfig {
     pub is_dev: bool,
 
-    pub totp_secret: String,                  // TOTP 백업 코드 해시용 시크릿
-    pub auth_session_max_lifetime_hours: i64, // 세션 최대 수명 (시간)
-    pub auth_session_sliding_ttl_hours: i64,  // 활동 시 연장 TTL (시간)
-    pub auth_session_refresh_threshold: u8,   // TTL 갱신 임계값 (%)
+    pub totp_secret: String, // Secret for hashing TOTP backup codes
+    pub auth_session_max_lifetime_hours: i64, // Maximum session lifetime (hours)
+    pub auth_session_sliding_ttl_hours: i64, // Sliding TTL extended on activity (hours)
+    pub auth_session_refresh_threshold: u8, // TTL refresh threshold (%)
     pub auth_email_verification_token_expire_time: i64, // minutes
     pub auth_password_reset_token_expire_time: i64, // minutes
     pub auth_email_change_token_expire_time: i64, // minutes
@@ -27,32 +27,26 @@ pub struct ServerConfig {
     pub github_client_secret: String,
     pub github_redirect_uri: String,
 
-    // Cloudflare
+    // Cloudflare R2 (shared credentials)
     pub r2_endpoint: String,
     pub r2_region: String,
-    pub r2_public_domain: String,
-    pub r2_bucket_name: String,
     pub r2_access_key_id: String,
     pub r2_secret_access_key: String,
+    // R2 Assets (public bucket - images, sitemap)
+    pub r2_assets_public_domain: String,
+    pub r2_assets_bucket_name: String,
+
+    // Cloudflare Turnstile
     pub turnstile_secret_key: String,
 
-    // Write DB (Primary)
-    pub db_write_host: String,
-    pub db_write_port: String,
-    pub db_write_name: String,
-    pub db_write_user: String,
-    pub db_write_password: String,
-    pub db_write_max_connection: u32,
-    pub db_write_min_connection: u32,
-
-    // Read DB (Replica)
-    pub db_read_host: String,
-    pub db_read_port: String,
-    pub db_read_name: String,
-    pub db_read_user: String,
-    pub db_read_password: String,
-    pub db_read_max_connection: u32,
-    pub db_read_min_connection: u32,
+    // Database (via PgDog connection pooler)
+    pub db_host: String,
+    pub db_port: String,
+    pub db_name: String,
+    pub db_user: String,
+    pub db_password: String,
+    pub db_max_connection: u32,
+    pub db_min_connection: u32,
 
     // Redis Session (persistent, for sessions/tokens/rate-limit)
     pub redis_session_host: String,
@@ -73,9 +67,6 @@ pub struct ServerConfig {
     pub meilisearch_host: String,
     pub meilisearch_api_key: Option<String>,
 
-    // SeaweedFS (revision content storage)
-    pub seaweedfs_endpoint: String,
-
     pub cors_allowed_origins: Vec<HeaderValue>,
     pub cors_allowed_headers: Vec<HeaderName>,
     pub cors_max_age: Option<u64>,
@@ -89,12 +80,13 @@ pub struct ServerConfig {
     pub stability_timeout_secs: u64,        // Request timeout in seconds (default: 30)
 }
 
-// LazyLock으로 자동 초기화
+// Auto-initialized via LazyLock
 static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     dotenv().ok();
 
     let mut errors: Vec<String> = Vec::new();
 
+    // Required env vars (collects errors on missing, does not panic)
     macro_rules! require {
         ($name:expr) => {
             env::var($name).unwrap_or_else(|_| {
@@ -104,6 +96,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         };
     }
 
+    // Required env vars + parsing (collects errors on missing/parse failure)
     macro_rules! require_parse {
         ($name:expr, $ty:ty) => {{
             match env::var($name) {
@@ -187,24 +180,18 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     let github_redirect_uri = require!("GITHUB_REDIRECT_URI");
     let r2_endpoint = require!("R2_ENDPOINT");
     let r2_region = require!("R2_REGION");
-    let r2_public_domain = require!("R2_PUBLIC_DOMAIN");
-    let r2_bucket_name = require!("R2_BUCKET_NAME");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
+    let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
+    let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
     let turnstile_secret_key = require!("TURNSTILE_SECRET_KEY");
-    let db_write_host = require!("POSTGRES_WRITE_HOST");
-    let db_write_port = require!("POSTGRES_WRITE_PORT");
-    let db_write_name = require!("POSTGRES_WRITE_NAME");
-    let db_write_user = require!("POSTGRES_WRITE_USER");
-    let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
-    let db_read_host = require!("POSTGRES_READ_HOST");
-    let db_read_port = require!("POSTGRES_READ_PORT");
-    let db_read_name = require!("POSTGRES_READ_NAME");
-    let db_read_user = require!("POSTGRES_READ_USER");
-    let db_read_password = require!("POSTGRES_READ_PASSWORD");
+    let db_host = require!("POSTGRES_HOST");
+    let db_port = require!("POSTGRES_PORT");
+    let db_name = require!("POSTGRES_NAME");
+    let db_user = require!("POSTGRES_USER");
+    let db_password = require!("POSTGRES_PASSWORD");
     let server_host = require!("HOST");
     let server_port = require!("PORT");
-    let seaweedfs_endpoint = require!("SEAWEEDFS_ENDPOINT");
 
     // Required parsed vars
     let auth_session_max_lifetime_hours = require_parse!("AUTH_SESSION_MAX_LIFETIME_HOURS", i64);
@@ -224,28 +211,32 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         is_dev,
         totp_secret,
 
-        auth_session_max_lifetime_hours,
-        auth_session_sliding_ttl_hours,
+        auth_session_max_lifetime_hours: auth_session_max_lifetime_hours.max(0),
+        auth_session_sliding_ttl_hours: auth_session_sliding_ttl_hours.max(0),
         auth_session_refresh_threshold,
 
         auth_email_verification_token_expire_time: env::var(
             "AUTH_EMAIL_VERIFICATION_TOKEN_EXPIRE_TIME",
         )
         .ok()
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(1), // 기본값 1시간 (minutes)
+        .and_then(|v| v.parse::<i64>().ok())
+        .unwrap_or(1)
+        .max(0), // Default 1 hour (minutes)
         auth_password_reset_token_expire_time: env::var("AUTH_PASSWORD_RESET_TOKEN_EXPIRE_TIME")
             .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(15), // 기본값 15분
+            .and_then(|v| v.parse::<i64>().ok())
+            .unwrap_or(15)
+            .max(0), // Default 15 minutes
         auth_email_change_token_expire_time: env::var("AUTH_EMAIL_CHANGE_TOKEN_EXPIRE_TIME")
             .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(15), // 기본값 15분
+            .and_then(|v| v.parse::<i64>().ok())
+            .unwrap_or(15)
+            .max(0), // Default 15 minutes
         oauth_pending_signup_ttl_minutes: env::var("OAUTH_PENDING_SIGNUP_TTL_MINUTES")
             .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(10), // 기본값 10분
+            .and_then(|v| v.parse::<i64>().ok())
+            .unwrap_or(10)
+            .max(0), // Default 10 minutes
 
         // Google
         google_client_id,
@@ -257,44 +248,32 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         github_client_secret,
         github_redirect_uri,
 
-        // Cloudflare
+        // Cloudflare R2 (shared credentials)
         r2_endpoint,
         r2_region,
-        r2_public_domain,
-        r2_bucket_name,
         r2_access_key_id,
         r2_secret_access_key,
+        // R2 Assets (public bucket)
+        r2_assets_public_domain,
+        r2_assets_bucket_name,
+
+        // Cloudflare Turnstile
         turnstile_secret_key,
 
-        // Write DB (Primary)
-        db_write_host,
-        db_write_port,
-        db_write_name,
-        db_write_user,
-        db_write_password,
-        db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
+        // Database (via PgDog connection pooler)
+        db_host,
+        db_port,
+        db_name,
+        db_user,
+        db_password,
+        db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(100),
-        db_write_min_connection: env::var("POSTGRES_WRITE_MIN_CONNECTION")
+            .unwrap_or(30),
+        db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
-            .unwrap_or(10),
-
-        // Read DB (Replica)
-        db_read_host,
-        db_read_port,
-        db_read_name,
-        db_read_user,
-        db_read_password,
-        db_read_max_connection: env::var("POSTGRES_READ_MAX_CONNECTION")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(100),
-        db_read_min_connection: env::var("POSTGRES_READ_MIN_CONNECTION")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(10),
+            .unwrap_or(5),
 
         // Redis Session
         redis_session_host: env::var("REDIS_SESSION_HOST")
@@ -329,9 +308,6 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 
         cookie_domain: env::var("COOKIE_DOMAIN").ok().filter(|d| !d.is_empty()),
 
-        // SeaweedFS
-        seaweedfs_endpoint,
-
         // Stability Layer
         stability_concurrency_limit: env::var("STABILITY_CONCURRENCY_LIMIT")
             .ok()
@@ -349,7 +325,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 });
 
 impl ServerConfig {
-    // 이제 단순히 CONFIG에 접근만 하면 됨
+    // Simply access the CONFIG static
     pub fn get() -> &'static ServerConfig {
         &CONFIG
     }
