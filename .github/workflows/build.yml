@@ -2,9 +2,7 @@ name: axumkit-server
 
 on:
   push:
-    branches: [ "main" ]
   pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:

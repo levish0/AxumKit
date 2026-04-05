@@ -38,16 +38,12 @@ pub async fn service_list_moderation_logs(
         let first_id = logs.first().unwrap().id;
         let last_id = logs.last().unwrap().id;
         if is_newer {
-            let has_newer =
-                repository_exists_newer_moderation_log(conn, &filter, last_id).await?;
-            let has_older =
-                repository_exists_older_moderation_log(conn, &filter, first_id).await?;
+            let has_newer = repository_exists_newer_moderation_log(conn, &filter, last_id).await?;
+            let has_older = repository_exists_older_moderation_log(conn, &filter, first_id).await?;
             (has_newer, has_older)
         } else {
-            let has_newer =
-                repository_exists_newer_moderation_log(conn, &filter, first_id).await?;
-            let has_older =
-                repository_exists_older_moderation_log(conn, &filter, last_id).await?;
+            let has_newer = repository_exists_newer_moderation_log(conn, &filter, first_id).await?;
+            let has_older = repository_exists_older_moderation_log(conn, &filter, last_id).await?;
             (has_newer, has_older)
         }
     };
