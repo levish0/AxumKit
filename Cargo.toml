@@ -21,7 +21,7 @@ axumkit_worker = { path = "crates/axumkit-worker" }
 axumkit_server = { path = "crates/axumkit-server" }
 
 # External dependencies
-tokio = { version = "1.50.0", features = ["full"] }
+tokio = { version = "1.51.0", features = ["full"] }
 axum = { version = "0.8.8", features = ["multipart", "macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header", "query"] }
 tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
@@ -30,40 +30,40 @@ tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 sea-orm = { version = "2.0.0-rc.35", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
-redis = { version = "1.0.4", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
+redis = { version = "1.2.0", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
 oauth2 = { version = "5.0.0", features = ["reqwest"] }
-totp-rs = { version = "5.7.0", features = ["qr"] }
+totp-rs = { version = "5.7.1", features = ["qr"] }
 cookie = "0.18.1"
-aws-sdk-s3 = "1.124.0"
-aws-config = { version = "1.8.14", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.128.0"
+aws-config = { version = "1.8.15", features = ["behavior-version-latest"] }
 meilisearch-sdk = { version = "0.32.0" }
 utoipa = { version = "5.4.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"] }
 validator = { version = "0.20.0", features = ["derive"] }
 tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["json", "env-filter"] }
+tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 tracing-appender = "0.2.4"
 reqwest = { version = "0.12.28", features = ["json", "multipart"] }
 anyhow = "1.0.102"
 chrono = { version = "0.4.44", features = ["serde"] }
 chrono-tz = "0.10.4"
-uuid = { version = "1.21.0", features = ["v7", "v4"] }
+uuid = { version = "1.23.0", features = ["v7", "v4"] }
 dotenvy = "0.15.7"
 rand = "0.10.0"
 hex = "0.4.3"
 base64 = "0.22.1"
-image = { version = "0.25.9", features = ["webp"] }
+image = { version = "0.25.10", features = ["webp"] }
 infer = "0.19.0"
-blake3 = "1.8.3"
+blake3 = "1.8.4"
 zstd = "0.13.3"
-lettre = { version = "0.11.19", features = ["tokio1-native-tls"] }
+lettre = { version = "0.11.21", features = ["tokio1-native-tls"] }
 mrml = "5.1.0"
-minijinja = { version = "2.17.0", features = ["loader"] }
-similar = "2.7.0"
+minijinja = { version = "2.19.0", features = ["loader"] }
+similar = "3.0.0"
 futures = "0.3.32"
-async-nats = "0.46.0"
+async-nats = "0.47.0"
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 sitemap-rs = "0.4.0"
 urlencoding = "2.1.3"

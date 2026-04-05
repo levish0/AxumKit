@@ -23,6 +23,9 @@ pub struct WorkerConfig {
     // Redis Cache (View counts, etc.)
     pub redis_cache_host: String,
     pub redis_cache_port: String,
+    // Redis Session (persistent store for cron locks)
+    pub redis_session_host: String,
+    pub redis_session_port: String,
 
     // Frontend & Project
     pub frontend_host: String,
@@ -125,6 +128,10 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         // Redis Cache
         redis_cache_host: env::var("REDIS_CACHE_HOST").unwrap_or_else(|_| "127.0.0.1".into()),
         redis_cache_port: env::var("REDIS_CACHE_PORT").unwrap_or_else(|_| "6380".into()),
+        // Redis Session
+        redis_session_host: env::var("REDIS_SESSION_HOST")
+            .unwrap_or_else(|_| "127.0.0.1".into()),
+        redis_session_port: env::var("REDIS_SESSION_PORT").unwrap_or_else(|_| "6379".into()),
 
         // Frontend & Project
         frontend_host,
@@ -171,6 +178,13 @@ impl WorkerConfig {
         format!(
             "redis://{}:{}",
             self.redis_cache_host, self.redis_cache_port
+        )
+    }
+
+    pub fn redis_session_url(&self) -> String {
+        format!(
+            "redis://{}:{}",
+            self.redis_session_host, self.redis_session_port
         )
     }
 

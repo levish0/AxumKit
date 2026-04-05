@@ -1,8 +1,8 @@
 mod cleanup;
 pub mod sitemap;
 
-use crate::CacheClient;
 use crate::DbPool;
+use crate::SessionClient;
 use crate::config::WorkerConfig;
 use crate::connection::R2Client;
 use chrono_tz::Tz;
@@ -37,7 +37,7 @@ static EXTEND_LOCK_SCRIPT: LazyLock<Script> =
 /// Create and start the cron scheduler.
 pub async fn start_scheduler(
     db_pool: DbPool,
-    cache_client: CacheClient,
+    lock_client: SessionClient,
     r2_client: R2Client,
     config: &'static WorkerConfig,
 ) -> Result<JobScheduler, JobSchedulerError> {
@@ -56,7 +56,7 @@ pub async fn start_scheduler(
         timezone = %timezone,
         "Registering cleanup cron job"
     );
-    let cleanup_job = create_cleanup_job(db_pool.clone(), cache_client.clone(), timezone)?;
+    let cleanup_job = create_cleanup_job(db_pool.clone(), lock_client.clone(), timezone)?;
     sched.add(cleanup_job).await?;
 
     tracing::info!(
@@ -64,7 +64,7 @@ pub async fn start_scheduler(
         timezone = %timezone,
         "Registering sitemap cron job"
     );
-    let sitemap_job = create_sitemap_job(db_pool, cache_client, r2_client, config, timezone)?;
+    let sitemap_job = create_sitemap_job(db_pool, lock_client, r2_client, config, timezone)?;
     sched.add(sitemap_job).await?;
 
     sched.start().await?;
@@ -74,11 +74,11 @@ pub async fn start_scheduler(
 
 fn create_cleanup_job(
     db_pool: DbPool,
-    cache_client: CacheClient,
+    lock_client: SessionClient,
     timezone: Tz,
 ) -> Result<Job, JobSchedulerError> {
     let db = Arc::clone(&db_pool);
-    let cache = cache_client.clone();
+    let lock_client = lock_client.clone();
 
     JobBuilder::new()
         .with_timezone(timezone)
@@ -86,9 +86,9 @@ fn create_cleanup_job(
         .with_schedule(CLEANUP_SCHEDULE)?
         .with_run_async(Box::new(move |_uuid, _lock| {
             let db = Arc::clone(&db);
-            let cache = cache.clone();
+            let lock_client = lock_client.clone();
             Box::pin(async move {
-                run_with_cron_lock(cache, CLEANUP_LOCK_KEY, "cleanup", || async move {
+                run_with_cron_lock(lock_client, CLEANUP_LOCK_KEY, "cleanup", || async move {
                     cleanup::run_cleanup(&db).await;
                 })
                 .await;
@@ -99,13 +99,13 @@ fn create_cleanup_job(
 
 fn create_sitemap_job(
     db_pool: DbPool,
-    cache_client: CacheClient,
+    lock_client: SessionClient,
     r2_client: R2Client,
     config: &'static WorkerConfig,
     timezone: Tz,
 ) -> Result<Job, JobSchedulerError> {
     let db = Arc::clone(&db_pool);
-    let cache = cache_client.clone();
+    let lock_client = lock_client.clone();
 
     JobBuilder::new()
         .with_timezone(timezone)
@@ -113,10 +113,10 @@ fn create_sitemap_job(
         .with_schedule(SITEMAP_SCHEDULE)?
         .with_run_async(Box::new(move |_uuid, _lock| {
             let db = Arc::clone(&db);
-            let cache = cache.clone();
+            let lock_client = lock_client.clone();
             let r2 = r2_client.clone();
             Box::pin(async move {
-                run_with_cron_lock(cache, SITEMAP_LOCK_KEY, "sitemap", || async move {
+                run_with_cron_lock(lock_client, SITEMAP_LOCK_KEY, "sitemap", || async move {
                     sitemap::generate_and_upload_sitemap(&db, &r2, config).await;
                 })
                 .await;
@@ -126,7 +126,7 @@ fn create_sitemap_job(
 }
 
 async fn run_with_cron_lock<F, Fut>(
-    cache_client: CacheClient,
+    lock_client: SessionClient,
     lock_key: &'static str,
     job_name: &'static str,
     run: F,
@@ -135,7 +135,7 @@ async fn run_with_cron_lock<F, Fut>(
     Fut: std::future::Future<Output = ()>,
 {
     let lock_token = Uuid::now_v7().to_string();
-    match try_acquire_cron_lock(&cache_client, lock_key, &lock_token).await {
+    match try_acquire_cron_lock(&lock_client, lock_key, &lock_token).await {
         Ok(true) => {}
         Ok(false) => {
             tracing::info!(
@@ -165,7 +165,7 @@ async fn run_with_cron_lock<F, Fut>(
         tokio::select! {
             _ = &mut job_future => break,
             _ = tokio::time::sleep(heartbeat_interval), if !lock_lost => {
-                match extend_cron_lock(&cache_client, lock_key, &lock_token).await {
+                match extend_cron_lock(&lock_client, lock_key, &lock_token).await {
                     Ok(true) => {
                         tracing::debug!(
                             job = job_name,
@@ -203,7 +203,7 @@ async fn run_with_cron_lock<F, Fut>(
         );
     }
 
-    if let Err(e) = release_cron_lock(&cache_client, lock_key, &lock_token).await {
+    if let Err(e) = release_cron_lock(&lock_client, lock_key, &lock_token).await {
         tracing::warn!(job = job_name, lock_key, error = %e, "Failed to release cron lock");
     } else {
         tracing::info!(job = job_name, lock_key, "Cron lock released");
@@ -211,11 +211,11 @@ async fn run_with_cron_lock<F, Fut>(
 }
 
 async fn try_acquire_cron_lock(
-    cache_client: &CacheClient,
+    lock_client: &SessionClient,
     lock_key: &str,
     token: &str,
 ) -> Result<bool, redis::RedisError> {
-    let mut conn = cache_client.as_ref().clone();
+    let mut conn = lock_client.as_ref().clone();
     let result: Option<String> = redis::cmd("SET")
         .arg(lock_key)
         .arg(token)
@@ -229,11 +229,11 @@ async fn try_acquire_cron_lock(
 }
 
 async fn release_cron_lock(
-    cache_client: &CacheClient,
+    lock_client: &SessionClient,
     lock_key: &str,
     token: &str,
 ) -> Result<(), redis::RedisError> {
-    let mut conn = cache_client.as_ref().clone();
+    let mut conn = lock_client.as_ref().clone();
     let _: i32 = RELEASE_LOCK_SCRIPT
         .key(lock_key)
         .arg(token)
@@ -243,11 +243,11 @@ async fn release_cron_lock(
 }
 
 async fn extend_cron_lock(
-    cache_client: &CacheClient,
+    lock_client: &SessionClient,
     lock_key: &str,
     token: &str,
 ) -> Result<bool, redis::RedisError> {
-    let mut conn = cache_client.as_ref().clone();
+    let mut conn = lock_client.as_ref().clone();
     let result: i32 = EXTEND_LOCK_SCRIPT
         .key(lock_key)
         .arg(token)

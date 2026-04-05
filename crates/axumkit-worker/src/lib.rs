@@ -25,5 +25,8 @@ pub type DbPool = Arc<DatabaseConnection>;
 /// Shared Redis cache client (for view counts, etc.)
 pub type CacheClient = Arc<RedisConnectionManager>;
 
+/// Shared Redis session client (persistent store for auth and cron locks)
+pub type SessionClient = Arc<RedisConnectionManager>;
+
 /// Shared R2 storage client (for sitemap files)
 pub type R2StorageClient = Arc<R2Client>;
