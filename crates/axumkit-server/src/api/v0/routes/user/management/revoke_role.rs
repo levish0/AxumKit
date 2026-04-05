@@ -32,7 +32,7 @@ pub async fn revoke_role(
     ValidatedJson(payload): ValidatedJson<RevokeRoleRequest>,
 ) -> Result<RevokeRoleResponse, Errors> {
     service_revoke_role(
-        &state.write_db,
+        &state.db,
         payload.user_id,
         payload.role,
         payload.reason,

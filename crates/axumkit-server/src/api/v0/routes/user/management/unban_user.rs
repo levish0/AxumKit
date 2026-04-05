@@ -31,5 +31,5 @@ pub async fn unban_user(
     RequiredSession(session): RequiredSession,
     ValidatedJson(payload): ValidatedJson<UnbanUserRequest>,
 ) -> Result<UnbanUserResponse, Errors> {
-    service_unban_user(&state.write_db, payload.user_id, payload.reason, &session).await
+    service_unban_user(&state.db, payload.user_id, payload.reason, &session).await
 }

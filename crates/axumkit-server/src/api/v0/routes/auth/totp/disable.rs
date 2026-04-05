@@ -27,6 +27,6 @@ pub async fn totp_disable(
     RequiredSession(session): RequiredSession,
     ValidatedJson(payload): ValidatedJson<TotpDisableRequest>,
 ) -> Result<StatusCode, Errors> {
-    service_totp_disable(&state.write_db, session.user_id, &payload.code).await?;
+    service_totp_disable(&state.db, session.user_id, &payload.code).await?;
     Ok(StatusCode::NO_CONTENT)
 }

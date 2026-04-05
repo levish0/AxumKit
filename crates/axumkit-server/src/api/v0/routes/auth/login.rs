@@ -42,7 +42,7 @@ pub async fn auth_login(
     let ip_address = extract_ip_address(&headers, addr);
 
     let result = service_login(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         payload,
         Some(user_agent),

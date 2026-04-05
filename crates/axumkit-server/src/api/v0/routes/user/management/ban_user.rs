@@ -33,7 +33,7 @@ pub async fn ban_user(
     ValidatedJson(payload): ValidatedJson<BanUserRequest>,
 ) -> Result<BanUserResponse, Errors> {
     service_ban_user(
-        &state.write_db,
+        &state.db,
         payload.user_id,
         payload.expires_at,
         payload.reason,

@@ -58,38 +58,20 @@ async fn establish_connection_with_config(
     }
 }
 
-/// Establishes and returns a Write (Primary) database connection.
-pub async fn establish_write_connection() -> DatabaseConnection {
+/// Establishes and returns a database connection (via PgDog connection pooler).
+pub async fn establish_connection() -> DatabaseConnection {
     let db_config = ServerConfig::get();
     establish_connection_with_config(
         DbConnConfig {
-            user: &db_config.db_write_user,
-            password: &db_config.db_write_password,
-            host: &db_config.db_write_host,
-            port: &db_config.db_write_port,
-            name: &db_config.db_write_name,
-            max_connections: db_config.db_write_max_connection,
-            min_connections: db_config.db_write_min_connection,
+            user: &db_config.db_user,
+            password: &db_config.db_password,
+            host: &db_config.db_host,
+            port: &db_config.db_port,
+            name: &db_config.db_name,
+            max_connections: db_config.db_max_connection,
+            min_connections: db_config.db_min_connection,
         },
-        "Write",
-    )
-    .await
-}
-
-/// Establishes and returns a Read (Replica) database connection.
-pub async fn establish_read_connection() -> DatabaseConnection {
-    let db_config = ServerConfig::get();
-    establish_connection_with_config(
-        DbConnConfig {
-            user: &db_config.db_read_user,
-            password: &db_config.db_read_password,
-            host: &db_config.db_read_host,
-            port: &db_config.db_read_port,
-            name: &db_config.db_read_name,
-            max_connections: db_config.db_read_max_connection,
-            min_connections: db_config.db_read_min_connection,
-        },
-        "Read",
+        "PostgreSQL",
     )
     .await
 }

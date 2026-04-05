@@ -18,8 +18,8 @@ pub type EventStreamSender = broadcast::Sender<ActionLogResponse>;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub write_db: PostgresqlClient,
-    pub read_db: PostgresqlClient,
+    /// Database connection (via PgDog connection pooler)
+    pub db: PostgresqlClient,
     pub r2_client: R2Client,
     /// Redis for sessions, tokens, rate-limiting (persistent, AOF)
     pub redis_session: RedisClient,

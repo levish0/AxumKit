@@ -42,7 +42,7 @@ pub async fn auth_complete_signup(
     let ip_address = extract_ip_address(&headers, addr);
 
     let session_id = service_complete_signup(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         &state.r2_client,

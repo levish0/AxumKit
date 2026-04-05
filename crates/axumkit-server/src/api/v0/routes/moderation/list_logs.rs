@@ -20,5 +20,5 @@ pub async fn list_moderation_logs(
     State(state): State<AppState>,
     ValidatedQuery(payload): ValidatedQuery<ListModerationLogsRequest>,
 ) -> Result<ListModerationLogsResponse, Errors> {
-    service_list_moderation_logs(&state.read_db, payload).await
+    service_list_moderation_logs(&state.db, payload).await
 }

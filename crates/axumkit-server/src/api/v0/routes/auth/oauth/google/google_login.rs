@@ -42,7 +42,7 @@ pub async fn auth_google_login(
     let ip_address = extract_ip_address(&headers, addr);
 
     let result = service_google_sign_in(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         &payload.code,

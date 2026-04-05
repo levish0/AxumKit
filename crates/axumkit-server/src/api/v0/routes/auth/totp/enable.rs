@@ -28,5 +28,5 @@ pub async fn totp_enable(
     RequiredSession(session): RequiredSession,
     ValidatedJson(payload): ValidatedJson<TotpEnableRequest>,
 ) -> Result<TotpEnableResponse, Errors> {
-    service_totp_enable(&state.write_db, session.user_id, &payload.code).await
+    service_totp_enable(&state.db, session.user_id, &payload.code).await
 }

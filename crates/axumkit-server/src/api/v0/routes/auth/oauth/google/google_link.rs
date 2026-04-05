@@ -32,7 +32,7 @@ pub async fn auth_google_link(
     ValidatedJson(payload): ValidatedJson<GoogleLinkRequest>,
 ) -> Result<StatusCode, Errors> {
     service_link_google_oauth(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.http_client,
         session_context.user_id,

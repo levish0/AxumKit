@@ -33,7 +33,7 @@ pub async fn grant_role(
     ValidatedJson(payload): ValidatedJson<GrantRoleRequest>,
 ) -> Result<GrantRoleResponse, Errors> {
     service_grant_role(
-        &state.write_db,
+        &state.db,
         payload.user_id,
         payload.role,
         payload.expires_at,

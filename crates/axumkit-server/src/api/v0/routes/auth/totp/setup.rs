@@ -23,5 +23,5 @@ pub async fn totp_setup(
     State(state): State<AppState>,
     RequiredSession(session): RequiredSession,
 ) -> Result<TotpSetupResponse, Errors> {
-    service_totp_setup(&state.write_db, session.user_id).await
+    service_totp_setup(&state.db, session.user_id).await
 }

@@ -39,23 +39,14 @@ pub struct ServerConfig {
     // Cloudflare Turnstile
     pub turnstile_secret_key: String,
 
-    // Write DB (Primary)
-    pub db_write_user: String,
-    pub db_write_password: String,
-    pub db_write_host: String,
-    pub db_write_port: String,
-    pub db_write_name: String,
-    pub db_write_max_connection: u32,
-    pub db_write_min_connection: u32,
-
-    // Read DB (Replica) - defaults to write DB if not set
-    pub db_read_user: String,
-    pub db_read_password: String,
-    pub db_read_host: String,
-    pub db_read_port: String,
-    pub db_read_name: String,
-    pub db_read_max_connection: u32,
-    pub db_read_min_connection: u32,
+    // Database (via PgDog connection pooler)
+    pub db_host: String,
+    pub db_port: String,
+    pub db_name: String,
+    pub db_user: String,
+    pub db_password: String,
+    pub db_max_connection: u32,
+    pub db_min_connection: u32,
 
     // Redis Session (persistent, for sessions/tokens/rate-limit)
     pub redis_session_host: String,
@@ -194,16 +185,11 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
     let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
     let turnstile_secret_key = require!("TURNSTILE_SECRET_KEY");
-    let db_write_host = require!("POSTGRES_WRITE_HOST");
-    let db_write_port = require!("POSTGRES_WRITE_PORT");
-    let db_write_name = require!("POSTGRES_WRITE_NAME");
-    let db_write_user = require!("POSTGRES_WRITE_USER");
-    let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
-    let db_read_host = require!("POSTGRES_READ_HOST");
-    let db_read_port = require!("POSTGRES_READ_PORT");
-    let db_read_name = require!("POSTGRES_READ_NAME");
-    let db_read_user = require!("POSTGRES_READ_USER");
-    let db_read_password = require!("POSTGRES_READ_PASSWORD");
+    let db_host = require!("POSTGRES_HOST");
+    let db_port = require!("POSTGRES_PORT");
+    let db_name = require!("POSTGRES_NAME");
+    let db_user = require!("POSTGRES_USER");
+    let db_password = require!("POSTGRES_PASSWORD");
     let server_host = require!("HOST");
     let server_port = require!("PORT");
 
@@ -274,32 +260,17 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         // Cloudflare Turnstile
         turnstile_secret_key,
 
-        // Write DB (Primary)
-        db_write_host,
-        db_write_port,
-        db_write_name,
-        db_write_user,
-        db_write_password,
-        db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(20),
-        db_write_min_connection: env::var("POSTGRES_WRITE_MIN_CONNECTION")
-            .ok()
-            .and_then(|v| v.parse().ok())
-            .unwrap_or(5),
-
-        // Read DB (Replica)
-        db_read_host,
-        db_read_port,
-        db_read_name,
-        db_read_user,
-        db_read_password,
-        db_read_max_connection: env::var("POSTGRES_READ_MAX_CONNECTION")
+        // Database (via PgDog connection pooler)
+        db_host,
+        db_port,
+        db_name,
+        db_user,
+        db_password,
+        db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(30),
-        db_read_min_connection: env::var("POSTGRES_READ_MIN_CONNECTION")
+        db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(5),

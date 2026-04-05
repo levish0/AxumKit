@@ -24,7 +24,7 @@ pub async fn create_user(
     ValidatedJson(payload): ValidatedJson<CreateUserRequest>,
 ) -> Result<impl IntoResponse, Errors> {
     let response = service_create_user(
-        &state.write_db,
+        &state.db,
         &state.redis_session,
         &state.worker,
         payload,
