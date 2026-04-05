@@ -90,6 +90,14 @@ pub fn validate_display_name(name: &str) -> Result<(), ValidationError> {
         let category = get_general_category(ch);
 
         match category {
+            // Cc: control chars (U+0000–U+001F, U+007F–U+009F)
+            // Cf: format chars — covers ALL of: soft hyphen, ZWS, ZWNJ, ZWJ,
+            //     LTR/RTL marks, LTR/RTL overrides, BOM, word joiners, etc.
+            // Cs: surrogates
+            // Co: private use
+            // Zl: line separator (U+2028)
+            // Zp: paragraph separator (U+2029)
+            // So: other symbols — covers emoji (😀 🎉 🚀 etc.) and misc symbols (© ® ™ ★ ♠ etc.)
             GeneralCategory::Control
             | GeneralCategory::Format
             | GeneralCategory::Surrogate
@@ -99,6 +107,7 @@ pub fn validate_display_name(name: &str) -> Result<(), ValidationError> {
             | GeneralCategory::OtherSymbol => {
                 return Err(ValidationError::new("display_name_invalid_chars"));
             }
+            // Mn: non-spacing marks — Zalgo abuses these
             GeneralCategory::NonspacingMark => {
                 consecutive_combining += 1;
                 if consecutive_combining > 2 {
