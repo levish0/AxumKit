@@ -171,9 +171,10 @@ async fn get_google_jwks(
         }
     }
 
-    // Acquire write lock and double-check to prevent cache stampede
-    let mut cache = GOOGLE_JWKS_CACHE.write().await;
+    // Double-check under write lock to prevent cache stampede, but do NOT
+    // hold the lock across the HTTP fetch — that would block all readers.
     if !force_refresh {
+        let cache = GOOGLE_JWKS_CACHE.write().await;
         if let Some(cached) = cache.as_ref() {
             if Instant::now() < cached.expires_at {
                 return Ok((cached.jwks.clone(), true));
@@ -182,10 +183,14 @@ async fn get_google_jwks(
     }
 
     let (jwks, cache_ttl_seconds) = fetch_google_jwks(http_client).await?;
-    *cache = Some(CachedGoogleJwks {
-        jwks: jwks.clone(),
-        expires_at: Instant::now() + Duration::from_secs(cache_ttl_seconds),
-    });
+
+    {
+        let mut cache = GOOGLE_JWKS_CACHE.write().await;
+        *cache = Some(CachedGoogleJwks {
+            jwks: jwks.clone(),
+            expires_at: Instant::now() + Duration::from_secs(cache_ttl_seconds),
+        });
+    }
 
     Ok((jwks, false))
 }
