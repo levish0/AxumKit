@@ -71,7 +71,7 @@ pub struct ServerConfig {
     pub cors_allowed_headers: Vec<HeaderName>,
     pub cors_max_age: Option<u64>,
 
-    // Cookie Domain (e.g., ".seven.wiki" for cross-subdomain cookies)
+    // Cookie Domain (e.g., ".example.com" for cross-subdomain cookies)
     pub cookie_domain: Option<String>,
 
     // Stability Layer (protect DB pool from overload)

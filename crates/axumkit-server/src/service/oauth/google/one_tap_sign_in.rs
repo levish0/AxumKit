@@ -171,11 +171,26 @@ async fn get_google_jwks(
         }
     }
 
-    let jwks = fetch_google_jwks(http_client).await?;
+    // Acquire write lock and double-check to prevent cache stampede
+    let mut cache = GOOGLE_JWKS_CACHE.write().await;
+    if !force_refresh {
+        if let Some(cached) = cache.as_ref() {
+            if Instant::now() < cached.expires_at {
+                return Ok((cached.jwks.clone(), true));
+            }
+        }
+    }
+
+    let (jwks, cache_ttl_seconds) = fetch_google_jwks(http_client).await?;
+    *cache = Some(CachedGoogleJwks {
+        jwks: jwks.clone(),
+        expires_at: Instant::now() + Duration::from_secs(cache_ttl_seconds),
+    });
+
     Ok((jwks, false))
 }
 
-async fn fetch_google_jwks(http_client: &reqwest::Client) -> ServiceResult<JwkSet> {
+async fn fetch_google_jwks(http_client: &reqwest::Client) -> ServiceResult<(JwkSet, u64)> {
     let response = http_client
         .get(GOOGLE_JWKS_URL)
         .send()
@@ -198,13 +213,7 @@ async fn fetch_google_jwks(http_client: &reqwest::Client) -> ServiceResult<JwkSe
         .await
         .map_err(|_| Errors::GoogleJwksParseFailed)?;
 
-    let mut cache = GOOGLE_JWKS_CACHE.write().await;
-    *cache = Some(CachedGoogleJwks {
-        jwks: jwks.clone(),
-        expires_at: Instant::now() + Duration::from_secs(cache_ttl_seconds),
-    });
-
-    Ok(jwks)
+    Ok((jwks, cache_ttl_seconds))
 }
 
 fn parse_cache_control_max_age(cache_control: &str) -> Option<u64> {
