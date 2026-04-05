@@ -1,4 +1,4 @@
-﻿use crate::service::auth::confirm_email_change::service_confirm_email_change;
+use crate::service::auth::confirm_email_change::service_confirm_email_change;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -26,4 +26,3 @@ pub async fn auth_confirm_email_change(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

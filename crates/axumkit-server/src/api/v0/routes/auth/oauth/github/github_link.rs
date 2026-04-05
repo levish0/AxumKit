@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::github::service_link_github_oauth;
 use crate::state::AppState;
@@ -44,4 +44,3 @@ pub async fn auth_github_link(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

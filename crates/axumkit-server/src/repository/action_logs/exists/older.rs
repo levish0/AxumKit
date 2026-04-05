@@ -20,10 +20,6 @@ where
         query = query.filter(ActionLogColumn::ActorId.eq(actor_id));
     }
 
-    if let Some(actor_ip) = filter.actor_ip {
-        query = query.filter(ActionLogColumn::ActorIp.eq(actor_ip));
-    }
-
     if let Some(resource_id) = filter.resource_id {
         query = query.filter(ActionLogColumn::ResourceId.eq(resource_id));
     }

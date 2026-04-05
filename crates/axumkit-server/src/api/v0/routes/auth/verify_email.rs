@@ -1,4 +1,4 @@
-﻿use crate::service::auth::verify_email::service_verify_email;
+use crate::service::auth::verify_email::service_verify_email;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -28,4 +28,3 @@ pub async fn auth_verify_email(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

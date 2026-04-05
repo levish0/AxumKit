@@ -1,10 +1,10 @@
-﻿use crate::service::auth::session_types::Session;
+use crate::service::auth::session_types::Session;
+use axumkit_config::ServerConfig;
+use axumkit_errors::errors::Errors;
 use chrono::Utc;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager as RedisClient;
 use std::collections::HashSet;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::Errors;
 
 pub struct SessionService;
 
@@ -283,4 +283,3 @@ impl SessionService {
         Ok(count)
     }
 }
-

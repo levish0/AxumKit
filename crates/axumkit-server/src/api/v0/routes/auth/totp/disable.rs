@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_disable;
 use crate::state::AppState;
 use axum::extract::State;
@@ -30,4 +30,3 @@ pub async fn totp_disable(
     service_totp_disable(&state.write_db, session.user_id, &payload.code).await?;
     Ok(StatusCode::NO_CONTENT)
 }
-

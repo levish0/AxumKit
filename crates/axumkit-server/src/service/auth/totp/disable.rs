@@ -1,12 +1,12 @@
-﻿use super::common::verify_totp_code;
+use super::common::verify_totp_code;
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::utils::crypto::backup_code::verify_backup_code;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 pub async fn service_totp_disable(
     conn: &DatabaseConnection,
@@ -54,4 +54,3 @@ pub async fn service_totp_disable(
 
     Ok(())
 }
-

@@ -1,14 +1,14 @@
-﻿use crate::repository::user::UserUpdateParams;
+use crate::repository::user::UserUpdateParams;
 use crate::repository::user::repository_get_user_by_id;
 use crate::repository::user::repository_update_user;
 use crate::service::auth::session::SessionService;
 use crate::utils::crypto::password::{hash_password, verify_password};
+use axumkit_dto::auth::request::ChangePasswordRequest;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_dto::auth::request::ChangePasswordRequest;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 ///
 /// # Arguments
@@ -54,4 +54,3 @@ pub async fn service_change_password(
 
     Ok(())
 }
-

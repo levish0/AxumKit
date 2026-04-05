@@ -5,14 +5,12 @@ use axumkit_entity::action_logs::{
 };
 use axumkit_entity::common::ActionResourceType;
 use axumkit_errors::errors::Errors;
-use sea_orm::prelude::IpNetwork;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect};
 use uuid::Uuid;
 
 #[derive(Debug, Default, Clone)]
 pub struct ActionLogFilter {
     pub actor_id: Option<Uuid>,
-    pub actor_ip: Option<IpNetwork>,
     pub resource_id: Option<Uuid>,
     pub resource_type: Option<ActionResourceType>,
     pub actions: Option<Vec<ActionLogAction>>,
@@ -32,10 +30,6 @@ where
 
     if let Some(actor_id) = filter.actor_id {
         query = query.filter(ActionLogColumn::ActorId.eq(actor_id));
-    }
-
-    if let Some(actor_ip) = filter.actor_ip {
-        query = query.filter(ActionLogColumn::ActorIp.eq(actor_ip));
     }
 
     if let Some(resource_id) = filter.resource_id {

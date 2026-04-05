@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::oauth::list_connections::service_list_oauth_connections;
 use crate::state::AppState;
 use axum::extract::State;
@@ -26,4 +26,3 @@ pub async fn list_oauth_connections(
 
     Ok(result)
 }
-

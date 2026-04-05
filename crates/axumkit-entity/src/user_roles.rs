@@ -1,20 +1,22 @@
-use super::users::Entity as UsersEntity;
-use crate::common::OAuthProvider;
 use sea_orm::prelude::*;
 use uuid::Uuid;
 
+use super::common::Role;
+use super::users::Entity as UsersEntity;
+
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
-#[sea_orm(table_name = "user_oauth_connections")]
+#[sea_orm(table_name = "user_roles")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
     #[sea_orm(not_null)]
     pub user_id: Uuid,
     #[sea_orm(not_null)]
-    pub provider: OAuthProvider,
-    pub provider_user_id: String,
+    pub role: Role,
     #[sea_orm(column_type = "TimestampWithTimeZone", not_null)]
-    pub created_at: DateTimeUtc,
+    pub granted_at: DateTimeUtc,
+    #[sea_orm(column_type = "TimestampWithTimeZone", nullable)]
+    pub expires_at: Option<DateTimeUtc>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

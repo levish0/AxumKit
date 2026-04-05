@@ -1,10 +1,10 @@
-﻿use crate::utils::redis_cache::{get_optional_json_and_delete, set_json_with_ttl};
+use crate::utils::redis_cache::{get_optional_json_and_delete, set_json_with_ttl};
+use axumkit_errors::errors::Errors;
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use redis::aio::ConnectionManager as RedisClient;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use axumkit_errors::errors::Errors;
 
 const TEMP_TOKEN_TTL_SECONDS: u64 = 120; // 2 minutes
 
@@ -72,4 +72,3 @@ impl TotpTempToken {
         .await
     }
 }
-

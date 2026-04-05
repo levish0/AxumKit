@@ -1,14 +1,14 @@
-﻿use crate::bridge::worker_client;
+use crate::bridge::worker_client;
 use crate::repository::user::repository_find_user_by_email;
 use crate::state::WorkerClient;
 use crate::utils::crypto::token::generate_secure_token;
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
+use axumkit_config::ServerConfig;
+use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use serde::{Deserialize, Serialize};
 use tracing::info;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::ServiceResult;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PasswordResetData {
@@ -42,7 +42,6 @@ where
         return Ok(());
     }
 
-
     let reset_data = PasswordResetData {
         user_id: user.id.to_string(),
     };
@@ -70,4 +69,3 @@ where
 
     Ok(())
 }
-

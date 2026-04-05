@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_status;
 use crate::state::AppState;
 use axum::extract::State;
@@ -24,4 +24,3 @@ pub async fn totp_status(
 ) -> Result<TotpStatusResponse, Errors> {
     service_totp_status(&state.write_db, session.user_id).await
 }
-

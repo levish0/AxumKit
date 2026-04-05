@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::resend_verification_email::service_resend_verification_email;
 use crate::state::AppState;
 use axum::extract::State;
@@ -37,4 +37,3 @@ pub async fn auth_resend_verification_email(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

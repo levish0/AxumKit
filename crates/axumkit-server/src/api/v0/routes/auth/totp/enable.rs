@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_enable;
 use crate::state::AppState;
 use axum::extract::State;
@@ -30,4 +30,3 @@ pub async fn totp_enable(
 ) -> Result<TotpEnableResponse, Errors> {
     service_totp_enable(&state.write_db, session.user_id, &payload.code).await
 }
-

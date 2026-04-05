@@ -1,14 +1,14 @@
-﻿use super::common::{generate_backup_codes, verify_totp_code};
+use super::common::{generate_backup_codes, verify_totp_code};
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::utils::crypto::backup_code::hash_backup_codes;
+use axumkit_dto::auth::response::TotpEnableResponse;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use chrono::Utc;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_dto::auth::response::TotpEnableResponse;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 pub async fn service_totp_enable(
     conn: &DatabaseConnection,
@@ -49,4 +49,3 @@ pub async fn service_totp_enable(
 
     Ok(TotpEnableResponse { backup_codes })
 }
-

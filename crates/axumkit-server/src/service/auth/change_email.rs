@@ -1,17 +1,17 @@
-﻿use crate::bridge::worker_client;
+use crate::bridge::worker_client;
 use crate::repository::user::{repository_find_user_by_email, repository_get_user_by_id};
 use crate::state::WorkerClient;
 use crate::utils::crypto::password::verify_password;
 use crate::utils::crypto::token::generate_secure_token;
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
+use axumkit_config::ServerConfig;
+use axumkit_dto::auth::request::ChangeEmailRequest;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_config::ServerConfig;
-use axumkit_dto::auth::request::ChangeEmailRequest;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmailChangeData {
@@ -49,7 +49,6 @@ where
         return Err(Errors::UserEmailAlreadyExists);
     }
 
-
     let change_data = EmailChangeData {
         user_id: user.id.to_string(),
         new_email: payload.new_email.clone(),
@@ -78,4 +77,3 @@ where
 
     Ok(())
 }
-

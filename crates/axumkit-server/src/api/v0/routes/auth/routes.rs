@@ -1,4 +1,4 @@
-﻿use super::change_email::auth_change_email;
+use super::change_email::auth_change_email;
 use super::change_password::auth_change_password;
 use super::complete_signup::auth_complete_signup;
 use super::confirm_email_change::auth_confirm_email_change;
@@ -77,4 +77,3 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
             post(auth_confirm_email_change),
         )
 }
-

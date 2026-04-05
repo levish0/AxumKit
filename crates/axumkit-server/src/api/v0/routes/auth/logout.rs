@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::logout::service_logout;
 use crate::state::AppState;
 use axum::{extract::State, response::Response};
@@ -26,4 +26,3 @@ pub async fn auth_logout(
 
     create_logout_response()
 }
-

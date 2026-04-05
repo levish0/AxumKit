@@ -1,7 +1,7 @@
-﻿use crate::service::auth::session::SessionService;
+use crate::service::auth::session::SessionService;
+use axumkit_errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 use tracing::info;
-use axumkit_errors::errors::ServiceResult;
 
 pub async fn service_logout(redis: &ConnectionManager, session_id: &str) -> ServiceResult<()> {
     SessionService::delete_session(redis, session_id).await?;
@@ -10,4 +10,3 @@ pub async fn service_logout(redis: &ConnectionManager, session_id: &str) -> Serv
 
     Ok(())
 }
-

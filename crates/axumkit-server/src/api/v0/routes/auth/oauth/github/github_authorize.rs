@@ -1,4 +1,4 @@
-﻿use crate::middleware::anonymous_user::AnonymousUserContext;
+use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::github::service_generate_github_oauth_url;
 use crate::state::AppState;
 use axum::Extension;
@@ -28,4 +28,3 @@ pub async fn auth_github_authorize(
     service_generate_github_oauth_url(&state.redis_session, &anonymous.anonymous_user_id, flow)
         .await
 }
-

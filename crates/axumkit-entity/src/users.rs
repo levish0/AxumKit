@@ -8,11 +8,11 @@ use super::user_oauth_connections::Entity as UserOAuthConnectionsEntity;
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: Uuid,
-    #[sea_orm(column_name = "display_name", not_null)]
+    #[sea_orm(column_type = "Text", not_null)]
     pub display_name: String,
-    #[sea_orm(string_len = 20, not_null, unique)]
-    pub handle: String,
-    #[sea_orm(string_len = 200, nullable)]
+    #[sea_orm(column_type = "Text", not_null, unique)]
+    pub handle: String, // Unique
+    #[sea_orm(column_type = "Text", nullable)]
     pub bio: Option<String>,
     #[sea_orm(string_len = 254, not_null, unique)]
     pub email: String,
@@ -24,6 +24,7 @@ pub struct Model {
     pub profile_image: Option<String>,
     #[sea_orm(column_type = "Text", nullable)]
     pub banner_image: Option<String>,
+    // TOTP 2FA
     #[sea_orm(column_type = "Text", nullable)]
     pub totp_secret: Option<String>,
     #[sea_orm(column_type = "TimestampWithTimeZone", nullable)]

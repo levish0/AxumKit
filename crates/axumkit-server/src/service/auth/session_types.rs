@@ -1,4 +1,4 @@
-﻿use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -111,4 +111,3 @@ mod tests {
         assert!(!session.needs_refresh(50, 0));
     }
 }
-

@@ -1,14 +1,14 @@
-﻿use super::common::verify_totp_code;
+use super::common::verify_totp_code;
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::service::auth::session::SessionService;
 use crate::service::auth::totp::TotpTempToken;
 use crate::utils::crypto::backup_code::verify_backup_code;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager as RedisClient;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 pub struct TotpVerifyResult {
     pub session_id: String,
@@ -82,4 +82,3 @@ pub async fn service_totp_verify(
         remember_me: token_data.remember_me,
     })
 }
-

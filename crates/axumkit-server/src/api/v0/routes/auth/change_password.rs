@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::change_password::service_change_password;
 use crate::state::AppState;
 use axum::extract::State;
@@ -39,4 +39,3 @@ pub async fn auth_change_password(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

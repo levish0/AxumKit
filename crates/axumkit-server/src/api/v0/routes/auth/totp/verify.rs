@@ -1,4 +1,4 @@
-﻿use crate::service::auth::totp::service_totp_verify;
+use crate::service::auth::totp::service_totp_verify;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::response::Response;
@@ -32,4 +32,3 @@ pub async fn totp_verify(
 
     create_login_response(result.session_id, result.remember_me)
 }
-

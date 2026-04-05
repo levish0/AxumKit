@@ -1,8 +1,8 @@
-﻿use crate::repository::user::repository_get_user_by_id;
-use sea_orm::ConnectionTrait;
-use uuid::Uuid;
+use crate::repository::user::repository_get_user_by_id;
 use axumkit_dto::auth::response::TotpStatusResponse;
 use axumkit_errors::errors::ServiceResult;
+use sea_orm::ConnectionTrait;
+use uuid::Uuid;
 
 pub async fn service_totp_status<C>(conn: &C, user_id: Uuid) -> ServiceResult<TotpStatusResponse>
 where
@@ -22,4 +22,3 @@ where
         },
     })
 }
-

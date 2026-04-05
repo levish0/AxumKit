@@ -53,15 +53,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // CHECK constraint: at least one of actor_id or actor_ip must be set
-        manager
-            .get_connection()
-            .execute_unprepared(
-                "ALTER TABLE action_logs ADD CONSTRAINT chk_action_logs_actor \
-                 CHECK (((actor_id IS NOT NULL)::int + (actor_ip IS NOT NULL)::int) >= 1)",
-            )
-            .await?;
-
         // Index: User actions (filter by actor_id)
         manager
             .create_index(

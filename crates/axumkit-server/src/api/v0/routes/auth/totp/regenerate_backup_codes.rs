@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_regenerate_backup_codes;
 use crate::state::AppState;
 use axum::extract::State;
@@ -29,4 +29,3 @@ pub async fn totp_regenerate_backup_codes(
 ) -> Result<TotpBackupCodesResponse, Errors> {
     service_regenerate_backup_codes(&state.write_db, session.user_id, &payload.code).await
 }
-

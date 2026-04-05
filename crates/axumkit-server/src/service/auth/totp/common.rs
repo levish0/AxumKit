@@ -1,6 +1,6 @@
-﻿use rand::RngExt;
-use totp_rs::{Algorithm, Secret, TOTP};
 use axumkit_errors::errors::{Errors, ServiceResult};
+use rand::RngExt;
+use totp_rs::{Algorithm, Secret, TOTP};
 
 pub const ISSUER: &str = "Sevenwiki";
 pub const BACKUP_CODE_COUNT: usize = 10;
@@ -39,4 +39,3 @@ pub fn generate_backup_codes() -> Vec<String> {
         })
         .collect()
 }
-

@@ -1,4 +1,4 @@
-﻿use crate::middleware::anonymous_user::AnonymousUserContext;
+use crate::middleware::anonymous_user::AnonymousUserContext;
 use crate::service::oauth::github::service_github_sign_in;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
@@ -10,11 +10,11 @@ use axum::{
     response::Response,
 };
 use axum_extra::{TypedHeader, headers::UserAgent};
-use std::net::SocketAddr;
 use axumkit_dto::oauth::request::github::GithubLoginRequest;
 use axumkit_dto::oauth::response::{OAuthPendingSignupResponse, OAuthSignInResponse};
 use axumkit_dto::validator::json_validator::ValidatedJson;
 use axumkit_errors::errors::Errors;
+use std::net::SocketAddr;
 
 ///
 #[utoipa::path(
@@ -55,4 +55,3 @@ pub async fn auth_github_login(
 
     OAuthSignInResponse::from_result(result).into_response_result()
 }
-

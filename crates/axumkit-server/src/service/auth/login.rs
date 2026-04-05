@@ -1,9 +1,9 @@
-﻿use crate::repository::user::repository_find_user_by_email;
+use crate::repository::user::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
 use crate::service::auth::totp::TotpTempToken;
-use tracing::info;
 use axumkit_dto::auth::request::LoginRequest;
 use axumkit_errors::errors::{Errors, ServiceResult};
+use tracing::info;
 
 use crate::utils::crypto::password::verify_password;
 use redis::aio::ConnectionManager;
@@ -50,4 +50,3 @@ pub async fn service_login(
         remember_me: payload.remember_me,
     })
 }
-

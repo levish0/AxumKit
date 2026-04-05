@@ -1,12 +1,12 @@
-﻿use super::common::{generate_backup_codes, verify_totp_code};
+use super::common::{generate_backup_codes, verify_totp_code};
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::utils::crypto::backup_code::hash_backup_codes;
-use sea_orm::{DatabaseConnection, TransactionTrait};
-use uuid::Uuid;
 use axumkit_dto::auth::response::TotpBackupCodesResponse;
 use axumkit_errors::errors::{Errors, ServiceResult};
+use sea_orm::{DatabaseConnection, TransactionTrait};
+use uuid::Uuid;
 
 pub async fn service_regenerate_backup_codes(
     conn: &DatabaseConnection,
@@ -44,4 +44,3 @@ pub async fn service_regenerate_backup_codes(
 
     Ok(TotpBackupCodesResponse { backup_codes })
 }
-

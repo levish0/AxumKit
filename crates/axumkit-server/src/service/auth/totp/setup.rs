@@ -1,14 +1,14 @@
-﻿use super::common::ISSUER;
+use super::common::ISSUER;
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
+use axumkit_dto::auth::response::TotpSetupResponse;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use rand::RngExt;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use totp_rs::{Algorithm, Secret, TOTP};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_dto::auth::response::TotpSetupResponse;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 pub async fn service_totp_setup(
     conn: &DatabaseConnection,
@@ -64,4 +64,3 @@ pub async fn service_totp_setup(
         qr_code_uri,
     })
 }
-

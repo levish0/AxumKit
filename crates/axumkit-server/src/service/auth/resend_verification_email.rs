@@ -1,15 +1,15 @@
-﻿use crate::bridge::worker_client;
+use crate::bridge::worker_client;
 use crate::repository::user::repository_get_user_by_id;
 use crate::service::auth::verify_email::EmailVerificationData;
 use crate::state::WorkerClient;
 use crate::utils::crypto::token::generate_secure_token;
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
+use axumkit_config::ServerConfig;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use tracing::info;
 use uuid::Uuid;
-use axumkit_config::ServerConfig;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 ///
 /// # Arguments
@@ -35,7 +35,6 @@ where
     if user.password.is_none() {
         return Err(Errors::UserPasswordNotSet);
     }
-
 
     let verification_data = EmailVerificationData {
         user_id: user.id.to_string(),
@@ -65,4 +64,3 @@ where
 
     Ok(())
 }
-

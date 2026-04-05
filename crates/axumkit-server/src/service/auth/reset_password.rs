@@ -1,13 +1,13 @@
-﻿use crate::repository::user::{UserUpdateParams, repository_update_user};
+use crate::repository::user::{UserUpdateParams, repository_update_user};
 use crate::service::auth::forgot_password::PasswordResetData;
 use crate::service::auth::session::SessionService;
 use crate::utils::crypto::password::hash_password;
 use crate::utils::redis_cache::get_json_and_delete;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::ConnectionTrait;
 use tracing::info;
 use uuid::Uuid;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 ///
 /// # Arguments
@@ -50,4 +50,3 @@ where
 
     Ok(())
 }
-

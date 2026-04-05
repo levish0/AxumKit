@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::oauth::unlink_connection::service_unlink_oauth;
 use crate::state::AppState;
 use axum::extract::State;
@@ -32,4 +32,3 @@ pub async fn unlink_oauth_connection(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

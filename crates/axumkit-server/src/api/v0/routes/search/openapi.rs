@@ -1,6 +1,4 @@
-use axumkit_dto::search::{
-    SearchUsersRequest, SearchUsersResponse, SortOrder, UserSearchItem,
-};
+use axumkit_dto::search::{SearchUsersRequest, SearchUsersResponse, SortOrder, UserSearchItem};
 use utoipa::OpenApi;
 
 #[derive(OpenApi)]

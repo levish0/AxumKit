@@ -1,4 +1,4 @@
-﻿pub mod backup_codes;
+pub mod backup_codes;
 mod common;
 pub mod disable;
 pub mod enable;
@@ -14,4 +14,3 @@ pub use setup::service_totp_setup;
 pub use status::service_totp_status;
 pub use temp_token::TotpTempToken;
 pub use verify::{TotpVerifyResult, service_totp_verify};
-

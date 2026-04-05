@@ -1,4 +1,4 @@
-﻿use crate::service::auth::forgot_password::service_forgot_password;
+use crate::service::auth::forgot_password::service_forgot_password;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -32,4 +32,3 @@ pub async fn auth_forgot_password(
 
     Ok(StatusCode::NO_CONTENT)
 }
-

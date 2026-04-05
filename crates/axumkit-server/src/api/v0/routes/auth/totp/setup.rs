@@ -1,4 +1,4 @@
-﻿use crate::extractors::RequiredSession;
+use crate::extractors::RequiredSession;
 use crate::service::auth::totp::service_totp_setup;
 use crate::state::AppState;
 use axum::extract::State;
@@ -25,4 +25,3 @@ pub async fn totp_setup(
 ) -> Result<TotpSetupResponse, Errors> {
     service_totp_setup(&state.write_db, session.user_id).await
 }
-

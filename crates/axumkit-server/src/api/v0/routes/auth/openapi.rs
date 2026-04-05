@@ -1,4 +1,3 @@
-﻿use utoipa::OpenApi;
 use axumkit_dto::auth::request::{
     ChangeEmailRequest, ChangePasswordRequest, CompleteSignupRequest, ConfirmEmailChangeRequest,
     ForgotPasswordRequest, LoginRequest, ResetPasswordRequest, TotpDisableRequest,
@@ -16,6 +15,7 @@ use axumkit_dto::oauth::response::OAuthPendingSignupResponse;
 use axumkit_dto::oauth::response::{
     OAuthConnectionListResponse, OAuthConnectionResponse, OAuthUrlResponse,
 };
+use utoipa::OpenApi;
 
 #[derive(OpenApi)]
 #[openapi(
@@ -82,4 +82,3 @@ use axumkit_dto::oauth::response::{
     )
 )]
 pub struct AuthApiDoc;
-

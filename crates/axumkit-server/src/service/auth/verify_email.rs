@@ -1,14 +1,14 @@
-﻿use crate::repository::user::{
+use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::utils::redis_cache::get_json_and_delete;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use chrono::Utc;
 use redis::aio::ConnectionManager;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct EmailVerificationData {
@@ -65,4 +65,3 @@ pub async fn service_verify_email(
 
     Ok(())
 }
-

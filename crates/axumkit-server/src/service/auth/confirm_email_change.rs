@@ -1,13 +1,13 @@
-﻿use crate::repository::user::{
+use crate::repository::user::{
     UserUpdateParams, repository_find_user_by_email, repository_update_user,
 };
 use crate::service::auth::change_email::EmailChangeData;
 use crate::utils::redis_cache::get_json_and_delete;
+use axumkit_errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
-use axumkit_errors::errors::{Errors, ServiceResult};
 
 pub async fn service_confirm_email_change(
     conn: &DatabaseConnection,
@@ -52,4 +52,3 @@ pub async fn service_confirm_email_change(
 
     Ok(())
 }
-
