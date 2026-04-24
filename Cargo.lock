@@ -1158,7 +1158,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_config"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "dotenvy",
@@ -1175,7 +1175,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_dto"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "axum-extra",
@@ -1197,7 +1197,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_entity"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "sea-orm",
  "serde",
@@ -1207,7 +1207,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_errors"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "axumkit_config",
@@ -1219,7 +1219,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_server"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_worker"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -2162,7 +2162,7 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "e2e"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "axumkit_dto",
@@ -6068,6 +6068,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
+name = "symlink"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a7973cce6668464ea31f176d85b13c7ab3bba2cb3b77a2ed26abd7801688010a"
+
+[[package]]
 name = "syn"
 version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6524,11 +6530,12 @@ dependencies = [
 
 [[package]]
 name = "tracing-appender"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "786d480bce6247ab75f005b14ae1624ad978d3029d9113f0a22fa1ac773faeaf"
+checksum = "050686193eb999b4bb3bc2acfa891a13da00f79734704c4b8b4ef1a10b368a3c"
 dependencies = [
  "crossbeam-channel",
+ "symlink",
  "thiserror 2.0.18",
  "time",
  "tracing-subscriber",
