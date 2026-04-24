@@ -43,6 +43,6 @@ pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Re
         Errors::SysInternalError("Session cookie header creation failed".to_string())
     })?;
 
-    response.headers_mut().insert(SET_COOKIE, header_value);
+    response.headers_mut().append(SET_COOKIE, header_value);
     Ok(response)
 }
