@@ -22,7 +22,7 @@ axumkit_server = { path = "crates/axumkit-server" }
 
 # External dependencies
 tokio = { version = "1.51.0", features = ["full"] }
-axum = { version = "0.8.8", features = ["multipart", "macros"] }
+axum = { version = "0.8.9", features = ["multipart", "macros"] }
 axum-extra = { version = "0.12.5", features = ["typed-header", "query"] }
 tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
 tower-http = { version = "0.6.8", features = ["cors", "auth", "trace", "request-id"] }
