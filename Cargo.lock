@@ -1158,7 +1158,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_config"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "dotenvy",
@@ -1175,7 +1175,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_dto"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "axum-extra",
@@ -1197,7 +1197,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_entity"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "sea-orm",
  "serde",
@@ -1207,7 +1207,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_errors"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "axum",
  "axumkit_config",
@@ -1219,7 +1219,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_server"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -1270,7 +1270,7 @@ dependencies = [
 
 [[package]]
 name = "axumkit_worker"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "async-nats",
@@ -2162,7 +2162,7 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "e2e"
-version = "0.7.0"
+version = "0.7.1"
 dependencies = [
  "anyhow",
  "axumkit_dto",
@@ -6758,9 +6758,9 @@ dependencies = [
 
 [[package]]
 name = "uuid"
-version = "1.23.0"
+version = "1.23.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ac8b6f42ead25368cf5b098aeb3dc8a1a2c05a3eee8a9a1a68c640edbfc79d9"
+checksum = "ddd74a9687298c6858e9b88ec8935ec45d22e8fd5e6394fa1bd4e99a87789c76"
 dependencies = [
  "getrandom 0.4.2",
  "js-sys",
