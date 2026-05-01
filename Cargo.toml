@@ -45,7 +45,7 @@ validator = { version = "0.20.0", features = ["derive"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 tracing-appender = "0.2.5"
-reqwest = { version = "0.12.28", features = ["json", "multipart"] }
+reqwest = { version = "0.13.3", features = ["json", "multipart"] }
 anyhow = "1.0.102"
 chrono = { version = "0.4.44", features = ["serde"] }
 chrono-tz = "0.10.4"
