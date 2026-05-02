@@ -4,6 +4,7 @@ use oauth2::{
     AuthUrl, AuthorizationCode, ClientId, ClientSecret, CsrfToken, PkceCodeChallenge,
     PkceCodeVerifier, RedirectUrl, Scope, TokenResponse, TokenUrl, basic::BasicClient,
 };
+use oauth2_reqwest::ReqwestClient;
 use reqwest::Client as HttpClient;
 
 /// Generates an OAuth authorization URL.
@@ -62,10 +63,11 @@ pub async fn exchange_code<P: OAuthProviderConfig>(
         .set_token_uri(token_url)
         .set_redirect_uri(redirect_url);
 
+    let oauth_http = ReqwestClient::from(http_client.clone());
     let token_result = client
         .exchange_code(AuthorizationCode::new(code.to_string()))
         .set_pkce_verifier(PkceCodeVerifier::new(pkce_verifier.to_string()))
-        .request_async(http_client)
+        .request_async(&oauth_http)
         .await
         .map_err(|_| Errors::OauthTokenExchangeFailed)?;
 

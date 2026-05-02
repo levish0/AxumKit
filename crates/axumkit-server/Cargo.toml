@@ -36,6 +36,7 @@ sea-orm.workspace = true
 redis.workspace = true
 argon2.workspace = true
 oauth2.workspace = true
+oauth2-reqwest.workspace = true
 totp-rs.workspace = true
 cookie.workspace = true
 aws-sdk-s3.workspace = true

@@ -33,7 +33,8 @@ sea-orm = { version = "2.0.0-rc.38", features = ["postgres-array", "sqlx-postgre
 redis = { version = "1.2.0", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
-oauth2 = { version = "5.0.0", features = ["reqwest"] }
+oauth2 = { version = "5.0.0"}
+oauth2-reqwest = "0.1.0-alpha.3"
 totp-rs = { version = "5.7.1", features = ["qr"] }
 cookie = "0.18.1"
 aws-sdk-s3 = "1.131.0"
@@ -45,7 +46,7 @@ validator = { version = "0.20.0", features = ["derive"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 tracing-appender = "0.2.5"
-reqwest = { version = "0.12.28", features = ["json", "multipart"] }
+reqwest = { version = "0.13.3", features = ["json", "multipart"] }
 anyhow = "1.0.102"
 chrono = { version = "0.4.44", features = ["serde"] }
 chrono-tz = "0.10.4"
