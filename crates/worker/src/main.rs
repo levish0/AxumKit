@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
     // Initialize logging
     utils::logger::init_tracing();
 
-    info!("Starting axumkit-worker...");
+    info!("Starting worker...");
 
     // Create shared clients
     let mailer = clients::create_mailer(config)?;

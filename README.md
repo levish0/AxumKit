@@ -31,8 +31,8 @@ cargo run -p worker                   # worker (separate terminal)
 
 ```
 crates/
-├── axumkit-server     # API (handlers → services → repositories → entities)
-├── axumkit-worker     # Background jobs (NATS consumers, cron)
+├── server             # API (handlers → services → repositories → entities)
+├── worker             # Background jobs (NATS consumers, cron)
 ├── axumkit-config     # Env config
 ├── axumkit-constants  # Shared constants
 ├── axumkit-dto        # Request / response types
