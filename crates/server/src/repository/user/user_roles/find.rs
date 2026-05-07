@@ -1,7 +1,7 @@
+use chrono::Utc;
 use entity::common::Role;
 use entity::user_roles::{Column, Entity};
 use errors::errors::Errors;
-use chrono::Utc;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, ExprTrait, QueryFilter};
 use uuid::Uuid;
 

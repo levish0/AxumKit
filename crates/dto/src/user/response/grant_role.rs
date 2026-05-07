@@ -1,6 +1,6 @@
 use axum::{Json, http::StatusCode, response::IntoResponse, response::Response};
-use entity::common::Role;
 use chrono::{DateTime, Utc};
+use entity::common::Role;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;

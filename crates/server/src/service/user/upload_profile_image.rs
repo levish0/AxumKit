@@ -1,13 +1,13 @@
 use crate::connection::r2_conn::R2Client;
 use crate::repository::user::{UserUpdateParams, repository_update_user};
 use crate::service::auth::session_types::SessionContext;
-use image_utils::image_processor::{
-    MAX_IMAGE_SIZE, generate_image_hash, process_image_for_upload, validate_image,
-};
 use constants::user_image_key;
 use dto::user::UploadUserImageRequest;
 use dto::user::UploadUserImageResponse;
 use errors::errors::Errors;
+use image_utils::image_processor::{
+    MAX_IMAGE_SIZE, generate_image_hash, process_image_for_upload, validate_image,
+};
 use sea_orm::DatabaseConnection;
 use tracing::{error, info};
 

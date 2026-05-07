@@ -1,6 +1,4 @@
-use entity::users::{
-    ActiveModel as UserActiveModel, Entity as UserEntity, Model as UserModel,
-};
+use entity::users::{ActiveModel as UserActiveModel, Entity as UserEntity, Model as UserModel};
 use errors::errors::Errors;
 use sea_orm::prelude::DateTimeUtc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait, IntoActiveModel, Set};

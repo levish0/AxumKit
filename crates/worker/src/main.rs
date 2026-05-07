@@ -1,11 +1,4 @@
 use anyhow::Result;
-use worker::clients;
-use worker::config::WorkerConfig;
-use worker::connection;
-use worker::jobs::{self, WorkerContext};
-use worker::nats::streams::initialize_all_streams;
-use worker::utils;
-use worker::{CacheClient, DbPool};
 use futures::FutureExt;
 use std::any::Any;
 use std::panic::AssertUnwindSafe;
@@ -13,6 +6,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::task::JoinSet;
 use tracing::{error, info};
+use worker::clients;
+use worker::config::WorkerConfig;
+use worker::connection;
+use worker::jobs::{self, WorkerContext};
+use worker::nats::streams::initialize_all_streams;
+use worker::utils;
+use worker::{CacheClient, DbPool};
 
 const CONSUMER_RESTART_DELAY: Duration = Duration::from_secs(1);
 

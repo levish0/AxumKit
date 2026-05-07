@@ -1,10 +1,10 @@
 use super::publish_job;
 use crate::state::WorkerClient;
 use errors::errors::Errors;
-use worker::jobs::reindex::create_reindex_users_job;
-use worker::nats::streams::REINDEX_USERS_SUBJECT;
 use tracing::info;
 use uuid::Uuid;
+use worker::jobs::reindex::create_reindex_users_job;
+use worker::nats::streams::REINDEX_USERS_SUBJECT;
 
 /// Start a full reindex of all users
 pub async fn start_reindex_users(

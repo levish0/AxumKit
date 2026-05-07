@@ -1,7 +1,7 @@
+use chrono::{DateTime, Utc};
 use entity::common::Role;
 use entity::user_roles::{ActiveModel, Model};
 use errors::errors::Errors;
-use chrono::{DateTime, Utc};
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 use uuid::Uuid;
 

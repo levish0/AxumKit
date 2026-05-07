@@ -1,8 +1,6 @@
 use constants::ModerationAction;
 use entity::common::ModerationResourceType;
-use entity::moderation_logs::{
-    Column as ModerationLogColumn, Entity as ModerationLogEntity,
-};
+use entity::moderation_logs::{Column as ModerationLogColumn, Entity as ModerationLogEntity};
 use sea_orm::{ColumnTrait, QueryFilter, Select};
 use uuid::Uuid;
 

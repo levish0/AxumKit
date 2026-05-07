@@ -1,6 +1,6 @@
+use chrono::Utc;
 use entity::users::{ActiveModel as UserActiveModel, Model as UserModel};
 use errors::errors::Errors;
-use chrono::Utc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 
 /// Create a new user via OAuth (no password, email verified)

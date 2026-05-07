@@ -1,8 +1,6 @@
 use crate::connection::R2Client;
-use image_utils::image_processor::{
-    generate_image_hash, process_image_for_upload, validate_image,
-};
 use constants::{PROFILE_IMAGE_MAX_SIZE, user_image_key};
+use image_utils::image_processor::{generate_image_hash, process_image_for_upload, validate_image};
 use reqwest::Client as HttpClient;
 use tracing::{error, warn};
 

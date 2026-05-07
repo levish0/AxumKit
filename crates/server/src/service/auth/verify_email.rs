@@ -78,22 +78,15 @@ pub async fn find_pending_email_signup_by_email(
     redis_conn: &ConnectionManager,
     email: &str,
 ) -> ServiceResult<Option<(String, PendingEmailSignupData)>> {
-    find_pending_email_signup_by_index(
-        redis_conn,
-        &constants::email_signup_email_key(email),
-    )
-    .await
+    find_pending_email_signup_by_index(redis_conn, &constants::email_signup_email_key(email)).await
 }
 
 pub async fn find_pending_email_signup_by_handle(
     redis_conn: &ConnectionManager,
     handle: &str,
 ) -> ServiceResult<Option<(String, PendingEmailSignupData)>> {
-    find_pending_email_signup_by_index(
-        redis_conn,
-        &constants::email_signup_handle_key(handle),
-    )
-    .await
+    find_pending_email_signup_by_index(redis_conn, &constants::email_signup_handle_key(handle))
+        .await
 }
 
 pub async fn delete_pending_email_signup_indices(

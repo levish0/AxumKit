@@ -1,6 +1,6 @@
 use crate::utils::redis_cache::{get_optional_json_and_delete, set_json_with_ttl};
-use errors::errors::Errors;
 use chrono::{DateTime, Utc};
+use errors::errors::Errors;
 use rand::Rng;
 use redis::aio::ConnectionManager as RedisClient;
 use serde::{Deserialize, Serialize};

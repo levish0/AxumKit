@@ -3,9 +3,9 @@ use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
 use crate::utils::crypto::backup_code::hash_backup_codes;
+use chrono::Utc;
 use dto::auth::response::TotpEnableResponse;
 use errors::errors::{Errors, ServiceResult};
-use chrono::Utc;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;

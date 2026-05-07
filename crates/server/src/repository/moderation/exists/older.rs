@@ -1,7 +1,5 @@
 use super::super::filter::{ModerationLogFilter, apply_moderation_log_filter};
-use entity::moderation_logs::{
-    Column as ModerationLogColumn, Entity as ModerationLogEntity,
-};
+use entity::moderation_logs::{Column as ModerationLogColumn, Entity as ModerationLogEntity};
 use errors::errors::Errors;
 use sea_orm::{
     ColumnTrait, ConnectionTrait, EntityTrait, PaginatorTrait, QueryFilter, QuerySelect,

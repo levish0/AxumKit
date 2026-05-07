@@ -1,8 +1,8 @@
 use axum::http::{HeaderValue, StatusCode, header::SET_COOKIE};
 use axum::response::{IntoResponse, Response};
 use config::ServerConfig;
-use errors::errors::Errors;
 use cookie::{Cookie, SameSite, time::Duration};
+use errors::errors::Errors;
 
 pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Response, Errors> {
     let config = ServerConfig::get();

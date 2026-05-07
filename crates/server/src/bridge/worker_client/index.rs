@@ -1,10 +1,10 @@
 use super::publish_job;
 use crate::state::WorkerClient;
 use errors::errors::Errors;
-use worker::jobs::user_index::{IndexUserJob, UserIndexAction};
-use worker::nats::streams::INDEX_USER_SUBJECT;
 use tracing::info;
 use uuid::Uuid;
+use worker::jobs::user_index::{IndexUserJob, UserIndexAction};
+use worker::nats::streams::INDEX_USER_SUBJECT;
 
 /// Push a user indexing job to the worker queue
 pub async fn index_user(worker: &WorkerClient, user_id: Uuid) -> Result<(), Errors> {

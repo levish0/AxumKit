@@ -106,7 +106,14 @@ impl R2AssetsClient {
         &self,
         key: &str,
     ) -> Result<bool, Box<dyn std::error::Error + Send + Sync>> {
-        match self.client.head_object().bucket(&self.bucket).key(key).send().await {
+        match self
+            .client
+            .head_object()
+            .bucket(&self.bucket)
+            .key(key)
+            .send()
+            .await
+        {
             Ok(_) => Ok(true),
             Err(err) => match &err {
                 SdkError::ServiceError(service_err) => {

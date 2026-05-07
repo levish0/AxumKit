@@ -1,9 +1,9 @@
 use super::publish_job;
 use crate::state::WorkerClient;
 use errors::errors::Errors;
+use tracing::info;
 use worker::jobs::email::{EmailTemplate, SendEmailJob};
 use worker::nats::streams::EMAIL_SUBJECT;
-use tracing::info;
 
 /// Push a verification email job to the worker queue
 pub async fn send_verification_email(

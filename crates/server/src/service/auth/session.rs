@@ -1,7 +1,7 @@
 use crate::service::auth::session_types::Session;
+use chrono::Utc;
 use config::ServerConfig;
 use errors::errors::Errors;
-use chrono::Utc;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager as RedisClient;
 use std::collections::HashSet;

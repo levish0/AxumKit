@@ -1,6 +1,6 @@
+use chrono::{DateTime, Utc};
 use entity::user_bans::{ActiveModel, Model};
 use errors::errors::Errors;
-use chrono::{DateTime, Utc};
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 use uuid::Uuid;
 
