@@ -14,7 +14,7 @@ Production-ready Rust web backend template.
 - **Email**:SMTP templates (Lettre + MRML + MiniJinja)
 - **Rate Limiting**:Sliding window (Redis Lua), per-route
 - **API Docs**:Auto-generated Swagger UI (debug builds)
-- **Deploy**:Docker multi-stage, Helm charts, GitHub Actions CI/CD
+- **Deploy**:Docker multi-stage, GitHub Actions CI/CD
 
 ## Quick Start
 
@@ -33,13 +33,12 @@ cargo run -p worker                   # worker (separate terminal)
 crates/
 ├── server             # API (handlers → services → repositories → entities)
 ├── worker             # Background jobs (NATS consumers, cron)
-├── axumkit-config     # Env config
-├── axumkit-constants  # Shared constants
-├── axumkit-dto        # Request / response types
-├── axumkit-entity     # SeaORM models
-├── axumkit-errors     # Centralized error handling
-├── migration          # DB migrations
-└── e2e                # E2E tests
+├── config             # Env config
+├── constants          # Shared constants
+├── dto                # Request / response types
+├── entity             # SeaORM models
+├── errors             # Centralized error handling
+└── migration          # DB migrations
 ```
 
 ## Configuration

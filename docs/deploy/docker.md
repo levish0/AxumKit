@@ -25,34 +25,7 @@ docker build --target worker-runtime -t worker .
 - Minimal runtime dependencies
 - Separate runtime targets for server and worker
 
-## docker-compose (E2E)
-
-`docker-compose.e2e.yml` provides infrastructure for end-to-end tests:
-
-```yaml
-services:
-  postgres
-  redis-session
-  redis-cache
-  meilisearch
-  nats
-  object-storage   # R2-compatible S3 API (MinIO)
-  object-storage-init
-  server
-  worker
-```
-
-### Run
-
-```bash
-# Build and start all services
-docker compose -f docker-compose.e2e.yml up --build
-
-# Start infrastructure only
-docker compose -f docker-compose.e2e.yml up postgres redis-session redis-cache meilisearch nats object-storage object-storage-init
-```
-
-### Health Checks
+## Health Checks
 
 | Service | Health Check |
 |---------|-------------|
@@ -62,19 +35,3 @@ docker compose -f docker-compose.e2e.yml up postgres redis-session redis-cache m
 | NATS | `wget http://localhost:8222/healthz` |
 | Object Storage | `curl http://localhost:9000/minio/health/live` |
 | Server | `curl http://localhost:8000/health-check` |
-
-## Helm Charts
-
-Helm charts live in `charts/`:
-
-- `charts/axumkit` (umbrella)
-- `charts/axumkit-server`
-- `charts/axumkit-worker`
-
-Key chart features:
-
-- HPA support
-- Pod disruption budgets
-- Non-root security defaults
-- Migration hook job
-- ConfigMap/Secret separation
