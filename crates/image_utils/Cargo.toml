@@ -1,0 +1,15 @@
+[package]
+name = "image_utils"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Shared image processing utilities for AxumKit crates"
+
+[dependencies]
+errors.workspace = true
+
+blake3.workspace = true
+image.workspace = true
+infer.workspace = true
+tracing.workspace = true

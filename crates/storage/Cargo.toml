@@ -1,0 +1,12 @@
+[package]
+name = "storage"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Shared storage clients for AxumKit crates"
+
+[dependencies]
+aws-config.workspace = true
+aws-sdk-s3.workspace = true
+tokio.workspace = true

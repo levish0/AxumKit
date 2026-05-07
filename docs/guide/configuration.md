@@ -26,8 +26,8 @@ This means:
 
 | Config | Used by | File |
 |--------|---------|------|
-| `ServerConfig` | `axumkit-server` | `crates/axumkit-config/src/server_config.rs` |
-| `WorkerConfig` | `axumkit-worker` | `crates/axumkit-worker/src/config/worker_config.rs` |
+| `ServerConfig` | `server` | `crates/config/src/server_config.rs` |
+| `WorkerConfig` | `worker` | `crates/worker/src/config/worker_config.rs` |
 
 Both follow the same `LazyLock` pattern but load different sets of variables.
 

@@ -15,8 +15,8 @@ AxumKit uses a multi-stage Dockerfile with [cargo-chef](https://github.com/LukeM
 ### Build Images
 
 ```bash
-docker build --target server-runtime -t axumkit-server .
-docker build --target worker-runtime -t axumkit-worker .
+docker build --target server-runtime -t server .
+docker build --target worker-runtime -t worker .
 ```
 
 ### Security Notes

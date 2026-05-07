@@ -2,7 +2,7 @@
 
 Complete list of environment variables used by AxumKit.
 
-## Server (`axumkit-server`)
+## Server (`server`)
 
 ### Required
 
@@ -67,7 +67,7 @@ Complete list of environment variables used by AxumKit.
 | `STABILITY_BUFFER_SIZE` | 1024 | Stability queue size |
 | `STABILITY_TIMEOUT_SECS` | 30 | Stability timeout seconds |
 
-## Worker (`axumkit-worker`)
+## Worker (`worker`)
 
 ### Required
 

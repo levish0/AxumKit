@@ -1,11 +1,11 @@
 ﻿# Background Worker
 
-AxumKit runs a separate worker binary (`axumkit-worker`) that processes background jobs via NATS JetStream and runs scheduled cron tasks.
+AxumKit runs a separate worker binary (`worker`) that processes background jobs via NATS JetStream and runs scheduled cron tasks.
 
 ## Architecture
 
 ```
-axumkit-server                          axumkit-worker
+server                                  worker
 +--------------+                        +----------------------+
 |   Handler    |                        |  NATS Consumers      |
 |      |       |   NATS JetStream       |  |- Email             |

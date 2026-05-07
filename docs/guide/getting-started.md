@@ -1,4 +1,4 @@
-﻿# Getting Started
+# Getting Started
 
 ## Prerequisites
 
@@ -47,7 +47,7 @@ cargo run -- status
 ## Start the Server
 
 ```bash
-cargo run -p axumkit_server
+cargo run -p server
 ```
 
 API server starts at `http://localhost:8000`.
@@ -57,7 +57,7 @@ API server starts at `http://localhost:8000`.
 In another terminal:
 
 ```bash
-cargo run -p axumkit_worker
+cargo run -p worker
 ```
 
 The worker handles email delivery, user search indexing, and cron jobs.

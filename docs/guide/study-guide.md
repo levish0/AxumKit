@@ -1,4 +1,4 @@
-﻿# Study Guide
+# Study Guide
 
 This guide gives a practical reading order for the current AxumKit codebase.
 
@@ -6,8 +6,8 @@ This guide gives a practical reading order for the current AxumKit codebase.
 
 Read:
 
-- `crates/axumkit-config/src/server_config.rs`
-- `crates/axumkit-worker/src/config/worker_config.rs`
+- `crates/config/src/server_config.rs`
+- `crates/worker/src/config/worker_config.rs`
 
 Focus on required env vars and defaults.
 
@@ -15,19 +15,19 @@ Focus on required env vars and defaults.
 
 Read:
 
-- `crates/axumkit-entity/src/users.rs`
-- `crates/axumkit-entity/src/user_oauth_connections.rs`
-- `crates/axumkit-dto/src/auth/*`
-- `crates/axumkit-dto/src/oauth/*`
-- `crates/axumkit-dto/src/search/*`
+- `crates/entity/src/users.rs`
+- `crates/entity/src/user_oauth_connections.rs`
+- `crates/dto/src/auth/*`
+- `crates/dto/src/oauth/*`
+- `crates/dto/src/search/*`
 
 ## 3) Learn the Error System
 
 Read:
 
-- `crates/axumkit-errors/src/errors.rs`
-- `crates/axumkit-errors/src/protocol.rs`
-- `crates/axumkit-errors/src/handlers/*`
+- `crates/errors/src/errors.rs`
+- `crates/errors/src/protocol.rs`
+- `crates/errors/src/handlers/*`
 
 Goal: understand how domain errors map to HTTP responses.
 
@@ -35,9 +35,9 @@ Goal: understand how domain errors map to HTTP responses.
 
 Read:
 
-- `crates/axumkit-server/src/main.rs`
-- `crates/axumkit-server/src/state.rs`
-- `crates/axumkit-server/src/connection/*`
+- `crates/server/src/main.rs`
+- `crates/server/src/state.rs`
+- `crates/server/src/connection/*`
 
 Goal: how DB, Redis, NATS, R2, and MeiliSearch are wired.
 
@@ -45,8 +45,8 @@ Goal: how DB, Redis, NATS, R2, and MeiliSearch are wired.
 
 Read:
 
-- `crates/axumkit-server/src/middleware/*`
-- `crates/axumkit-server/src/extractors/*`
+- `crates/server/src/middleware/*`
+- `crates/server/src/extractors/*`
 
 Goal: request lifecycle, session extraction, and rate-limit flow.
 
@@ -54,28 +54,28 @@ Goal: request lifecycle, session extraction, and rate-limit flow.
 
 Read in this order:
 
-- `crates/axumkit-server/src/api/v0/routes/auth/*`
-- `crates/axumkit-server/src/service/auth/*`
-- `crates/axumkit-server/src/repository/user/*`
-- `crates/axumkit-server/src/repository/oauth/*`
+- `crates/server/src/api/v0/routes/auth/*`
+- `crates/server/src/service/auth/*`
+- `crates/server/src/repository/user/*`
+- `crates/server/src/repository/oauth/*`
 
 Then check user/search routes:
 
-- `crates/axumkit-server/src/api/v0/routes/user/*`
-- `crates/axumkit-server/src/api/v0/routes/search/*`
-- `crates/axumkit-server/src/service/search/*`
+- `crates/server/src/api/v0/routes/user/*`
+- `crates/server/src/api/v0/routes/search/*`
+- `crates/server/src/service/search/*`
 
 ## 7) Worker Pipeline
 
 Read:
 
-- `crates/axumkit-worker/src/main.rs`
-- `crates/axumkit-worker/src/nats/streams.rs`
-- `crates/axumkit-worker/src/nats/consumer.rs`
-- `crates/axumkit-worker/src/jobs/email/*`
-- `crates/axumkit-worker/src/jobs/index/*`
-- `crates/axumkit-worker/src/jobs/reindex/*`
-- `crates/axumkit-worker/src/jobs/cron/*`
+- `crates/worker/src/main.rs`
+- `crates/worker/src/nats/streams.rs`
+- `crates/worker/src/nats/consumer.rs`
+- `crates/worker/src/jobs/email/*`
+- `crates/worker/src/jobs/index/*`
+- `crates/worker/src/jobs/reindex/*`
+- `crates/worker/src/jobs/cron/*`
 
 Goal: understand asynchronous job execution and cron scheduling.
 

@@ -1,0 +1,28 @@
+[package]
+name = "dto"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "axumkit API Data Transfer Objects"
+
+[dependencies]
+# Internal crates
+config.workspace = true
+constants.workspace = true
+entity.workspace = true
+errors.workspace = true
+
+# External dependencies
+serde = { workspace = true, features = ["derive"] }
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["v7", "serde"] }
+validator = { workspace = true, features = ["derive"] }
+sea-orm.workspace = true
+utoipa.workspace = true
+axum.workspace = true
+axum-extra.workspace = true
+cookie.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+unicode-general-category.workspace = true

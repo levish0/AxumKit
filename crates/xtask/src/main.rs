@@ -111,9 +111,9 @@ fn dev() -> Result<()> {
 
     println!("\n=== Development environment ready! ===");
     println!("\nStart the server:");
-    println!("  cargo run -p axumkit-server");
+    println!("  cargo run -p server");
     println!("\nStart the worker (in a separate terminal):");
-    println!("  cargo run -p axumkit-worker");
+    println!("  cargo run -p worker");
 
     Ok(())
 }

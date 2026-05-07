@@ -16,7 +16,7 @@ All 5 steps run atomically in a single Lua script — no race conditions.
 
 ## Lua Script
 
-Located at `crates/axumkit-server/src/middleware/lua/sliding_window.lua`:
+Located at `crates/server/src/middleware/lua/sliding_window.lua`:
 
 ```lua
 local key = KEYS[1]

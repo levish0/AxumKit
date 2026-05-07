@@ -23,16 +23,16 @@ git clone https://github.com/levish0/AxumKit.git && cd AxumKit
 cp .env.example .env  # edit with your config
 
 cd crates/migration && cargo run && cd ../..  # migrations
-cargo run -p axumkit-server                   # API server
-cargo run -p axumkit-worker                   # worker (separate terminal)
+cargo run -p server                   # API server
+cargo run -p worker                   # worker (separate terminal)
 ```
 
 ## Project Structure
 
 ```
 crates/
-├── axumkit-server     # API (handlers → services → repositories → entities)
-├── axumkit-worker     # Background jobs (NATS consumers, cron)
+├── server             # API (handlers → services → repositories → entities)
+├── worker             # Background jobs (NATS consumers, cron)
 ├── axumkit-config     # Env config
 ├── axumkit-constants  # Shared constants
 ├── axumkit-dto        # Request / response types

@@ -11,8 +11,8 @@ AxumKit is a Cargo workspace with focused crates:
 | `axumkit-entity` | SeaORM database entities |
 | `axumkit-errors` | Centralized error model and HTTP mapping |
 | `axumkit-dto` | Request/response DTOs and validators |
-| `axumkit-server` | API server (routes, services, repositories, middleware) |
-| `axumkit-worker` | Background worker (NATS consumers, cron jobs) |
+| `server` | API server (routes, services, repositories, middleware) |
+| `worker` | Background worker (NATS consumers, cron jobs) |
 
 ## Layered Server Design
 

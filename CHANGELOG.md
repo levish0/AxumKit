@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-05-07
+
+### Added
+
+- **Shared `storage` crate**
+  - extracted Cloudflare R2 client setup and asset operations into a reusable workspace crate
+  - removed duplicated R2 client implementation between server and worker
+
+- **Shared `image_utils` crate**
+  - moved image validation, hashing, resize, and WebP conversion logic out of the server crate
+  - kept upload flows in server while making image processing reusable across crates
+
+### Changed
+
+- **Internal crate naming simplified**
+  - renamed internal workspace crates from `axumkit_*` / `axumkit-*` to plain names such as `server`, `worker`, `config`, `constants`, `dto`, `entity`, and `errors`
+  - updated workspace dependencies, imports, and crate paths to match the new names
+
+- **Build and docs alignment**
+  - updated Docker build/runtime targets to use `server` and `worker` package/binary names
+  - refreshed README and docs references to the renamed internal crates
+
 ## [0.7.1] - 2026-04-24
 
 ### Fixed
