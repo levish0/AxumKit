@@ -458,9 +458,9 @@ dependencies = [
 
 [[package]]
 name = "async-nats"
-version = "0.47.0"
+version = "0.48.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07d6f157065c3461096d51aacde0c326fa49f3f6e0199e204c566842cdaa5299"
+checksum = "31811585c7c5bc2f60f8b80d5a6b0f737115611dac47567d7f7d94562ebb180b"
 dependencies = [
  "base64",
  "bytes",
@@ -470,7 +470,7 @@ dependencies = [
  "nuid",
  "pin-project",
  "portable-atomic",
- "rand 0.8.5",
+ "rand 0.10.1",
  "regex",
  "ring",
  "rustls-native-certs",
@@ -480,7 +480,7 @@ dependencies = [
  "serde_json",
  "serde_nanos",
  "serde_repr",
- "thiserror 1.0.69",
+ "thiserror 2.0.18",
  "time",
  "tokio",
  "tokio-rustls 0.26.4",
@@ -717,9 +717,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-s3"
-version = "1.131.0"
+version = "1.132.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe1b8c5282bf859170836045296b3cd710b7573aceb909498366bb508a41058e"
+checksum = "5575840a3a6b11f6011463ebe359320dfe5b67babb5e9b06fed6ddf809a9ab40"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -1169,152 +1169,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "axumkit_config"
-version = "0.7.1"
-dependencies = [
- "axum",
- "dotenvy",
- "tracing",
-]
-
-[[package]]
-name = "axumkit_constants"
-version = "0.1.0"
-dependencies = [
- "serde",
- "utoipa",
-]
-
-[[package]]
-name = "axumkit_dto"
-version = "0.7.1"
-dependencies = [
- "axum",
- "axum-extra",
- "axumkit_config",
- "axumkit_constants",
- "axumkit_entity",
- "axumkit_errors",
- "chrono",
- "cookie",
- "sea-orm",
- "serde",
- "serde_json",
- "tracing",
- "unicode-general-category",
- "utoipa",
- "uuid",
- "validator",
-]
-
-[[package]]
-name = "axumkit_entity"
-version = "0.7.1"
-dependencies = [
- "sea-orm",
- "serde",
- "utoipa",
- "uuid",
-]
-
-[[package]]
-name = "axumkit_errors"
-version = "0.7.1"
-dependencies = [
- "axum",
- "axumkit_config",
- "sea-orm",
- "serde",
- "tracing",
- "utoipa",
-]
-
-[[package]]
-name = "axumkit_server"
-version = "0.7.1"
-dependencies = [
- "anyhow",
- "argon2",
- "async-nats",
- "aws-config",
- "aws-sdk-s3",
- "axum",
- "axum-extra",
- "axumkit_config",
- "axumkit_constants",
- "axumkit_dto",
- "axumkit_entity",
- "axumkit_errors",
- "axumkit_worker",
- "base64",
- "blake3",
- "chrono",
- "cookie",
- "dotenvy",
- "futures",
- "hex",
- "image",
- "infer",
- "jsonwebtoken",
- "meilisearch-sdk",
- "oauth2",
- "oauth2-reqwest",
- "rand 0.10.1",
- "redis",
- "reqwest 0.13.3",
- "sea-orm",
- "serde",
- "serde_json",
- "similar",
- "tokio",
- "tokio-stream",
- "totp-rs",
- "tower",
- "tower-cookies",
- "tower-http",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "utoipa",
- "utoipa-swagger-ui",
- "uuid",
- "zstd",
-]
-
-[[package]]
-name = "axumkit_worker"
-version = "0.7.1"
-dependencies = [
- "anyhow",
- "async-nats",
- "aws-config",
- "aws-sdk-s3",
- "axumkit_constants",
- "axumkit_entity",
- "chrono",
- "chrono-tz",
- "dotenvy",
- "futures",
- "lettre",
- "meilisearch-sdk",
- "minijinja",
- "mrml",
- "redis",
- "sea-orm",
- "serde",
- "serde_json",
- "sitemap-rs",
- "tokio",
- "tokio-cron-scheduler",
- "tracing",
- "tracing-appender",
- "tracing-subscriber",
- "urlencoding",
- "uuid",
- "zstd",
-]
-
-[[package]]
 name = "backon"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1726,6 +1580,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "config"
+version = "0.7.2"
+dependencies = [
+ "axum",
+ "dotenvy",
+ "tracing",
+]
+
+[[package]]
 name = "const-oid"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1768,6 +1631,14 @@ name = "constant_time_eq"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3d52eff69cd5e647efe296129160853a42795992097e8af39800e1060caeea9b"
+
+[[package]]
+name = "constants"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "utoipa",
+]
 
 [[package]]
 name = "convert_case"
@@ -2219,6 +2090,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
+name = "dto"
+version = "0.7.2"
+dependencies = [
+ "axum",
+ "axum-extra",
+ "chrono",
+ "config",
+ "constants",
+ "cookie",
+ "entity",
+ "errors",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tracing",
+ "unicode-general-category",
+ "utoipa",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "dunce"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2226,12 +2119,12 @@ checksum = "92773504d58c093f6de2459af4af33faa518c13451eb8f2b5698ed3d36e7c813"
 
 [[package]]
 name = "e2e"
-version = "0.7.1"
+version = "0.7.2"
 dependencies = [
  "anyhow",
- "axumkit_dto",
- "axumkit_entity",
  "chrono",
+ "dto",
+ "entity",
  "futures",
  "reqwest 0.13.3",
  "sea-orm",
@@ -2334,6 +2227,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "entity"
+version = "0.7.2"
+dependencies = [
+ "sea-orm",
+ "serde",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
 name = "enum-as-inner"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2391,6 +2294,18 @@ checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "errors"
+version = "0.7.2"
+dependencies = [
+ "axum",
+ "config",
+ "sea-orm",
+ "serde",
+ "tracing",
+ "utoipa",
 ]
 
 [[package]]
@@ -3327,6 +3242,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "image_utils"
+version = "0.7.2"
+dependencies = [
+ "blake3",
+ "errors",
+ "image",
+ "infer",
+ "tracing",
+]
+
+[[package]]
 name = "imgref"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3396,16 +3322,6 @@ version = "0.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf466541e9d546596ee94f9f69590f89473455f88372423e0008fc1a7daf100e"
 dependencies = [
- "serde",
-]
-
-[[package]]
-name = "iri-string"
-version = "0.7.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c91338f0783edbd6195decb37bae672fd3b165faffb89bf7b9e6942f8b1a731a"
-dependencies = [
- "memchr",
  "serde",
 ]
 
@@ -4929,9 +4845,9 @@ dependencies = [
 
 [[package]]
 name = "redis"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f44e94c96d8870a387d88ce3de3fdd608cbfc0705f03cb343cdde91509d3e49a"
+checksum = "72d32a1ac9123f0d84fda64bfc02a271d9868483162dd2d9099b5c362ece064c"
 dependencies = [
  "arc-swap",
  "arcstr",
@@ -5746,6 +5662,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "server"
+version = "0.7.2"
+dependencies = [
+ "anyhow",
+ "argon2",
+ "async-nats",
+ "axum",
+ "axum-extra",
+ "base64",
+ "blake3",
+ "chrono",
+ "config",
+ "constants",
+ "cookie",
+ "dotenvy",
+ "dto",
+ "entity",
+ "errors",
+ "futures",
+ "hex",
+ "image_utils",
+ "jsonwebtoken",
+ "meilisearch-sdk",
+ "oauth2",
+ "oauth2-reqwest",
+ "rand 0.10.1",
+ "redis",
+ "reqwest 0.13.3",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "similar",
+ "storage",
+ "tokio",
+ "tokio-stream",
+ "totp-rs",
+ "tower",
+ "tower-cookies",
+ "tower-http",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "utoipa",
+ "utoipa-swagger-ui",
+ "uuid",
+ "worker",
+ "zstd",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6211,6 +6177,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
+name = "storage"
+version = "0.7.2"
+dependencies = [
+ "aws-config",
+ "aws-sdk-s3",
+ "tokio",
+]
+
+[[package]]
 name = "stringprep"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6516,9 +6491,9 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.52.1"
+version = "1.52.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b67dee974fe86fd92cc45b7a95fdd2f99a36a6d7b0d431a231178d3d670bbcc6"
+checksum = "110a78583f19d5cdb2c5ccf321d1290344e71313c6c37d43520d386027d18386"
 dependencies = [
  "bytes",
  "libc",
@@ -6715,9 +6690,9 @@ dependencies = [
 
 [[package]]
 name = "tower-http"
-version = "0.6.8"
+version = "0.6.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4e6559d53cc268e5031cd8429d05415bc4cb4aefc4aa5d6cc35fbf5b924a1f8"
+checksum = "68d6fdd9f81c2819c9a8b0e0cd91660e7746a8e6ea2ba7c6b2b057985f6bcb51"
 dependencies = [
  "base64",
  "bitflags",
@@ -6725,13 +6700,13 @@ dependencies = [
  "futures-util",
  "http 1.4.0",
  "http-body 1.0.1",
- "iri-string",
  "mime",
  "pin-project-lite",
  "tower",
  "tower-layer",
  "tower-service",
  "tracing",
+ "url",
  "uuid",
 ]
 
@@ -6953,9 +6928,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "utoipa"
-version = "5.4.0"
+version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fcc29c80c21c31608227e0912b2d7fddba57ad76b606890627ba8ee7964e993"
+checksum = "8bde15df68e80b16c7d16b9616e80770ad158988daa56a27dccd1e55558b0160"
 dependencies = [
  "indexmap",
  "serde",
@@ -6965,9 +6940,9 @@ dependencies = [
 
 [[package]]
 name = "utoipa-gen"
-version = "5.4.0"
+version = "5.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d79d08d92ab8af4c5e8a6da20c47ae3f61a0f1dabc1997cdf2d082b757ca08b"
+checksum = "6ba0b99ee52df3028635d93840c797102da61f8a7bb3cf751032455895b52ef8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7713,6 +7688,38 @@ dependencies = [
  "serde_json",
  "unicode-xid",
  "wasmparser",
+]
+
+[[package]]
+name = "worker"
+version = "0.7.2"
+dependencies = [
+ "anyhow",
+ "async-nats",
+ "chrono",
+ "chrono-tz",
+ "constants",
+ "dotenvy",
+ "entity",
+ "futures",
+ "lettre",
+ "meilisearch-sdk",
+ "minijinja",
+ "mrml",
+ "redis",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "sitemap-rs",
+ "storage",
+ "tokio",
+ "tokio-cron-scheduler",
+ "tracing",
+ "tracing-appender",
+ "tracing-subscriber",
+ "urlencoding",
+ "uuid",
+ "zstd",
 ]
 
 [[package]]

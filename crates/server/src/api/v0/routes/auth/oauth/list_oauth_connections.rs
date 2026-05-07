@@ -1,0 +1,28 @@
+use crate::extractors::RequiredSession;
+use crate::service::oauth::list_connections::service_list_oauth_connections;
+use crate::state::AppState;
+use axum::extract::State;
+use dto::oauth::response::OAuthConnectionListResponse;
+use errors::errors::Errors;
+
+#[utoipa::path(
+    get,
+    path = "/v0/auth/oauth/connections",
+    responses(
+        (status = 200, description = "OAuth connections list", body = OAuthConnectionListResponse),
+        (status = 401, description = "Unauthorized - Invalid or expired session"),
+        (status = 500, description = "Internal Server Error - Database error")
+    ),
+    tag = "Auth",
+    security(
+        ("session_id_cookie" = [])
+    )
+)]
+pub async fn list_oauth_connections(
+    State(state): State<AppState>,
+    RequiredSession(session_context): RequiredSession,
+) -> Result<OAuthConnectionListResponse, Errors> {
+    let result = service_list_oauth_connections(&state.db, session_context.user_id).await?;
+
+    Ok(result)
+}

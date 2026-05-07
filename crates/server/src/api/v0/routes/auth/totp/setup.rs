@@ -1,0 +1,27 @@
+use crate::extractors::RequiredSession;
+use crate::service::auth::totp::service_totp_setup;
+use crate::state::AppState;
+use axum::extract::State;
+use dto::auth::response::TotpSetupResponse;
+use errors::errors::Errors;
+
+#[utoipa::path(
+    post,
+    path = "/v0/auth/totp/setup",
+    responses(
+        (status = 200, description = "TOTP setup initiated", body = TotpSetupResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 409, description = "TOTP already enabled"),
+        (status = 500, description = "Internal Server Error")
+    ),
+    security(
+        ("session_id_cookie" = [])
+    ),
+    tag = "Auth - TOTP"
+)]
+pub async fn totp_setup(
+    State(state): State<AppState>,
+    RequiredSession(session): RequiredSession,
+) -> Result<TotpSetupResponse, Errors> {
+    service_totp_setup(&state.db, session.user_id).await
+}

@@ -31,10 +31,10 @@ cargo xtask migrate-fresh  # Drop & recreate DB
 cargo xtask dev
 
 # 2. Start server
-cargo run -p axumkit-server
+cargo run -p server
 
 # 3. Start worker (in a separate terminal)
-cargo run -p axumkit-worker
+cargo run -p worker
 ```
 
 ## Notes

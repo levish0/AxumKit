@@ -28,7 +28,7 @@ RUN cargo chef cook --release --recipe-path recipe.json
 COPY . .
 
 # Build all binaries (server, worker, migration)
-RUN cargo build --release -p axumkit_server -p axumkit_worker -p migration
+RUN cargo build --release -p server -p worker -p migration
 
 # Runtime stage for server
 FROM debian:stable-slim AS server-runtime
@@ -48,7 +48,7 @@ RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 
 # Copy binaries from builder stage
-COPY --from=builder /app/target/release/axumkit_server .
+COPY --from=builder /app/target/release/server .
 COPY --from=builder /app/target/release/migration .
 
 # Change ownership to app user
@@ -61,7 +61,7 @@ USER app
 EXPOSE 8000
 
 # Run the application
-CMD ["./axumkit_server"]
+CMD ["./server"]
 
 # Runtime stage for worker
 FROM debian:stable-slim AS worker-runtime
@@ -80,7 +80,7 @@ RUN groupadd -r app && useradd -r -g app app
 WORKDIR /app
 
 # Copy the binary from builder stage
-COPY --from=builder /app/target/release/axumkit_worker .
+COPY --from=builder /app/target/release/worker .
 
 # Change ownership to app user
 RUN chown -R app:app /app
@@ -89,4 +89,4 @@ RUN chown -R app:app /app
 USER app
 
 # Run the worker
-CMD ["./axumkit_worker"]
+CMD ["./worker"]

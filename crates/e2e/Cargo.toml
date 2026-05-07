@@ -13,8 +13,8 @@ path = "src/lib.rs"
 
 [dependencies]
 # Internal crates
-axumkit_entity.workspace = true
-axumkit_dto.workspace = true
+entity.workspace = true
+dto.workspace = true
 sea-orm.workspace = true
 
 # External dependencies

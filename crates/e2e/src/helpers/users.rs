@@ -1,13 +1,13 @@
 //! User creation helpers for E2E tests
 
 use anyhow::Result;
-use axumkit_dto::auth::request::LoginRequest;
-use axumkit_dto::user::request::CreateUserRequest;
+use dto::auth::request::LoginRequest;
+use dto::user::request::CreateUserRequest;
 use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set};
 use uuid::Uuid;
 
 use crate::fixtures::{ApiClient, TestServer};
-use axumkit_entity::users;
+use entity::users;
 
 /// Test user with credentials and session
 #[derive(Debug, Clone)]
