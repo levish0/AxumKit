@@ -11,7 +11,6 @@ env:
 
 jobs:
   build:
-    # 태그 push는 항상, PR은 [e2e] 있을 때만
     if: |
       github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -105,11 +104,8 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   test:
-    # PR에서 [e2e] 없을 때만 빌드 테스트 (push 안 함)
     if: |
-      github.event_name == 'pull_request' &&
-      !contains(github.event.pull_request.title, '[e2e]') &&
-      !contains(github.event.pull_request.body, '[e2e]')
+      github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:

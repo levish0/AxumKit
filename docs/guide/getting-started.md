@@ -13,10 +13,6 @@ Ensure the following are installed:
 | [MeiliSearch](https://www.meilisearch.com/) | 1.30+ | Full-text search engine |
 | S3-compatible object storage | Latest | R2 assets storage (images, sitemap) |
 
-::: tip
-You can use `docker-compose.e2e.yml` to spin up infrastructure services quickly. See [Docker deployment](/deploy/docker).
-:::
-
 ## Clone and Setup
 
 ```bash

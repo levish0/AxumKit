@@ -79,17 +79,8 @@ Read:
 
 Goal: understand asynchronous job execution and cron scheduling.
 
-## 8) E2E Test Harness
-
-Read:
-
-- `crates/e2e/src/fixtures/*`
-- `crates/e2e/src/helpers/*`
-
-Goal: how docker-compose infra is started, migrated, and tested.
-
 ## Suggested Exercises
 
 1. Add a new field to user profile and expose it in API.
 2. Add a new worker job subject and consumer.
-3. Add an e2e test that verifies a full auth flow.
+3. Add an integration or API-level test that verifies a full auth flow.
