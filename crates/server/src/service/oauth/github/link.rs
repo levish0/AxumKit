@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 /// Links GitHub OAuth to an existing account.
 pub async fn service_link_github_oauth(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     redis_conn: &ConnectionManager,
     http_client: &reqwest::Client,
     user_id: Uuid,
@@ -47,7 +47,7 @@ pub async fn service_link_github_oauth(
     // 3. Fetch user info with access token
     let user_info = fetch_github_user_info(http_client, &access_token).await?;
 
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
     // 4. Check if already linked to another account
     if repository_find_user_by_oauth(&txn, OAuthProvider::Github, &user_info.id.to_string())

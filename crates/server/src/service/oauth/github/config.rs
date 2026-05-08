@@ -2,6 +2,7 @@ use crate::service::oauth::provider::config::OAuthProviderConfig;
 use config::ServerConfig;
 use entity::common::OAuthProvider;
 
+/// Data structure for github provider.
 pub struct GithubProvider;
 
 impl OAuthProviderConfig for GithubProvider {
