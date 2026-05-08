@@ -12,11 +12,11 @@ use uuid::Uuid;
 /// Safety rule:
 /// - If the account has no password and only one OAuth connection left, unlink is denied.
 pub async fn service_unlink_oauth(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     user_id: Uuid,
     provider: OAuthProvider,
 ) -> ServiceResult<()> {
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
     // Serialize per-user unlink flow to prevent concurrent last-factor removal.
     let user = repository_get_user_by_id_for_update(&txn, user_id).await?;
