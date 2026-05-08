@@ -2,9 +2,8 @@ use super::{GoogleProvider, fetch_google_user_info};
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
-use crate::service::auth::verify_email::find_pending_email_signup_by_email;
 use crate::service::oauth::provider::client::exchange_code;
-use crate::service::oauth::types::{OAuthStateData, PendingSignupData};
+use crate::service::oauth::types::{OAuthStateData, PendingSignupData, PendingSignupTokenState};
 use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
 use config::ServerConfig;
 use constants::{oauth_pending_key, oauth_state_key};
@@ -85,14 +84,6 @@ where
         return Err(Errors::OauthEmailAlreadyExists);
     }
 
-    // 5b. Check if a pending email/password signup holds this email
-    if find_pending_email_signup_by_email(redis_conn, &user_info.email)
-        .await?
-        .is_some()
-    {
-        return Err(Errors::OauthEmailAlreadyExists);
-    }
-
     // 6. New user - store pending signup data in Redis
     let config = ServerConfig::get();
     let pending_data = PendingSignupData {
@@ -104,11 +95,12 @@ where
     };
 
     let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
+    let pending_state = PendingSignupTokenState::Pending { data: pending_data };
     let pending_token = issue_token_and_store_json_with_ttl(
         redis_conn,
         || uuid::Uuid::new_v4().to_string(),
         oauth_pending_key,
-        &pending_data,
+        &pending_state,
         ttl_seconds,
     )
     .await?;
