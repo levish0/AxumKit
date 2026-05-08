@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 /// Links Google OAuth to an existing account.
 pub async fn service_link_google_oauth(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     redis_conn: &ConnectionManager,
     http_client: &reqwest::Client,
     user_id: Uuid,
@@ -52,7 +52,7 @@ pub async fn service_link_google_oauth(
         return Err(Errors::OauthEmailNotVerified);
     }
 
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
     // 4. Check if already linked to another account
     if repository_find_user_by_oauth(&txn, OAuthProvider::Google, &user_info.id)
