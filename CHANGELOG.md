@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2026-05-08
+
+### Added
+
+- **Worker-based OAuth profile image processing**
+  - added `OAuthProfileImageJob` and a dedicated worker consumer/JetStream subject for OAuth profile image downloads
+  - moved provider image fetch, validation, processing, and R2 upload out of synchronous signup completion
+  - added server-side background job helpers and worker bridge publishing for OAuth profile image jobs
+
+- **OAuth pending signup token state**
+  - added `PendingSignupTokenState` with `pending` and `completed` variants for Redis-backed OAuth signup state
+  - completed OAuth signup tokens are now retained briefly so clients can safely retry after a lost response
+
+### Changed
+
+- **OAuth signup completion flow**
+  - `complete_signup` now creates the user first, stores completed token state, then schedules async side effects such as user indexing and profile image processing
+  - OAuth sign-in flows now store pending signup state in the new token envelope instead of raw pending signup payloads
+
+- **Worker storage naming cleanup**
+  - renamed worker R2 connection/module usage to `r2_assets` / `R2AssetsClient` for consistency with the storage crate and asset bucket purpose
+
+### Fixed
+
+- **OAuth signup retry/idempotency**
+  - repeated `complete_signup` requests can now recover from the already-created user path and issue a session instead of failing or duplicating work
+
+- **Google One Tap JWKS refresh behavior**
+  - added a refresh mutex and double-check flow to avoid parallel JWKS fetch stampedes
+  - retries once with a forced JWKS refresh when Google rotates signing keys before cache expiry
+
 ## [0.7.2] - 2026-05-07
 
 ### Added

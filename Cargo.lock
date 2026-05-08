@@ -1581,7 +1581,7 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "axum",
  "dotenvy",
@@ -2064,7 +2064,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dto"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "axum",
  "axum-extra",
@@ -2180,7 +2180,7 @@ dependencies = [
 
 [[package]]
 name = "entity"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "sea-orm",
  "serde",
@@ -2250,7 +2250,7 @@ dependencies = [
 
 [[package]]
 name = "errors"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "axum",
  "config",
@@ -3195,7 +3195,7 @@ dependencies = [
 
 [[package]]
 name = "image_utils"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "blake3",
  "errors",
@@ -5591,7 +5591,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "argon2",
@@ -6106,7 +6106,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "storage"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
@@ -7620,7 +7620,7 @@ dependencies = [
 
 [[package]]
 name = "worker"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "async-nats",
