@@ -1,5 +1,4 @@
 pub mod complete_signup;
-pub mod download_profile_image;
 pub mod find_or_create_oauth_user;
 pub mod generate_oauth_url;
 pub mod github;
