@@ -2,7 +2,7 @@ use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
 use crate::service::auth::verify_email::find_pending_email_signup_by_email;
-use crate::service::oauth::types::PendingSignupData;
+use crate::service::oauth::types::{PendingSignupData, PendingSignupTokenState};
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
 use config::ServerConfig;
 use constants::oauth_pending_key;
@@ -17,7 +17,7 @@ use sea_orm::ConnectionTrait;
 use serde::Deserialize;
 use std::sync::LazyLock;
 use std::time::{Duration, Instant};
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::debug;
 
 const GOOGLE_JWKS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
@@ -25,6 +25,7 @@ const DEFAULT_JWKS_CACHE_TTL_SECONDS: u64 = 300;
 
 static GOOGLE_JWKS_CACHE: LazyLock<RwLock<Option<CachedGoogleJwks>>> =
     LazyLock::new(|| RwLock::new(None));
+static GOOGLE_JWKS_REFRESH_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
 
 #[derive(Debug, Clone)]
 struct CachedGoogleJwks {
@@ -69,6 +70,8 @@ where
             Errors::GoogleInvalidIdToken
         })?
     } else if from_cache {
+        // Google can rotate signing keys before our cached JWKS expires.
+        // Retry once with a forced refresh before classifying the token as invalid.
         let (refreshed_jwks, _) = get_google_jwks(http_client, true).await?;
         let jwk = refreshed_jwks.find(&kid).ok_or_else(|| {
             debug!(kid = %kid, "kid not found in refreshed JWKS");
@@ -142,11 +145,12 @@ where
     };
 
     let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
+    let pending_state = PendingSignupTokenState::Pending { data: pending_data };
     let pending_token = issue_token_and_store_json_with_ttl(
         redis_conn,
         || uuid::Uuid::new_v4().to_string(),
         oauth_pending_key,
-        &pending_data,
+        &pending_state,
         ttl_seconds,
     )
     .await?;
@@ -164,21 +168,23 @@ async fn get_google_jwks(
     let now = Instant::now();
     if !force_refresh {
         let cache = GOOGLE_JWKS_CACHE.read().await;
-        if let Some(cached) = cache.as_ref() {
-            if now < cached.expires_at {
-                return Ok((cached.jwks.clone(), true));
-            }
+        if let Some(cached) = cache.as_ref()
+            && now < cached.expires_at
+        {
+            return Ok((cached.jwks.clone(), true));
         }
     }
 
-    // Double-check under write lock to prevent cache stampede, but do NOT
-    // hold the lock across the HTTP fetch — that would block all readers.
+    let _refresh_guard = GOOGLE_JWKS_REFRESH_LOCK.lock().await;
+
+    // Double-check after acquiring the refresh lock so only one request fetches
+    // JWKS when the cache is cold or expired.
     if !force_refresh {
-        let cache = GOOGLE_JWKS_CACHE.write().await;
-        if let Some(cached) = cache.as_ref() {
-            if Instant::now() < cached.expires_at {
-                return Ok((cached.jwks.clone(), true));
-            }
+        let cache = GOOGLE_JWKS_CACHE.read().await;
+        if let Some(cached) = cache.as_ref()
+            && Instant::now() < cached.expires_at
+        {
+            return Ok((cached.jwks.clone(), true));
         }
     }
 
