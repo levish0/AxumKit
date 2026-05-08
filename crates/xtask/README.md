@@ -19,6 +19,7 @@ cargo xtask migrate-fresh  # Drop & recreate DB
 |---------------|------|---------------------|
 | Redis Session | 6379 | Session storage     |
 | Redis Cache   | 6380 | Cache               |
+| Redis Lock    | 6381 | Worker cron/job locks |
 | NATS          | 4222 | Message queue       |
 | MeiliSearch   | 7700 | Search engine       |
 

@@ -105,6 +105,8 @@ Complete list of environment variables used by AxumKit.
 | `NATS_URL` | `nats://localhost:4222` | NATS URL |
 | `REDIS_CACHE_HOST` | `127.0.0.1` | Cache Redis host |
 | `REDIS_CACHE_PORT` | `6380` | Cache Redis port |
+| `REDIS_LOCK_HOST` | `127.0.0.1` | Worker lock Redis host |
+| `REDIS_LOCK_PORT` | `6381` | Worker lock Redis port |
 | `POSTGRES_WRITE_MAX_CONNECTION` | 10 | DB max pool size |
 | `POSTGRES_WRITE_MIN_CONNECTION` | 2 | DB min pool size |
 | `R2_REGION` | `auto` | R2 region |

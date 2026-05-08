@@ -8,7 +8,7 @@ Ensure the following are installed:
 |------|---------|---------|
 | [Rust](https://rustup.rs/) | 1.93.0+ | Compiler (edition 2024) |
 | [PostgreSQL](https://www.postgresql.org/) | 18+ | Primary database |
-| [Redis](https://redis.io/) | 8+ | Sessions, cache, rate limiting |
+| [Redis](https://redis.io/) | 8+ | Sessions, cache, rate limiting, worker locks |
 | [NATS](https://nats.io/) | 2.12+ | Job queue (JetStream) |
 | [MeiliSearch](https://www.meilisearch.com/) | 1.30+ | Full-text search engine |
 | S3-compatible object storage | Latest | R2 assets storage (images, sitemap) |

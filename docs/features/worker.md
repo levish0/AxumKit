@@ -56,7 +56,7 @@ The worker runs `tokio-cron-scheduler` with configurable timezone (`CRON_TIMEZON
 
 ## Worker Context
 
-All consumers share a `WorkerContext` with SMTP, database, Redis cache, R2 client, JetStream, and runtime config.
+All consumers share a `WorkerContext` with SMTP, database, Redis cache, R2 client, JetStream, and runtime config. Cron locking uses a dedicated Redis lock connection configured separately from cache.
 
 ## Configuration
 
@@ -79,3 +79,5 @@ All consumers share a `WorkerContext` with SMTP, database, Redis cache, R2 clien
 | `R2_ASSETS_BUCKET_NAME` | Yes | - | R2 assets bucket |
 | `R2_ASSETS_PUBLIC_DOMAIN` | Yes | - | Public domain for assets |
 | `CRON_TIMEZONE` | No | `UTC` | Timezone for cron schedules |
+| `REDIS_LOCK_HOST` | No | `127.0.0.1` | Worker lock Redis host |
+| `REDIS_LOCK_PORT` | No | `6381` | Worker lock Redis port |

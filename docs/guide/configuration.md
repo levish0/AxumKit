@@ -98,6 +98,8 @@ redis_session_host: env::var("REDIS_SESSION_HOST")
 | `REDIS_CACHE_HOST` | No | `redis-cache` | Cache Redis host |
 | `REDIS_CACHE_PORT` | No | `6379` | Cache Redis port |
 | `REDIS_CACHE_TTL` | No | `3600` | Cache TTL (seconds) |
+| `REDIS_LOCK_HOST` | No | `127.0.0.1` | Worker lock Redis host |
+| `REDIS_LOCK_PORT` | No | `6381` | Worker lock Redis port |
 
 ### Stability Layer
 

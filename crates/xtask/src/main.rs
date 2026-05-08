@@ -67,6 +67,22 @@ const SERVICES: &[DockerService] = &[
         ],
     },
     DockerService {
+        name: "redis-lock",
+        image: "redis:8-alpine",
+        ports: &["6381:6379"],
+        env: &[],
+        volumes: &["redis-lock-data:/data"],
+        extra_args: &[
+            "redis-server",
+            "--appendonly",
+            "yes",
+            "--maxmemory",
+            "256mb",
+            "--maxmemory-policy",
+            "noeviction",
+        ],
+    },
+    DockerService {
         name: "nats",
         image: "nats:2.12.3-alpine",
         ports: &["4222:4222", "8222:8222"],
