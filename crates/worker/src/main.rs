@@ -12,7 +12,7 @@ use worker::connection;
 use worker::jobs::{self, WorkerContext};
 use worker::nats::streams::initialize_all_streams;
 use worker::utils;
-use worker::DbPool;
+use worker::{CacheClient, DbPool};
 
 const CONSUMER_RESTART_DELAY: Duration = Duration::from_secs(1);
 
@@ -113,10 +113,11 @@ async fn main() -> Result<()> {
     info!("Shared clients created");
 
     // Connect to Redis Cache (for view counts, etc.)
-    let cache_client = connection::establish_redis_cache_connection(config).await?;
-
-    // Connect to Redis lock store (for cron/job locks)
-    let lock_client = connection::establish_redis_lock_connection(config).await?;
+    let redis_cache_url = config.redis_cache_url();
+    info!("Connecting to Redis Cache: {}", redis_cache_url);
+    let redis_cache_client = redis::Client::open(redis_cache_url)?;
+    let redis_cache_conn = redis::aio::ConnectionManager::new(redis_cache_client).await?;
+    let cache_client: CacheClient = Arc::new(redis_cache_conn);
 
     // Connect to R2 assets
     info!("Connecting to R2 assets...");
@@ -138,7 +139,6 @@ async fn main() -> Result<()> {
         meili_client,
         db_pool,
         cache_client,
-        lock_client,
         r2_assets,
         jetstream,
         config,
@@ -156,7 +156,7 @@ async fn main() -> Result<()> {
     info!("Starting cron scheduler...");
     let _cron_scheduler = jobs::cron::start_scheduler(
         ctx.db_pool.clone(),
-        ctx.lock_client.clone(),
+        ctx.cache_client.clone(),
         ctx.r2_assets.clone(),
         config,
     )
