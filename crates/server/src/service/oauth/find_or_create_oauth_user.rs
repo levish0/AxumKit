@@ -58,6 +58,7 @@ where
     }
 
     // 2b. Check if a pending email/password signup holds this email
+    // Also reject if a pending email/password signup already holds this email.
     if find_pending_email_signup_by_email(redis_conn, email)
         .await?
         .is_some()
@@ -77,6 +78,7 @@ where
     }
 
     // 3b. Check if a pending email/password signup holds this handle
+    // Also reject if a pending email/password signup already holds this handle.
     if find_pending_email_signup_by_handle(redis_conn, handle)
         .await?
         .is_some()
