@@ -2,6 +2,7 @@ use crate::service::oauth::provider::config::OAuthProviderConfig;
 use config::ServerConfig;
 use entity::common::OAuthProvider;
 
+/// Data structure for google provider.
 pub struct GoogleProvider;
 
 impl OAuthProviderConfig for GoogleProvider {
