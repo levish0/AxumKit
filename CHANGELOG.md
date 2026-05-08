@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.4] - 2026-05-08
+
+### Changed
+
+- **Dedicated Redis lock store for worker cron jobs**
+  - worker cron locking now uses a separate `REDIS_LOCK_*` Redis connection instead of reusing the cache Redis client
+  - added `redis-lock` to the local development stack with a `noeviction` policy for distributed lock safety
+  - updated worker configuration, environment examples, and docs to reflect the new lock Redis role
+
+### Fixed
+
+- **OAuth pending-signup rejection consistency**
+  - Google OAuth login and GitHub OAuth login now reject emails already reserved by pending email/password signups, matching Google One Tap and `complete_signup`
+  - avoids issuing OAuth pending-signup tokens that would later fail at signup completion because the email was already reserved
+
 ## [0.7.3] - 2026-05-08
 
 ### Added
