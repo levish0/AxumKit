@@ -8,4 +8,4 @@ pub use github::{GithubEmail, GithubUserInfo};
 pub use google::GoogleUserInfo;
 pub use oauth_state_data::OAuthStateData;
 pub use oauth_user_result::OAuthUserResult;
-pub use pending_signup_data::PendingSignupData;
+pub use pending_signup_data::{PendingSignupData, PendingSignupTokenState};
