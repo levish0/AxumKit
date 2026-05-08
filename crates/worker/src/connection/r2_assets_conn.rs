@@ -18,7 +18,7 @@ pub async fn establish_r2_assets_connection(
         access_key_id: config.r2_access_key_id.clone(),
         secret_access_key: config.r2_secret_access_key.clone(),
     })
-        .await;
+    .await;
 
     let r2_client = R2AssetsClient::new(
         client,
