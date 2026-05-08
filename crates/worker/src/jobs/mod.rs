@@ -1,6 +1,7 @@
 pub mod cron;
 pub mod email;
 pub mod index;
+pub mod oauth;
 pub mod reindex;
 
 // Re-exports for backward compatibility with server

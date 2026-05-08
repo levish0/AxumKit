@@ -1,0 +1,137 @@
+use crate::DbPool;
+use crate::connection::R2AssetsClient;
+use crate::jobs::WorkerContext;
+use crate::nats::consumer::NatsConsumer;
+use crate::nats::publisher::publish_job;
+use crate::nats::streams::{OAUTH_PROFILE_IMAGE_CONSUMER, OAUTH_PROFILE_IMAGE_STREAM};
+use crate::nats::{JetStreamContext, streams::INDEX_USER_SUBJECT};
+use constants::{PROFILE_IMAGE_MAX_SIZE, user_image_key};
+use entity::users::{Column as UserColumn, Entity as UserEntity};
+use image_utils::image_processor::{generate_image_hash, process_image_for_upload, validate_image};
+use reqwest::Client as HttpClient;
+use sea_orm::prelude::Expr;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::jobs::index::user::{IndexUserJob, UserIndexAction};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OAuthProfileImageJob {
+    pub user_id: Uuid,
+    pub image_url: String,
+}
+
+async fn handle_oauth_profile_image(
+    job: OAuthProfileImageJob,
+    http_client: &HttpClient,
+    r2_assets: &R2AssetsClient,
+    db: &DbPool,
+    jetstream: &JetStreamContext,
+) -> Result<(), anyhow::Error> {
+    tracing::info!(user_id = %job.user_id, "Processing OAuth profile image job");
+
+    let response = http_client.get(&job.image_url).send().await?;
+    if !response.status().is_success() {
+        tracing::warn!(
+            user_id = %job.user_id,
+            status = %response.status(),
+            "OAuth profile image download failed"
+        );
+        return Ok(());
+    }
+
+    let image_bytes = response.bytes().await?;
+    let image_info = match validate_image(&image_bytes, PROFILE_IMAGE_MAX_SIZE) {
+        Ok(info) => info,
+        Err(err) => {
+            tracing::warn!(
+                user_id = %job.user_id,
+                error = ?err,
+                "OAuth profile image validation failed"
+            );
+            return Ok(());
+        }
+    };
+
+    let processed = match process_image_for_upload(&image_bytes, &image_info.mime_type) {
+        Ok(processed) => processed,
+        Err(err) => {
+            tracing::warn!(
+                user_id = %job.user_id,
+                error = ?err,
+                "OAuth profile image processing failed"
+            );
+            return Ok(());
+        }
+    };
+
+    let hash = generate_image_hash(&processed.data);
+    let storage_key = user_image_key(&hash, &processed.extension);
+
+    r2_assets
+        .upload_with_content_type(&storage_key, processed.data, &processed.content_type)
+        .await?;
+
+    let result = UserEntity::update_many()
+        .col_expr(
+            UserColumn::ProfileImage,
+            Expr::value(Some(storage_key.clone())),
+        )
+        .filter(UserColumn::Id.eq(job.user_id))
+        .filter(UserColumn::ProfileImage.is_null())
+        .exec(db.as_ref())
+        .await?;
+
+    if result.rows_affected == 0 {
+        if let Err(err) = r2_assets.delete(&storage_key).await {
+            tracing::warn!(
+                user_id = %job.user_id,
+                storage_key = %storage_key,
+                error = ?err,
+                "Failed to cleanup unused OAuth profile image"
+            );
+        }
+        return Ok(());
+    }
+
+    let index_job = IndexUserJob {
+        user_id: job.user_id,
+        action: UserIndexAction::Index,
+    };
+    publish_job(jetstream, INDEX_USER_SUBJECT, &index_job).await?;
+
+    tracing::info!(
+        user_id = %job.user_id,
+        storage_key = %storage_key,
+        "OAuth profile image uploaded"
+    );
+
+    Ok(())
+}
+
+pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
+    let http_client = HttpClient::new();
+    let r2_assets = ctx.r2_assets.clone();
+    let db_pool = ctx.db_pool.clone();
+    let jetstream = ctx.jetstream.clone();
+
+    let consumer = NatsConsumer::new(
+        ctx.jetstream.clone(),
+        OAUTH_PROFILE_IMAGE_STREAM,
+        OAUTH_PROFILE_IMAGE_CONSUMER,
+        2,
+    );
+
+    consumer
+        .run::<OAuthProfileImageJob, _, _>(move |job| {
+            let http_client = http_client.clone();
+            let r2_assets = r2_assets.clone();
+            let db = db_pool.clone();
+            let jetstream = jetstream.clone();
+            async move {
+                handle_oauth_profile_image(job, &http_client, &r2_assets, &db, &jetstream).await
+            }
+        })
+        .await
+}
