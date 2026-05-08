@@ -7,22 +7,26 @@ use async_nats::jetstream::{
 pub const EMAIL_STREAM: &str = "axumkit_jobs_email";
 pub const INDEX_USER_STREAM: &str = "axumkit_jobs_index_user";
 pub const REINDEX_USERS_STREAM: &str = "axumkit_jobs_reindex_users";
+pub const OAUTH_PROFILE_IMAGE_STREAM: &str = "axumkit_jobs_oauth_profile_image";
 
 // Subjects (for publishing)
 pub const EMAIL_SUBJECT: &str = "axumkit.jobs.email";
 pub const INDEX_USER_SUBJECT: &str = "axumkit.jobs.index.user";
 pub const REINDEX_USERS_SUBJECT: &str = "axumkit.jobs.reindex.users";
+pub const OAUTH_PROFILE_IMAGE_SUBJECT: &str = "axumkit.jobs.oauth.profile_image";
 
 // Consumer names
 pub const EMAIL_CONSUMER: &str = "email-consumer";
 pub const INDEX_USER_CONSUMER: &str = "user-index-consumer";
 pub const REINDEX_USERS_CONSUMER: &str = "reindex-users-consumer";
+pub const OAUTH_PROFILE_IMAGE_CONSUMER: &str = "oauth-profile-image-consumer";
 
 /// Stream and subject pairs for initialization
 const STREAMS: &[(&str, &str)] = &[
     (EMAIL_STREAM, EMAIL_SUBJECT),
     (INDEX_USER_STREAM, INDEX_USER_SUBJECT),
     (REINDEX_USERS_STREAM, REINDEX_USERS_SUBJECT),
+    (OAUTH_PROFILE_IMAGE_STREAM, OAUTH_PROFILE_IMAGE_SUBJECT),
 ];
 
 /// Initialize all job streams with WorkQueue retention policy

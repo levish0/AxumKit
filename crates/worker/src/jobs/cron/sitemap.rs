@@ -1,5 +1,5 @@
 use crate::config::WorkerConfig;
-use crate::connection::R2Client;
+use crate::connection::R2AssetsClient;
 use chrono::{DateTime, FixedOffset, Utc};
 use sea_orm::DatabaseConnection;
 use sitemap_rs::sitemap::Sitemap;
@@ -15,12 +15,12 @@ const SITEMAP_PREFIX: &str = "sitemaps/";
 /// AxumKit core currently publishes only a minimal sitemap (frontend root).
 pub async fn generate_and_upload_sitemap(
     _db: &DatabaseConnection,
-    r2_client: &R2Client,
+    r2_assets: &R2AssetsClient,
     config: &WorkerConfig,
 ) {
     info!("Starting sitemap generation...");
 
-    match generate_sitemap_internal(r2_client, config).await {
+    match generate_sitemap_internal(r2_assets, config).await {
         Ok(()) => {
             info!("Sitemap generation completed successfully");
         }
@@ -31,7 +31,7 @@ pub async fn generate_and_upload_sitemap(
 }
 
 async fn generate_sitemap_internal(
-    r2_client: &R2Client,
+    r2_assets: &R2AssetsClient,
     config: &WorkerConfig,
 ) -> anyhow::Result<()> {
     let base_url = config.frontend_host.trim_end_matches('/');
@@ -47,24 +47,24 @@ async fn generate_sitemap_internal(
     url_set.write(&mut sitemap_buf)?;
 
     let sitemap_key = format!("{}sitemap-1.xml", SITEMAP_PREFIX);
-    r2_client
+    r2_assets
         .upload_with_content_type(&sitemap_key, sitemap_buf, "application/xml")
         .await?;
 
     let index = SitemapIndex::new(vec![Sitemap::new(
-        r2_client.get_public_url(&sitemap_key),
+        r2_assets.get_public_url(&sitemap_key),
         Some(now_fixed),
     )])?;
     let mut index_buf: Vec<u8> = Vec::new();
     index.write(&mut index_buf)?;
 
     let index_key = format!("{}sitemap-index.xml", SITEMAP_PREFIX);
-    r2_client
+    r2_assets
         .upload_with_content_type(&index_key, index_buf, "application/xml")
         .await?;
 
     info!(
-        index_url = r2_client.get_public_url(&index_key),
+        index_url = r2_assets.get_public_url(&index_key),
         "Uploaded sitemap index"
     );
 

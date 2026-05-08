@@ -8,7 +8,7 @@ pub mod reindex;
 pub use index::user as user_index;
 
 use crate::config::WorkerConfig;
-use crate::connection::R2Client;
+use crate::connection::R2AssetsClient;
 use crate::nats::JetStreamContext;
 use crate::{CacheClient, DbPool, Mailer, SearchClient};
 
@@ -19,7 +19,7 @@ pub struct WorkerContext {
     pub meili_client: SearchClient,
     pub db_pool: DbPool,
     pub cache_client: CacheClient,
-    pub r2_client: R2Client,
+    pub r2_assets: R2AssetsClient,
     pub jetstream: JetStreamContext,
     pub config: &'static WorkerConfig,
 }

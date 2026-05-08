@@ -21,13 +21,15 @@ enum ConsumerKind {
     Email,
     IndexUser,
     ReindexUsers,
+    OAuthProfileImage,
 }
 
 impl ConsumerKind {
-    const ALL: [ConsumerKind; 3] = [
+    const ALL: [ConsumerKind; 4] = [
         ConsumerKind::Email,
         ConsumerKind::IndexUser,
         ConsumerKind::ReindexUsers,
+        ConsumerKind::OAuthProfileImage,
     ];
 
     fn name(self) -> &'static str {
@@ -35,6 +37,7 @@ impl ConsumerKind {
             ConsumerKind::Email => "email",
             ConsumerKind::IndexUser => "index_user",
             ConsumerKind::ReindexUsers => "reindex_users",
+            ConsumerKind::OAuthProfileImage => "oauth_profile_image",
         }
     }
 }
@@ -64,6 +67,7 @@ async fn run_consumer(kind: ConsumerKind, ctx: WorkerContext) -> Result<()> {
         ConsumerKind::Email => jobs::email::run_consumer(ctx).await,
         ConsumerKind::IndexUser => jobs::index::user::run_consumer(ctx).await,
         ConsumerKind::ReindexUsers => jobs::reindex::users::run_consumer(ctx).await,
+        ConsumerKind::OAuthProfileImage => jobs::oauth::run_consumer(ctx).await,
     }
 }
 
@@ -115,9 +119,9 @@ async fn main() -> Result<()> {
     let redis_cache_conn = redis::aio::ConnectionManager::new(redis_cache_client).await?;
     let cache_client: CacheClient = Arc::new(redis_cache_conn);
 
-    // Connect to R2 (for sitemap storage)
-    info!("Connecting to R2...");
-    let r2_client = connection::establish_r2_connection(config).await?;
+    // Connect to R2 assets
+    info!("Connecting to R2 assets...");
+    let r2_assets = connection::establish_r2_assets_connection(config).await?;
 
     // Connect to NATS
     info!("Connecting to NATS: {}", config.nats_url);
@@ -135,7 +139,7 @@ async fn main() -> Result<()> {
         meili_client,
         db_pool,
         cache_client,
-        r2_client,
+        r2_assets,
         jetstream,
         config,
     };
@@ -153,7 +157,7 @@ async fn main() -> Result<()> {
     let _cron_scheduler = jobs::cron::start_scheduler(
         ctx.db_pool.clone(),
         ctx.cache_client.clone(),
-        ctx.r2_client.clone(),
+        ctx.r2_assets.clone(),
         config,
     )
     .await?;

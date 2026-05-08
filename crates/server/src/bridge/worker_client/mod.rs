@@ -1,11 +1,13 @@
 mod cache;
 mod email;
 mod index;
+mod oauth;
 mod reindex;
 
 // Re-export all functions for backwards compatibility
 pub use email::*;
 pub use index::*;
+pub use oauth::*;
 pub use reindex::*;
 
 use crate::state::WorkerClient;

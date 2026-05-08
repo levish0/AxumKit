@@ -6,7 +6,7 @@ pub mod nats;
 pub mod templates;
 pub mod utils;
 
-use connection::R2Client;
+use connection::R2AssetsClient;
 use lettre::{AsyncSmtpTransport, Tokio1Executor};
 use meilisearch_sdk::client::Client as MeiliClient;
 use redis::aio::ConnectionManager as RedisConnectionManager;
@@ -25,8 +25,5 @@ pub type DbPool = Arc<DatabaseConnection>;
 /// Shared Redis cache client (for view counts, etc.)
 pub type CacheClient = Arc<RedisConnectionManager>;
 
-/// Shared Redis session client (persistent store for auth and cron locks)
-pub type SessionClient = Arc<RedisConnectionManager>;
-
-/// Shared R2 storage client (for sitemap files)
-pub type R2StorageClient = Arc<R2Client>;
+/// Shared R2 assets client
+pub type SharedR2AssetsClient = Arc<R2AssetsClient>;
