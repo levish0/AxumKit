@@ -5,8 +5,8 @@ use dto::auth::request::{
     VerifyEmailRequest,
 };
 use dto::auth::response::{
-    TotpBackupCodesResponse, TotpEnableResponse, TotpRequiredResponse, TotpSetupResponse,
-    TotpStatusResponse,
+    ListSessionsResponse, SessionInfo, TotpBackupCodesResponse, TotpEnableResponse,
+    TotpRequiredResponse, TotpSetupResponse, TotpStatusResponse,
 };
 use dto::oauth::request::{
     GithubLinkRequest, GithubLoginRequest, GoogleLinkRequest, GoogleLoginRequest,
@@ -25,6 +25,8 @@ use utoipa::OpenApi;
         super::signup::auth_signup,
         super::login::auth_login,
         super::logout::auth_logout,
+        super::session::list_sessions::auth_list_sessions,
+        super::session::revoke_session::auth_revoke_session,
         super::forgot_password::auth_forgot_password,
         super::reset_password::auth_reset_password,
         super::complete_signup::auth_complete_signup,
@@ -80,6 +82,8 @@ use utoipa::OpenApi;
             TotpEnableResponse,
             TotpBackupCodesResponse,
             TotpRequiredResponse,
+            SessionInfo,
+            ListSessionsResponse,
             ChangePasswordRequest,
             ChangeEmailRequest,
             ConfirmEmailChangeRequest,

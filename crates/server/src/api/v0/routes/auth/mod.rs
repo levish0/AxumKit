@@ -10,6 +10,7 @@ pub mod openapi;
 pub mod resend_verification_email;
 pub mod reset_password;
 pub mod routes;
+pub mod session;
 pub mod signup;
 pub mod totp;
 pub mod verify_email;

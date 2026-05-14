@@ -6,11 +6,13 @@ use uuid::Uuid;
 pub struct SessionContext {
     pub user_id: Uuid,
     pub session_id: String,
+    pub management_id: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     pub session_id: String,
+    pub management_id: String,
     pub user_id: String,
     pub created_at: DateTime<Utc>,
     pub expires_at: DateTime<Utc>,
@@ -27,6 +29,7 @@ impl Session {
 
         Self {
             session_id: Uuid::now_v7().to_string(),
+            management_id: Uuid::now_v7().to_string(),
             user_id,
             created_at: now,
             expires_at,
@@ -79,6 +82,7 @@ mod tests {
         let now = Utc::now();
         Session {
             session_id: "test-session".to_string(),
+            management_id: "test-management".to_string(),
             user_id: "test-user".to_string(),
             created_at: now,
             expires_at: now + Duration::hours(expires_in_hours),

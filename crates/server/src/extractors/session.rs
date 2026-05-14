@@ -71,6 +71,7 @@ where
         Ok(RequiredSession(SessionContext {
             user_id,
             session_id,
+            management_id: session.management_id,
         }))
     }
 }
@@ -142,6 +143,7 @@ where
         Ok(OptionalSession(Some(SessionContext {
             user_id,
             session_id,
+            management_id: session.management_id,
         })))
     }
 }

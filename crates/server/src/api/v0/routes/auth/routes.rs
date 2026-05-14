@@ -7,6 +7,8 @@ use super::login::auth_login;
 use super::logout::auth_logout;
 use super::resend_verification_email::auth_resend_verification_email;
 use super::reset_password::auth_reset_password;
+use super::session::list_sessions::auth_list_sessions;
+use super::session::revoke_session::auth_revoke_session;
 use super::signup::auth_signup;
 use super::totp::disable::totp_disable;
 use super::totp::enable::totp_enable;
@@ -25,12 +27,17 @@ use crate::api::v0::routes::auth::oauth::google::google_one_tap_login::auth_goog
 use crate::api::v0::routes::auth::oauth::list_oauth_connections::list_oauth_connections;
 use crate::api::v0::routes::auth::oauth::unlink_oauth_connection::unlink_oauth_connection;
 use crate::state::AppState;
-use axum::{Router, routing::get, routing::post};
+use axum::{Router, routing::delete, routing::get, routing::post};
 
 pub fn auth_routes(_state: AppState) -> Router<AppState> {
     Router::new()
         // Protected routes (authentication via extractors)
         .route("/auth/logout", post(auth_logout))
+        .route("/auth/sessions", get(auth_list_sessions))
+        .route(
+            "/auth/sessions/{management_id}",
+            delete(auth_revoke_session),
+        )
         .route("/auth/oauth/connections", get(list_oauth_connections))
         .route(
             "/auth/oauth/connections/unlink",

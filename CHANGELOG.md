@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.5] - 2026-05-14
+
+### Added
+
+- **Active session listing and revocation endpoints**
+  - added `GET /v0/auth/sessions` to list the authenticated user's active sessions with `is_current`
+  - added `DELETE /v0/auth/sessions/{management_id}` to revoke an owned session using a public management identifier instead of the bearer cookie value
+  - revoking the current session also clears the `session_id` cookie
+
+### Changed
+
+- **Session storage no longer exposes bearer session IDs**
+  - session payloads now include a separate `management_id` for JS-visible session management flows
+  - session listing responses return `management_id` and no longer expose the HttpOnly cookie `session_id`
+
+- **Per-user session lookup now uses a Redis ZSET**
+  - replaced `user_session_idx:{user_id}:{session_id}` scan-based lookup with `user_sessions:{user_id}` plus `session_mgmt:{management_id}`
+  - listing and revocation no longer require scanning the Redis keyspace
+  - stale management entries are pruned during list and delete flows
+
 ## [0.7.4] - 2026-05-08
 
 ### Changed
