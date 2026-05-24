@@ -23,14 +23,14 @@ storage = { path = "crates/storage" }
 image_utils = { path = "crates/image_utils" }
 
 # External dependencies
-tokio = { version = "1.52.2", features = ["full"] }
+tokio = { version = "1.52.3", features = ["full"] }
 axum = { version = "0.8.9", features = ["multipart", "macros"] }
 axum-extra = { version = "0.12.6", features = ["typed-header", "query"] }
 tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
-tower-http = { version = "0.6.10", features = ["cors", "auth", "trace", "request-id"] }
+tower-http = { version = "0.6.11", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
+serde_json = "1.0.150"
 sea-orm = { version = "2.0.0-rc.38", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
 redis = { version = "1.2.1", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
@@ -39,8 +39,8 @@ oauth2 = { version = "5.0.0"}
 oauth2-reqwest = "0.1.0-alpha.3"
 totp-rs = { version = "5.7.1", features = ["qr"] }
 cookie = "0.18.1"
-aws-sdk-s3 = "1.132.0"
-aws-config = { version = "1.8.16", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1.133.0"
+aws-config = { version = "1.8.17", features = ["behavior-version-latest"] }
 meilisearch-sdk = { version = "0.33.0" }
 utoipa = { version = "5.5.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"] }
@@ -61,17 +61,16 @@ image = { version = "0.25.10", features = ["webp"] }
 infer = "0.19.0"
 blake3 = "1.8.5"
 zstd = "0.13.3"
-lettre = { version = "0.11.21", features = ["tokio1-native-tls"] }
+lettre = { version = "0.11.22", features = ["tokio1-native-tls"] }
 mrml = "6.0.1"
-minijinja = { version = "2.19.0", features = ["loader"] }
-similar = "3.1.0"
+minijinja = { version = "2.20.0", features = ["loader"] }
 futures = "0.3.32"
 async-nats = "0.48.0"
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 sitemap-rs = "0.4.0"
 urlencoding = "2.1.3"
 unicode-general-category = "1.1.0"
-jsonwebtoken = "10.3.0"
+jsonwebtoken = "10.4.0"
 
 [profile.dev]
 opt-level = 1

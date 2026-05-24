@@ -58,7 +58,6 @@ base64.workspace = true
 blake3.workspace = true
 zstd.workspace = true
 futures.workspace = true
-similar.workspace = true
 async-nats.workspace = true
 tokio-stream.workspace = true
 jsonwebtoken.workspace = true
