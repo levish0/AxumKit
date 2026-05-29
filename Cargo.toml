@@ -39,7 +39,7 @@ oauth2 = { version = "5.0.0"}
 oauth2-reqwest = "0.1.0-alpha.3"
 totp-rs = { version = "5.7.1", features = ["qr"] }
 cookie = "0.18.1"
-aws-sdk-s3 = "1.133.0"
+aws-sdk-s3 = "1.134.0"
 aws-config = { version = "1.8.17", features = ["behavior-version-latest"] }
 meilisearch-sdk = { version = "0.33.0" }
 utoipa = { version = "5.5.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
