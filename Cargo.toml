@@ -32,14 +32,14 @@ tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
 sea-orm = { version = "2.0.0-rc.38", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
-redis = { version = "1.2.1", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
+redis = { version = "1.2.2", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
 oauth2 = { version = "5.0.0"}
 oauth2-reqwest = "0.1.0-alpha.3"
 totp-rs = { version = "5.7.1", features = ["qr"] }
 cookie = "0.18.1"
-aws-sdk-s3 = "1.133.0"
+aws-sdk-s3 = "1.134.0"
 aws-config = { version = "1.8.17", features = ["behavior-version-latest"] }
 meilisearch-sdk = { version = "0.33.0" }
 utoipa = { version = "5.5.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
@@ -48,11 +48,11 @@ validator = { version = "0.20.0", features = ["derive"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 tracing-appender = "0.2.5"
-reqwest = { version = "0.13.3", features = ["json", "multipart"] }
+reqwest = { version = "0.13.4", features = ["json", "multipart"] }
 anyhow = "1.0.102"
 chrono = { version = "0.4.44", features = ["serde"] }
 chrono-tz = "0.10.4"
-uuid = { version = "1.23.1", features = ["v7", "v4"] }
+uuid = { version = "1.23.2", features = ["v7", "v4"] }
 dotenvy = "0.15.7"
 rand = "0.10.1"
 hex = "0.4.3"
@@ -65,7 +65,7 @@ lettre = { version = "0.11.22", features = ["tokio1-native-tls"] }
 mrml = "6.0.1"
 minijinja = { version = "2.20.0", features = ["loader"] }
 futures = "0.3.32"
-async-nats = "0.48.0"
+async-nats = "0.49.0"
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 sitemap-rs = "0.4.0"
 urlencoding = "2.1.3"
