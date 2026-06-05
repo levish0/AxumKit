@@ -50,7 +50,7 @@ tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
 tracing-appender = "0.2.5"
 reqwest = { version = "0.13.4", features = ["json", "multipart"] }
 anyhow = "1.0.102"
-chrono = { version = "0.4.44", features = ["serde"] }
+chrono = { version = "0.4.45", features = ["serde"] }
 chrono-tz = "0.10.4"
 uuid = { version = "1.23.2", features = ["v7", "v4"] }
 dotenvy = "0.15.7"
