@@ -29,6 +29,10 @@ use std::net::SocketAddr;
     ),
     tag = "Auth"
 )]
+/// OAuth pending signup을 완료하고 세션을 발급합니다.
+///
+/// pending_token으로 Redis의 임시 OAuth 데이터를 조회한 뒤 계정을 생성하고
+/// 204 No Content + Set-Cookie로 응답합니다.
 pub async fn auth_complete_signup(
     user_agent: Option<TypedHeader<UserAgent>>,
     headers: HeaderMap,

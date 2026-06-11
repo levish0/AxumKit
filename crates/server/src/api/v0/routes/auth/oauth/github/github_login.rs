@@ -29,6 +29,10 @@ use std::net::SocketAddr;
     ),
     tag = "Auth"
 )]
+/// GitHub OAuth 로그인을 처리합니다.
+///
+/// - 기존 사용자: 204 No Content + Set-Cookie
+/// - 신규 사용자: 200 OK + pending signup 토큰 (complete-signup 필요)
 pub async fn auth_github_login(
     user_agent: Option<TypedHeader<UserAgent>>,
     headers: HeaderMap,
