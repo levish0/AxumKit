@@ -36,6 +36,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - local/test env templates default to direct `postgres:5432`
   - production guidance uses `pgdog:6432` when the app should connect through PgDog
 
+- **Email verification now signs users in**
+  - `POST /v0/auth/verify-email` now creates a session and returns the login cookie after the account is created
+  - verified signup clients can continue with authenticated requests without making a separate login call
+
 - **Worker runtime hardening**
   - NATS pull consumers now bound `max_ack_pending` to configured concurrency
   - long-running jobs send in-progress acks during processing

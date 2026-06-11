@@ -1249,7 +1249,7 @@
           "Auth"
         ],
         "summary": "Complete an email signup with a verification token",
-        "description": "Consumes the pending email verification token, creates the user account if the email and handle are still available, and then schedules background indexing. The token is only cleaned up after the database commit succeeds.",
+        "description": "Consumes the pending email verification token, creates the user account if the email and handle are still available, schedules background indexing, and issues a session cookie. The token is only cleaned up after the database commit succeeds.",
         "operationId": "auth_verify_email",
         "requestBody": {
           "content": {
@@ -1263,7 +1263,7 @@
         },
         "responses": {
           "204": {
-            "description": "Verification token accepted and the account was created"
+            "description": "Verification token accepted, account created, and session cookie issued"
           },
           "400": {
             "description": "Malformed JSON payload, validation error, or invalid verification token",
