@@ -9,11 +9,11 @@ use std::time::Duration;
 use uuid::Uuid;
 
 pub fn base_url() -> String {
-    std::env::var("E2E_BASE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string())
+    std::env::var("E2E_BASE_URL").unwrap_or_else(|_| "http://localhost:18000".to_string())
 }
 
 pub fn mailpit_url() -> String {
-    std::env::var("MAILPIT_URL").unwrap_or_else(|_| "http://localhost:8025".to_string())
+    std::env::var("MAILPIT_URL").unwrap_or_else(|_| "http://localhost:18025".to_string())
 }
 
 pub fn unique() -> String {
