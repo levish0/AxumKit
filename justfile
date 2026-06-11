@@ -78,7 +78,9 @@ test *args:
 # Run end-to-end tests against the full disposable docker stack.
 # Brings the stack up (waiting for healthchecks), runs the e2e crate, then tears it down.
 e2e:
-    $code = 0; docker compose -f docker-compose.test.yml up -d --build --wait; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; cargo test -p e2e; $code = $LASTEXITCODE; docker compose -f docker-compose.test.yml down -v; $down = $LASTEXITCODE; if ($code -ne 0) { exit $code }; if ($down -ne 0) { exit $down }
+    docker compose -f docker-compose.test.yml up -d --build --wait
+    -cargo test -p e2e
+    docker compose -f docker-compose.test.yml down -v
 
 # Build and push GHCR Docker images (e.g. `just publish 0.8.0 --latest`)
 publish tag *args:
