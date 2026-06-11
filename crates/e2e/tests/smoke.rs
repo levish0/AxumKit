@@ -77,7 +77,9 @@ async fn profile_image_upload_is_processed_to_webp() {
         .mime_str("image/png")
         .expect("valid mime type");
     let form = reqwest::multipart::Form::new().part("file", part);
-    let resp = client.post_multipart("/v0/user/me/profile-image", form).await;
+    let resp = client
+        .post_multipart("/v0/user/me/profile-image", form)
+        .await;
     let body = TestClient::json_ok(resp, StatusCode::CREATED).await;
 
     let image_url = body["image_url"]

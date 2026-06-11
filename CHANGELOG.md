@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-06-12
+
+### Added
+
+- **Concern-grouped environment files**
+  - added `.envs/.example`, `.envs/.local`, and `.envs/.test` trees split by concern (`postgres.env`, `r2.env`, `server.env`, `worker.env`, `image-processor.env`, and `meilisearch.env`)
+  - updated compose files to load only the env files each service needs
+  - documented the new environment layout and production PgDog credential alignment
+
+- **Disposable e2e stack and harness**
+  - added the `e2e` crate for black-box HTTP tests against a running Docker stack
+  - added Mailpit for email verification tests and SeaweedFS as the S3-compatible R2 substitute
+  - added e2e coverage for health checks, signup/verification/login, duplicate handle rejection, and profile image WebP sanitization
+  - added the GitHub Actions e2e workflow with container log dumping on failure
+
+- **PgDog configuration templates**
+  - added local PgDog config under `compose/local/pgdog.toml`
+  - added production PgDog backend and client credential templates under `compose/production/pgdog/`
+
+### Changed
+
+- **Image processing moved to smol-image-processor**
+  - server profile/banner uploads now call the external image processor and validate the returned WebP payload
+  - worker OAuth profile image jobs use the same image processor path
+  - removed the internal `image_utils` crate from server/worker upload paths
+
+- **Database and compose setup aligned around one PostgreSQL endpoint**
+  - standardized runtime config and migrations on `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_NAME`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`
+  - local/test env templates default to direct `postgres:5432`
+  - production guidance uses `pgdog:6432` when the app should connect through PgDog
+
+- **Worker runtime hardening**
+  - NATS pull consumers now bound `max_ack_pending` to configured concurrency
+  - long-running jobs send in-progress acks during processing
+  - permanently failed messages are terminated after the configured max deliveries
+
+- **Development workflow cleanup**
+  - `just` now owns compose, migration, OpenAPI, test, e2e, and publish commands
+  - root compose files use the concern-grouped env layout
+
+### Removed
+
+- **Legacy split database environment**
+  - removed `POSTGRES_WRITE_*` / `POSTGRES_READ_*` compatibility from Rust config loaders and docs
+  - removed the internal image processing crate from the workspace
+
 ## [0.7.5] - 2026-05-14
 
 ### Added
@@ -104,7 +150,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Two-stage email signup flow** (ported from V7)
+- **Two-stage email signup flow**
   - `POST /v0/auth/signup` stores pending signup in Redis and queues a verification email (returns 202 Accepted)
   - `POST /v0/auth/verify-email` now creates the user account after token verification, not before
   - Atomic Redis reservation via Lua script (`reserve_pending_signup.lua`) — prevents concurrent email/handle collision
@@ -121,7 +167,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GoogleInvalidIdToken`, `GoogleJwksFetchFailed`, `GoogleJwksParseFailed` error variants with protocol codes
   - `jsonwebtoken` v9 workspace dependency
 
-- **User management system** (ported from V7)
+- **User management system**
   - `POST /v0/users/ban` — ban a user with optional expiration
   - `POST /v0/users/unban` — remove an active ban
   - `POST /v0/users/roles/grant` — grant Mod/Admin role with optional expiration
@@ -134,7 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - JoinSet-based supervisor loop with `catch_unwind` auto-restart for consumer panics
   - `ConsumerKind` enum with `ConsumerExitOutcome` for structured exit tracking
 
-- **Handle and display name validation** (V7 exact match)
+- **Handle and display name validation**
   - `validate_handle`: ASCII alphanumeric + underscore, 4–15 chars, no leading/trailing `_`, no `__`
   - `validate_display_name`: blocks control characters, emoji, and Zalgo text (consecutive `NonspacingMark` limit)
   - `RESERVED_HANDLES`: 26 reserved words (e.g. `admin`, `support`, `system`)
@@ -145,7 +191,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Database connection simplified** (matches V7)
+- **Database connection simplified**
   - Merged separate `write_db` + `read_db` into single `db` field in `AppState`
   - Environment variables changed from `POSTGRES_WRITE_*` / `POSTGRES_READ_*` to `POSTGRES_*`
   - Single `establish_connection()` replaces `establish_write_connection()` + `establish_read_connection()`

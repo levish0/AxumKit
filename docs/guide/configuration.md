@@ -88,8 +88,9 @@ redis_session_host: env::var("REDIS_SESSION_HOST")
 | `POSTGRES_MAX_CONNECTION` | No | `30` server / `10` worker | Max pool connections |
 | `POSTGRES_MIN_CONNECTION` | No | `5` server / `2` worker | Min pool connections |
 
-For Docker environments, use `POSTGRES_HOST=pgdog` and `POSTGRES_PORT=6432`
-when the app should connect through PgDog.
+For production, use `POSTGRES_HOST=pgdog` and `POSTGRES_PORT=6432` when the app
+should connect through PgDog. The example/local/test templates default to direct
+`postgres:5432`.
 
 ### Redis
 

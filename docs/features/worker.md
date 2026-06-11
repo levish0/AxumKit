@@ -69,7 +69,7 @@ All consumers share a `WorkerContext` with SMTP, database, Redis cache, R2 clien
 | `SMTP_PASSWORD` | Yes | - | SMTP password |
 | `SMTP_TLS` | No | `true` | Enable TLS |
 | `EMAILS_FROM_EMAIL` | Yes | - | Sender email address |
-| `EMAILS_FROM_NAME` | No | `SevenWiki` | Sender display name |
+| `EMAILS_FROM_NAME` | No | `AxumKit` | Sender display name |
 | `FRONTEND_HOST` | Yes | - | Frontend URL for email links |
 | `PROJECT_NAME` | Yes | - | Project name in emails |
 | `R2_ENDPOINT` | Yes | - | R2-compatible S3 endpoint |

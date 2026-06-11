@@ -2,8 +2,8 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
 export COMPOSE_FILE := "docker-compose.dev.yml"
 
-# Local dependencies from docker-compose.dev.yml. App containers are excluded.
-infra := "postgres pgdog redis-session redis-cache redis-lock nats meilisearch image-processor"
+# Infrastructure services from docker-compose.dev.yml (stateful, no app containers)
+infra := "postgres pgdog redis-session redis-cache redis-lock nats meilisearch"
 
 # Default command to list all available commands.
 default:
@@ -19,7 +19,7 @@ dev: up-infra migrate
 build *args:
     docker compose build {{args}}
 
-# Start local dependency containers (postgres, pgdog, redis, nats, meilisearch, image-processor)
+# Start infrastructure containers (postgres, pgdog, redis, nats, meilisearch)
 up-infra:
     docker compose up -d {{infra}}
 

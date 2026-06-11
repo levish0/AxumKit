@@ -6,8 +6,9 @@ AxumKit supports two env layouts:
 - Concern-grouped `.envs/*` files for Docker Compose.
 
 The current standard database keys are `POSTGRES_HOST`, `POSTGRES_PORT`,
-`POSTGRES_NAME`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`. Use `pgdog:6432`
-for PgDog-backed Docker environments.
+`POSTGRES_NAME`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`. The
+example/local/test envs default to direct `postgres:5432`; production should use
+`pgdog:6432` when PgDog is enabled.
 
 ## Server (`server`)
 

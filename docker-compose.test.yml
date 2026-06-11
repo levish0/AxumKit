@@ -1,4 +1,5 @@
-# Disposable end-to-end test stack.
+# Disposable end-to-end test stack. The app talks to Postgres directly here;
+# PgDog is omitted to keep the stack smaller and faster.
 # Usage:
 #   docker compose -f docker-compose.test.yml up -d --build --wait
 #   E2E_BASE_URL=http://localhost:18000 MAILPIT_URL=http://localhost:18025 cargo test -p e2e
@@ -13,19 +14,6 @@ services:
       - /var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U axumkit"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  pgdog:
-    image: ghcr.io/pgdogdev/pgdog:v0.1.31
-    volumes:
-      - ./compose/test/pgdog.toml:/etc/pgdog/pgdog.toml:ro
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -131,7 +119,7 @@ services:
     env_file:
       - .envs/.test/postgres.env
     depends_on:
-      pgdog:
+      postgres:
         condition: service_healthy
     restart: "no"
 
