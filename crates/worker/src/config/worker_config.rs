@@ -3,6 +3,7 @@ use std::env;
 use std::sync::LazyLock;
 
 #[derive(Debug, Clone)]
+/// Configuration model for worker config.
 pub struct WorkerConfig {
     // SMTP
     pub smtp_host: String,
@@ -70,6 +71,20 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         };
     }
 
+    macro_rules! require_any {
+        ($name:expr, $legacy:expr) => {
+            env::var($name)
+                .or_else(|_| env::var($legacy))
+                .unwrap_or_else(|_| {
+                    errors.push(format!(
+                        "  - {} (missing; legacy {} also missing)",
+                        $name, $legacy
+                    ));
+                    String::new()
+                })
+        };
+    }
+
     // Required string vars
     let smtp_host = require!("SMTP_HOST");
     let smtp_user = require!("SMTP_USER");
@@ -80,16 +95,16 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     let frontend_path_verify_email = require!("FRONTEND_PATH_VERIFY_EMAIL");
     let frontend_path_reset_password = require!("FRONTEND_PATH_RESET_PASSWORD");
     let frontend_path_confirm_email_change = require!("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE");
-    let db_write_host = require!("POSTGRES_WRITE_HOST");
-    let db_write_port = require!("POSTGRES_WRITE_PORT");
-    let db_write_name = require!("POSTGRES_WRITE_NAME");
-    let db_write_user = require!("POSTGRES_WRITE_USER");
-    let db_write_password = require!("POSTGRES_WRITE_PASSWORD");
+    let db_write_host = require_any!("POSTGRES_HOST", "POSTGRES_WRITE_HOST");
+    let db_write_port = require_any!("POSTGRES_PORT", "POSTGRES_WRITE_PORT");
+    let db_write_name = require_any!("POSTGRES_NAME", "POSTGRES_WRITE_NAME");
+    let db_write_user = require_any!("POSTGRES_USER", "POSTGRES_WRITE_USER");
+    let db_write_password = require_any!("POSTGRES_PASSWORD", "POSTGRES_WRITE_PASSWORD");
     let r2_endpoint = require!("R2_ENDPOINT");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
-    let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
-    let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
+    let r2_assets_bucket_name = require_any!("R2_ASSETS_BUCKET_NAME", "R2_BUCKET_NAME");
+    let r2_assets_public_domain = require_any!("R2_ASSETS_PUBLIC_DOMAIN", "R2_PUBLIC_DOMAIN");
 
     // Panic with all errors at once
     if !errors.is_empty() {
@@ -113,7 +128,7 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
             .map(|v| v.to_lowercase() == "true")
             .unwrap_or(true),
         emails_from_email,
-        emails_from_name: env::var("EMAILS_FROM_NAME").unwrap_or_else(|_| "SevenWiki".into()),
+        emails_from_name: env::var("EMAILS_FROM_NAME").unwrap_or_else(|_| "AxumKit".into()),
 
         // MeiliSearch
         meilisearch_host: env::var("MEILISEARCH_HOST")
@@ -145,11 +160,13 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         db_write_name,
         db_write_user,
         db_write_password,
-        db_write_max_connection: env::var("POSTGRES_WRITE_MAX_CONNECTION")
+        db_write_max_connection: env::var("POSTGRES_MAX_CONNECTION")
+            .or_else(|_| env::var("POSTGRES_WRITE_MAX_CONNECTION"))
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(10),
-        db_write_min_connection: env::var("POSTGRES_WRITE_MIN_CONNECTION")
+        db_write_min_connection: env::var("POSTGRES_MIN_CONNECTION")
+            .or_else(|_| env::var("POSTGRES_WRITE_MIN_CONNECTION"))
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(2),
@@ -169,10 +186,12 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
 });
 
 impl WorkerConfig {
+    /// Helper function for get.
     pub fn get() -> &'static WorkerConfig {
         &CONFIG
     }
 
+    /// Helper function for redis cache url.
     pub fn redis_cache_url(&self) -> String {
         format!(
             "redis://{}:{}",
@@ -180,10 +199,12 @@ impl WorkerConfig {
         )
     }
 
+    /// Helper function for redis lock url.
     pub fn redis_lock_url(&self) -> String {
         format!("redis://{}:{}", self.redis_lock_host, self.redis_lock_port)
     }
 
+    /// Helper function for database url.
     pub fn database_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",

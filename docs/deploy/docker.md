@@ -19,6 +19,30 @@ docker build --target server-runtime -t server .
 docker build --target worker-runtime -t worker .
 ```
 
+## Compose Environments
+
+AxumKit has two root compose files:
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.dev.yml` | Local infrastructure and optional full app stack. Uses `.envs/.local/*`. |
+| `docker-compose.test.yml` | Disposable e2e stack. Uses committed `.envs/.test/*`. |
+
+Create local compose env files with:
+
+```bash
+cp -r .envs/.example .envs/.local
+```
+
+Common commands:
+
+```bash
+just up-infra
+just up
+just down
+just e2e
+```
+
 ### Security Notes
 
 - Runs as non-root user
@@ -29,9 +53,10 @@ docker build --target worker-runtime -t worker .
 
 | Service | Health Check |
 |---------|-------------|
-| PostgreSQL | `pg_isready -U postgres -d axumkit` |
+| PostgreSQL | `pg_isready -U axumkit` |
+| PgDog | `pg_isready -h localhost -p 6432` |
 | Redis | `redis-cli ping` |
 | MeiliSearch | `curl http://localhost:7700/health` |
 | NATS | `wget http://localhost:8222/healthz` |
-| Object Storage | `curl http://localhost:9000/minio/health/live` |
+| Object Storage (e2e) | SeaweedFS bucket init job |
 | Server | `curl http://localhost:8000/health-check` |

@@ -4,6 +4,7 @@ use config::ServerConfig;
 use cookie::{Cookie, SameSite, time::Duration};
 use errors::errors::Errors;
 
+/// Creates logout response.
 pub fn create_logout_response() -> Result<Response, Errors> {
     let config = ServerConfig::get();
     let is_dev = config.is_dev;
@@ -15,7 +16,7 @@ pub fn create_logout_response() -> Result<Response, Errors> {
         SameSite::Lax
     };
 
-    // Delete session cookie (set expiration time to the past)
+    // 세션 쿠키 삭제 (만료 시간을 과거로 설정)
     let mut cookie_builder = Cookie::build(("session_id", ""))
         .http_only(true)
         .secure(true)
@@ -23,10 +24,8 @@ pub fn create_logout_response() -> Result<Response, Errors> {
         .path("/")
         .max_age(Duration::seconds(0));
 
-    if !is_dev {
-        if let Some(ref domain) = config.cookie_domain {
-            cookie_builder = cookie_builder.domain(domain);
-        }
+    if !is_dev && let Some(ref domain) = config.cookie_domain {
+        cookie_builder = cookie_builder.domain(domain);
     }
 
     let clear_cookie = cookie_builder.build();

@@ -5,11 +5,8 @@ use tracing::error;
 
 /// MeiliSearch error logging handler
 pub fn log_error(err: &Errors) {
-    match err {
-        Errors::MeiliSearchQueryFailed => {
-            error!("MeiliSearch query failed");
-        }
-        _ => {}
+    if let Errors::MeiliSearchQueryFailed = err {
+        error!("MeiliSearch query failed");
     }
 }
 

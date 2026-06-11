@@ -6,6 +6,9 @@ authors.workspace = true
 repository.workspace = true
 description = "server"
 
+[lints]
+workspace = true
+
 [lib]
 name = "server"
 path = "src/lib.rs"

@@ -5,17 +5,21 @@ use errors::errors::Errors;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager as RedisClient;
 
+/// Data structure for session service.
 pub struct SessionService;
 
 impl SessionService {
+    /// Session payload key.
     fn session_key(session_id: &str) -> String {
         format!("session:{}", session_id)
     }
 
+    /// Management ID -> bearer session ID lookup key.
     fn session_management_key(management_id: &str) -> String {
         format!("session_mgmt:{}", management_id)
     }
 
+    /// Per-user active session index.
     fn user_sessions_key(user_id: &str) -> String {
         format!("user_sessions:{}", user_id)
     }
@@ -26,6 +30,7 @@ impl SessionService {
         max_lifetime.max(sliding_ttl)
     }
 
+    /// Collect active session management IDs from the per-user ZSET.
     async fn collect_user_management_ids(
         redis: &RedisClient,
         user_id: &str,
@@ -91,6 +96,18 @@ impl SessionService {
         Ok(())
     }
 
+    /// 새 세션을 생성해 Redis에 저장한다.
+    ///
+    /// # 역할
+    /// - 세션 ID/만료 정보를 포함한 `Session`을 생성한다.
+    /// - 세션 payload, 관리 ID lookup, 사용자별 ZSET 인덱스를 저장한다.
+    ///
+    /// # 연계
+    /// - `Session::new`
+    /// - Redis pipeline (`session:*`, `session_mgmt:*`, `user_sessions:*`)
+    ///
+    /// # Errors
+    /// - 직렬화/Redis 저장 실패 시 `Errors::SysInternalError`
     pub async fn create_session(
         redis: &RedisClient,
         user_id: String,
@@ -105,12 +122,14 @@ impl SessionService {
         )
         .with_client_info(user_agent, ip_address);
 
+        // Redis TTL = sliding TTL.
         let ttl_seconds = (config.auth_session_sliding_ttl_hours * 3600) as u64;
 
         let json = serde_json::to_string(&session).map_err(|e| {
             Errors::SysInternalError(format!("Session serialization failed: {}", e))
         })?;
 
+        // Store session + management lookup + per-user session index.
         let mut conn = redis.clone();
         let session_key = Self::session_key(&session.session_id);
         let management_key = Self::session_management_key(&session.management_id);
@@ -138,6 +157,14 @@ impl SessionService {
         Ok(session)
     }
 
+    /// 세션 ID로 세션 payload를 조회한다.
+    ///
+    /// # 역할
+    /// Redis에서 세션 JSON을 읽어 `Session`으로 역직렬화한다.
+    /// 세션이 없으면 `Ok(None)`을 반환한다.
+    ///
+    /// # Errors
+    /// - 역직렬화/Redis 조회 실패 시 `Errors::SysInternalError`
     pub async fn get_session(
         redis: &RedisClient,
         session_id: &str,
@@ -149,6 +176,7 @@ impl SessionService {
             Errors::SysInternalError(format!("Redis session retrieval failed: {}", e))
         })?;
 
+        // Redis TTL이 만료를 처리하므로 키가 존재하면 유효한 세션
         match session_data {
             Some(data) => {
                 let session: Session = serde_json::from_str(&data).map_err(|e| {
@@ -160,44 +188,52 @@ impl SessionService {
         }
     }
 
+    /// 세션 한 건을 삭제한다.
+    ///
+    /// # 역할
+    /// 세션 payload에서 사용자 ID와 관리 ID를 읽은 뒤 관련 Redis 키를 함께 제거한다.
+    /// 이미 만료/삭제된 세션이면 no-op으로 처리한다.
+    ///
+    /// # Errors
+    /// - 역직렬화/Redis 삭제 실패 시 `Errors::SysInternalError`
     pub async fn delete_session(redis: &RedisClient, session_id: &str) -> Result<(), Errors> {
         let mut conn = redis.clone();
         let key = Self::session_key(session_id);
 
+        // Read user_id from stored session payload; never trust external user_id.
         let session_data: Option<String> = conn.get(&key).await.map_err(|e| {
             Errors::SysInternalError(format!("Redis session retrieval failed: {}", e))
         })?;
 
-        match session_data {
-            Some(data) => {
-                let session: Session = serde_json::from_str(&data).map_err(|e| {
-                    Errors::SysInternalError(format!("Session deserialization failed: {}", e))
+        if let Some(data) = session_data {
+            let session: Session = serde_json::from_str(&data).map_err(|e| {
+                Errors::SysInternalError(format!("Session deserialization failed: {}", e))
+            })?;
+
+            let management_key = Self::session_management_key(&session.management_id);
+            // Delete session payload + management lookup + per-user index member.
+            let user_sessions_key = Self::user_sessions_key(&session.user_id);
+
+            redis::pipe()
+                .del(&key)
+                .ignore()
+                .del(&management_key)
+                .ignore()
+                .cmd("ZREM")
+                .arg(&user_sessions_key)
+                .arg(&session.management_id)
+                .ignore()
+                .query_async::<()>(&mut conn)
+                .await
+                .map_err(|e| {
+                    Errors::SysInternalError(format!("Redis session deletion failed: {}", e))
                 })?;
-
-                let management_key = Self::session_management_key(&session.management_id);
-                let user_sessions_key = Self::user_sessions_key(&session.user_id);
-
-                redis::pipe()
-                    .del(&key)
-                    .ignore()
-                    .del(&management_key)
-                    .ignore()
-                    .cmd("ZREM")
-                    .arg(&user_sessions_key)
-                    .arg(&session.management_id)
-                    .ignore()
-                    .query_async::<()>(&mut conn)
-                    .await
-                    .map_err(|e| {
-                        Errors::SysInternalError(format!("Redis session deletion failed: {}", e))
-                    })?;
-            }
-            None => {}
         }
 
         Ok(())
     }
 
+    /// 세션 TTL 연장 (최대 수명 체크 포함)
     pub async fn refresh_session(
         redis: &RedisClient,
         session: &Session,
@@ -205,13 +241,16 @@ impl SessionService {
         let config = ServerConfig::get();
         let now = Utc::now();
 
+        // 최대 수명 초과 시 연장 불가
         if now >= session.max_expires_at {
             return Ok(None);
         }
 
+        // 새 만료 시간 = min(now + sliding_ttl, max_expires_at)
         let sliding_expiry = now + chrono::Duration::hours(config.auth_session_sliding_ttl_hours);
         let new_expires_at = sliding_expiry.min(session.max_expires_at);
 
+        // Redis TTL
         let ttl_seconds = (new_expires_at - now).num_seconds().max(0) as u64;
         if ttl_seconds == 0 {
             return Ok(None);
@@ -224,6 +263,7 @@ impl SessionService {
             Errors::SysInternalError(format!("Session serialization failed: {}", e))
         })?;
 
+        // Refresh session payload, management lookup, and per-user index in one pipeline.
         let mut conn = redis.clone();
         let session_key = Self::session_key(&session.session_id);
         let management_key = Self::session_management_key(&session.management_id);
@@ -251,12 +291,14 @@ impl SessionService {
         Ok(Some(refreshed_session))
     }
 
+    /// 조건부 세션 연장 (임계값 체크 + 최대 수명 체크)
     pub async fn maybe_refresh_session(
         redis: &RedisClient,
         session: &Session,
     ) -> Result<Option<Session>, Errors> {
         let config = ServerConfig::get();
 
+        // Refresh only when threshold is hit and max lifetime still allows it.
         if session.needs_refresh(
             config.auth_session_refresh_threshold,
             config.auth_session_sliding_ttl_hours,
@@ -268,6 +310,15 @@ impl SessionService {
         }
     }
 
+    /// 특정 사용자의 활성 세션 목록을 조회한다.
+    ///
+    /// # 역할
+    /// - 사용자 인덱스에서 세션 ID를 수집한다.
+    /// - 각 `session:{id}` payload를 읽어 만료/누락된 항목은 제외한다.
+    /// - `created_at` 내림차순으로 정렬해 반환한다.
+    ///
+    /// # Errors
+    /// - 역직렬화/Redis 조회 실패 시 `Errors::SysInternalError`
     pub async fn list_user_sessions(
         redis: &RedisClient,
         user_id: &str,
@@ -302,6 +353,7 @@ impl SessionService {
             return Ok(Vec::new());
         }
 
+        // MGET으로 한 번에 payload 조회
         let keys: Vec<String> = session_refs
             .iter()
             .map(|(_, session_id)| Self::session_key(session_id))
@@ -329,11 +381,21 @@ impl SessionService {
 
         Self::remove_user_management_ids(redis, user_id, &stale_management_ids).await?;
 
-        sessions.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        // 최신 세션이 위로 오도록 정렬
+        sessions.sort_by_key(|session| std::cmp::Reverse(session.created_at));
 
         Ok(sessions)
     }
 
+    /// 소유권을 검증한 뒤 세션 한 건을 삭제한다.
+    ///
+    /// # 역할
+    /// 세션 payload의 `user_id`가 요청자와 일치할 때만 삭제한다.
+    /// 다른 사용자의 세션을 revoke하려는 시도는 `Errors::NotFound`로 응답해 존재 자체를 노출하지 않는다.
+    ///
+    /// # Errors
+    /// - 세션이 없거나 다른 사용자 소유면 `Errors::NotFound`
+    /// - Redis 실패 시 `Errors::SysInternalError`
     pub async fn revoke_user_session(
         redis: &RedisClient,
         user_id: &str,
@@ -351,6 +413,7 @@ impl SessionService {
             .await?
             .ok_or_else(|| Errors::NotFound("Session not found".to_string()))?;
 
+        // 다른 사용자 세션은 존재를 알리지 않도록 동일 에러로 매핑
         if session.user_id != user_id || session.management_id != management_id {
             return Err(Errors::NotFound("Session not found".to_string()));
         }
@@ -358,6 +421,7 @@ impl SessionService {
         Self::delete_session(redis, &session_id).await
     }
 
+    /// 특정 사용자의 모든 세션 삭제 (비밀번호 재설정 시 사용)
     pub async fn delete_all_user_sessions(
         redis: &RedisClient,
         user_id: &str,
@@ -398,6 +462,7 @@ impl SessionService {
         Ok(count)
     }
 
+    /// 현재 세션을 제외한 모든 세션 삭제 (비밀번호 변경 시 사용)
     pub async fn delete_other_sessions(
         redis: &RedisClient,
         user_id: &str,
@@ -434,6 +499,7 @@ impl SessionService {
         let count = other_sessions.len() as u64;
 
         if count > 0 {
+            // Delete other sessions and prune index members.
             let mut pipe = redis::pipe();
             for (management_id, session_id) in &other_sessions {
                 pipe.del(Self::session_key(session_id)).ignore();

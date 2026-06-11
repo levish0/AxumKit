@@ -23,6 +23,8 @@ target
 .idea/
 *.env
 !e2e/e2e_env/*.env
+.envs/.local/
+.envs/.production/
 docker.env
 docker_env/
 logs

@@ -1,0 +1,4 @@
+[[users]]
+name = "axumkit"
+database = "axumkit"
+password = "CHANGE_ME"

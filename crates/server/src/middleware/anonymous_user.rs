@@ -20,20 +20,20 @@ pub async fn anonymous_user_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Response {
-    // Check for anonymous_user_id in cookies
+    // 쿠키에서 anonymous_user_id 확인
     let (final_anonymous_id, has_anonymous_id) = match cookies.get(ANONYMOUS_USER_COOKIE_NAME) {
         Some(cookie) => (cookie.value().to_string(), true),
         None => (Uuid::now_v7().to_string(), false),
     };
 
-    // Add anonymous user context to extensions
+    // Extension에 익명 사용자 컨텍스트 추가
     req.extensions_mut().insert(AnonymousUserContext {
         anonymous_user_id: final_anonymous_id.clone(),
     });
 
     let response = next.run(req).await;
 
-    // If cookie was missing, create and set a new one
+    // 쿠키가 없었다면 새로 생성해서 설정
     if !has_anonymous_id {
         let is_dev = ServerConfig::get().is_dev;
 
@@ -49,12 +49,10 @@ pub async fn anonymous_user_middleware(
             .secure(true)
             .same_site(same_site_attribute)
             .path("/")
-            .max_age(Duration::days(365)); // 1 year
+            .max_age(Duration::days(365)); // 1년
 
-        if !is_dev {
-            if let Some(ref domain) = config.cookie_domain {
-                cookie_builder = cookie_builder.domain(domain);
-            }
+        if !is_dev && let Some(ref domain) = config.cookie_domain {
+            cookie_builder = cookie_builder.domain(domain);
         }
 
         cookies.add(cookie_builder.build());

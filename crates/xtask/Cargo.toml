@@ -3,6 +3,9 @@ name = "xtask"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [[bin]]
 name = "xtask"
 path = "src/main.rs"
@@ -10,3 +13,5 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4.5.60", features = ["derive"] }
 anyhow = "1.0.100"
+serde_json.workspace = true
+server.workspace = true

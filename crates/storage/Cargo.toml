@@ -6,6 +6,9 @@ authors.workspace = true
 repository.workspace = true
 description = "Shared storage clients for AxumKit crates"
 
+[lints]
+workspace = true
+
 [dependencies]
 aws-config.workspace = true
 aws-sdk-s3.workspace = true
