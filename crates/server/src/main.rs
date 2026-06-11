@@ -29,7 +29,7 @@ use tower_http::trace::TraceLayer;
 use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {
-    let db = establish_connection().await;
+    let db = establish_connection().await?;
     let r2_client = establish_r2_connection().await.map_err(|e| {
         error!("Failed to establish cloudflare_r2 connection: {}", e);
         anyhow::anyhow!("R2 connection failed: {}", e)

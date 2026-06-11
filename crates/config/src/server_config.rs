@@ -60,6 +60,10 @@ pub struct ServerConfig {
     pub server_host: String,
     pub server_port: String,
 
+    // Image processor microservice
+    pub image_processor_url: String,
+    pub image_processor_timeout_secs: u64,
+
     // NATS (for background job queue)
     pub nats_url: String,
 
@@ -93,22 +97,6 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
                 errors.push(format!("  - {} (missing)", $name));
                 String::new()
             })
-        };
-    }
-
-    // Required env var with a legacy fallback name. This keeps existing local
-    // AxumKit .env files working while new compose/env files use the standard key.
-    macro_rules! require_any {
-        ($name:expr, $legacy:expr) => {
-            env::var($name)
-                .or_else(|_| env::var($legacy))
-                .unwrap_or_else(|_| {
-                    errors.push(format!(
-                        "  - {} (missing; legacy {} also missing)",
-                        $name, $legacy
-                    ));
-                    String::new()
-                })
         };
     }
 
@@ -198,14 +186,14 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     let r2_region = require!("R2_REGION");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
-    let r2_assets_public_domain = require_any!("R2_ASSETS_PUBLIC_DOMAIN", "R2_PUBLIC_DOMAIN");
-    let r2_assets_bucket_name = require_any!("R2_ASSETS_BUCKET_NAME", "R2_BUCKET_NAME");
+    let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
+    let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
     let turnstile_secret_key = require!("TURNSTILE_SECRET_KEY");
-    let db_host = require_any!("POSTGRES_HOST", "POSTGRES_WRITE_HOST");
-    let db_port = require_any!("POSTGRES_PORT", "POSTGRES_WRITE_PORT");
-    let db_name = require_any!("POSTGRES_NAME", "POSTGRES_WRITE_NAME");
-    let db_user = require_any!("POSTGRES_USER", "POSTGRES_WRITE_USER");
-    let db_password = require_any!("POSTGRES_PASSWORD", "POSTGRES_WRITE_PASSWORD");
+    let db_host = require!("POSTGRES_HOST");
+    let db_port = require!("POSTGRES_PORT");
+    let db_name = require!("POSTGRES_NAME");
+    let db_user = require!("POSTGRES_USER");
+    let db_password = require!("POSTGRES_PASSWORD");
     let server_host = require!("HOST");
     let server_port = require!("PORT");
 
@@ -283,12 +271,10 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         db_user,
         db_password,
         db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
-            .or_else(|_| env::var("POSTGRES_WRITE_MAX_CONNECTION"))
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(30),
         db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
-            .or_else(|_| env::var("POSTGRES_WRITE_MIN_CONNECTION"))
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(5),
@@ -309,6 +295,14 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 
         server_host,
         server_port,
+
+        // Image processor microservice
+        image_processor_url: env::var("IMAGE_PROCESSOR_URL")
+            .unwrap_or_else(|_| "http://127.0.0.1:6701".to_string()),
+        image_processor_timeout_secs: env::var("IMAGE_PROCESSOR_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
 
         // NATS
         nats_url: env::var("NATS_URL").unwrap_or_else(|_| "nats://localhost:4222".to_string()),

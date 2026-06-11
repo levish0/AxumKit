@@ -26,7 +26,6 @@ entity.workspace = true
 errors.workspace = true
 worker.workspace = true
 storage.workspace = true
-image_utils.workspace = true
 
 # External dependencies
 tower.workspace = true

@@ -17,6 +17,19 @@ services:
       timeout: 5s
       retries: 10
 
+  pgdog:
+    image: ghcr.io/pgdogdev/pgdog:v0.1.31
+    volumes:
+      - ./compose/test/pgdog.toml:/etc/pgdog/pgdog.toml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   redis-session:
     image: redis:8-alpine
     command: redis-server --appendonly no --maxmemory 256mb --maxmemory-policy noeviction
@@ -60,6 +73,16 @@ services:
       MEILI_NO_ANALYTICS: "true"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  image-processor:
+    image: ghcr.io/levish0/smol-image-processor:0.1.1
+    env_file:
+      - .envs/.test/image-processor.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6701/health"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -108,7 +131,7 @@ services:
     env_file:
       - .envs/.test/postgres.env
     depends_on:
-      postgres:
+      pgdog:
         condition: service_healthy
     restart: "no"
 
@@ -133,6 +156,8 @@ services:
       nats:
         condition: service_healthy
       meilisearch:
+        condition: service_healthy
+      image-processor:
         condition: service_healthy
       seaweedfs-init:
         condition: service_completed_successfully
@@ -163,6 +188,8 @@ services:
       meilisearch:
         condition: service_healthy
       mailpit:
+        condition: service_healthy
+      image-processor:
         condition: service_healthy
       seaweedfs-init:
         condition: service_completed_successfully

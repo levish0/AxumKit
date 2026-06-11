@@ -134,6 +134,9 @@ pub enum Errors {
     FileUploadError(String),
     FileNotFound,
     FileReadError(String),
+    FileUnsupportedType(String),
+    FileProcessingTimeout(String),
+    FileProcessingUnavailable(String),
 
     // Worker Service errors
     WorkerServiceConnectionFailed,

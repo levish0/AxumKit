@@ -28,5 +28,12 @@ pub async fn upload_banner_image(
     RequiredSession(session_context): RequiredSession,
     ValidatedMultipart(payload): ValidatedMultipart<UploadUserImageRequest>,
 ) -> Result<UploadUserImageResponse, Errors> {
-    service_upload_banner_image(&state.db, &state.r2_client, &session_context, payload).await
+    service_upload_banner_image(
+        &state.db,
+        &state.http_client,
+        &state.r2_client,
+        &session_context,
+        payload,
+    )
+    .await
 }

@@ -62,6 +62,9 @@ pub mod file {
     pub const FILE_UPLOAD_ERROR: &str = "file:upload_error";
     pub const FILE_NOT_FOUND: &str = "file:not_found";
     pub const FILE_READ_ERROR: &str = "file:read_error";
+    pub const FILE_UNSUPPORTED_TYPE: &str = "file:unsupported_type";
+    pub const FILE_PROCESSING_TIMEOUT: &str = "file:processing_timeout";
+    pub const FILE_PROCESSING_UNAVAILABLE: &str = "file:processing_unavailable";
 }
 
 pub mod password {

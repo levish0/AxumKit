@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
 
     // Establish database connection
     info!("Connecting to database...");
-    let db_conn = connection::establish_connection().await;
+    let db_conn = connection::establish_connection().await?;
     let db_pool: DbPool = Arc::new(db_conn);
 
     info!("Shared clients created");

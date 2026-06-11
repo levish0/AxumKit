@@ -112,6 +112,21 @@ services:
       retries: 5
       start_period: 20s
 
+  image-processor:
+    image: ghcr.io/levish0/smol-image-processor:0.1.1
+    container_name: axumkit-image-processor
+    env_file:
+      - .envs/.local/image-processor.env
+    ports:
+      - "6701:6701"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6701/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
   migration:
     build:
       context: .
@@ -146,6 +161,8 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
+      image-processor:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
@@ -173,6 +190,8 @@ services:
       redis-lock:
         condition: service_healthy
       meilisearch:
+        condition: service_healthy
+      image-processor:
         condition: service_healthy
     restart: unless-stopped
 

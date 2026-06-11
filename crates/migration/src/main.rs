@@ -2,24 +2,18 @@ use dotenvy::dotenv;
 use sea_orm_migration::prelude::*;
 use std::env;
 
-/// 환경변수를 읽는 헬퍼. 기본 키를 먼저 시도하고 없으면 legacy 키를 사용한다.
-fn required_env(name: &str, legacy_name: &str) -> String {
-    env::var(name)
-        .or_else(|_| env::var(legacy_name))
-        .unwrap_or_else(|_| panic!("{name} not set (legacy {legacy_name} also missing)"))
-}
-
 #[async_std::main]
 async fn main() {
     dotenv().ok();
 
-    let db_user = required_env("POSTGRES_USER", "POSTGRES_WRITE_USER");
-    let db_password = required_env("POSTGRES_PASSWORD", "POSTGRES_WRITE_PASSWORD");
-    let db_host = required_env("POSTGRES_HOST", "POSTGRES_WRITE_HOST");
-    let db_port = required_env("POSTGRES_PORT", "POSTGRES_WRITE_PORT")
+    let db_user = env::var("POSTGRES_USER").expect("POSTGRES_USER not set");
+    let db_password = env::var("POSTGRES_PASSWORD").expect("POSTGRES_PASSWORD not set");
+    let db_host = env::var("POSTGRES_HOST").expect("POSTGRES_HOST not set");
+    let db_port = env::var("POSTGRES_PORT")
+        .expect("POSTGRES_PORT not set")
         .parse::<u16>()
         .expect("Invalid POSTGRES_PORT");
-    let db_name = required_env("POSTGRES_NAME", "POSTGRES_WRITE_NAME");
+    let db_name = env::var("POSTGRES_NAME").expect("POSTGRES_NAME not set");
 
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",

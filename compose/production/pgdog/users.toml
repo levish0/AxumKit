@@ -1,4 +1,10 @@
+# PgDog client credentials. Keep this aligned with:
+# - .envs/.production/postgres.env
+#
+# If PostgreSQL uses different backend credentials, set server_user/server_password.
+
 [[users]]
 name = "axumkit"
 database = "axumkit"
+# openssl rand -hex 16
 password = "CHANGE_ME"

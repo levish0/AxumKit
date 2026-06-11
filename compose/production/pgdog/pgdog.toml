@@ -1,4 +1,5 @@
 [general]
+# Listen on all interfaces inside the container.
 host = "0.0.0.0"
 port = 6432
 pooler_mode = "transaction"
@@ -8,11 +9,21 @@ idle_timeout = 30000
 
 [[databases]]
 name = "axumkit"
+# Reach PostgreSQL over the Docker Compose network.
 host = "postgres"
 port = 5432
 role = "primary"
 database_name = "axumkit"
 user = "axumkit"
+# openssl rand -hex 16
 password = "CHANGE_ME"
 
-# To add a read replica, add another [[databases]] entry with role = "replica".
+# To add a read replica, uncomment and configure:
+# [[databases]]
+# name = "axumkit"
+# host = "replica-host"
+# port = 5432
+# role = "replica"
+# database_name = "axumkit"
+# user = "axumkit"
+# password = "CHANGE_ME"

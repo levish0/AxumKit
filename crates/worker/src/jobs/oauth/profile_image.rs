@@ -1,4 +1,5 @@
 use crate::DbPool;
+use crate::clients::process_image;
 use crate::connection::R2AssetsClient;
 use crate::jobs::WorkerContext;
 use crate::nats::consumer::NatsConsumer;
@@ -7,7 +8,6 @@ use crate::nats::streams::{OAUTH_PROFILE_IMAGE_CONSUMER, OAUTH_PROFILE_IMAGE_STR
 use crate::nats::{JetStreamContext, streams::INDEX_USER_SUBJECT};
 use constants::{PROFILE_IMAGE_MAX_SIZE, user_image_key};
 use entity::users::{Column as UserColumn, Entity as UserEntity};
-use image_utils::image_processor::{generate_image_hash, process_image_for_upload, validate_image};
 use reqwest::Client as HttpClient;
 use sea_orm::prelude::Expr;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
@@ -42,35 +42,22 @@ async fn handle_oauth_profile_image(
     }
 
     let image_bytes = response.bytes().await?;
-    let image_info = match validate_image(&image_bytes, PROFILE_IMAGE_MAX_SIZE) {
-        Ok(info) => info,
+    let prepared_file = match prepare_oauth_profile_image(http_client, image_bytes.to_vec()).await {
+        Ok(file) => file,
         Err(err) => {
             tracing::warn!(
                 user_id = %job.user_id,
                 error = ?err,
-                "OAuth profile image validation failed"
+                "OAuth profile image preparation failed"
             );
             return Ok(());
         }
     };
 
-    let processed = match process_image_for_upload(&image_bytes, &image_info.mime_type) {
-        Ok(processed) => processed,
-        Err(err) => {
-            tracing::warn!(
-                user_id = %job.user_id,
-                error = ?err,
-                "OAuth profile image processing failed"
-            );
-            return Ok(());
-        }
-    };
-
-    let hash = generate_image_hash(&processed.data);
-    let storage_key = user_image_key(&hash, &processed.extension);
+    let storage_key = user_image_key(&prepared_file.hash, &prepared_file.extension);
 
     r2_assets
-        .upload_with_content_type(&storage_key, processed.data, &processed.content_type)
+        .upload_with_content_type(&storage_key, prepared_file.bytes, &prepared_file.mime_type)
         .await?;
 
     let result = UserEntity::update_many()
@@ -110,8 +97,68 @@ async fn handle_oauth_profile_image(
     Ok(())
 }
 
+struct PreparedOAuthProfileImage {
+    bytes: Vec<u8>,
+    mime_type: String,
+    extension: String,
+    hash: String,
+}
+
+async fn prepare_oauth_profile_image(
+    http_client: &HttpClient,
+    file: Vec<u8>,
+) -> Result<PreparedOAuthProfileImage, anyhow::Error> {
+    if file.is_empty() {
+        anyhow::bail!("empty file");
+    }
+
+    if file.len() > PROFILE_IMAGE_MAX_SIZE {
+        anyhow::bail!(
+            "file too large: {} bytes (max: {} bytes)",
+            file.len(),
+            PROFILE_IMAGE_MAX_SIZE
+        );
+    }
+
+    let processed = process_image(http_client, file).await?;
+    if processed.bytes.is_empty() {
+        anyhow::bail!("processed image is empty");
+    }
+
+    if processed.bytes.len() > PROFILE_IMAGE_MAX_SIZE {
+        anyhow::bail!(
+            "processed file too large: {} bytes (max: {} bytes)",
+            processed.bytes.len(),
+            PROFILE_IMAGE_MAX_SIZE
+        );
+    }
+
+    if processed.mime_type != "image/webp" {
+        anyhow::bail!("unexpected processed image type: {}", processed.mime_type);
+    }
+
+    if processed.extension != "webp" {
+        anyhow::bail!(
+            "unexpected processed image extension: {}",
+            processed.extension
+        );
+    }
+
+    let hash = blake3::hash(&processed.bytes).to_hex().to_string();
+
+    Ok(PreparedOAuthProfileImage {
+        bytes: processed.bytes,
+        mime_type: processed.mime_type,
+        extension: processed.extension,
+        hash,
+    })
+}
+
 pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
-    let http_client = HttpClient::new();
+    let http_client = HttpClient::builder()
+        .user_agent("axumkit-worker/1.0")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
     let r2_assets = ctx.r2_assets.clone();
     let db_pool = ctx.db_pool.clone();
     let jetstream = ctx.jetstream.clone();

@@ -68,6 +68,16 @@ impl TestClient {
             .expect("POST request failed")
     }
 
+    pub async fn post_multipart(&self, path: &str, form: reqwest::multipart::Form) -> Response {
+        self.http
+            .post(self.url(path))
+            .header("X-Turnstile-Token", "e2e-test-token")
+            .multipart(form)
+            .send()
+            .await
+            .expect("multipart POST failed")
+    }
+
     pub async fn json_ok(resp: Response, expected: StatusCode) -> Value {
         let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
@@ -124,6 +134,19 @@ pub struct SignedUpUser {
     pub handle: String,
     pub email: String,
     pub password: String,
+}
+
+pub fn test_png(rgba: [u8; 4]) -> Vec<u8> {
+    let mut out = Vec::new();
+    {
+        let mut encoder = png::Encoder::new(&mut out, 4, 4);
+        encoder.set_color(png::ColorType::Rgba);
+        encoder.set_depth(png::BitDepth::Eight);
+        let mut writer = encoder.write_header().expect("png header");
+        let pixels: Vec<u8> = rgba.iter().copied().cycle().take(4 * 4 * 4).collect();
+        writer.write_image_data(&pixels).expect("png data");
+    }
+    out
 }
 
 pub async fn wait_for_verification_token(email: &str) -> String {

@@ -2,8 +2,8 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
 export COMPOSE_FILE := "docker-compose.dev.yml"
 
-# Stateful infrastructure from docker-compose.dev.yml. App containers are excluded.
-infra := "postgres pgdog redis-session redis-cache redis-lock nats meilisearch"
+# Local dependencies from docker-compose.dev.yml. App containers are excluded.
+infra := "postgres pgdog redis-session redis-cache redis-lock nats meilisearch image-processor"
 
 # Default command to list all available commands.
 default:
@@ -19,7 +19,7 @@ dev: up-infra migrate
 build *args:
     docker compose build {{args}}
 
-# Start infrastructure containers (postgres, pgdog, redis, nats, meilisearch)
+# Start local dependency containers (postgres, pgdog, redis, nats, meilisearch, image-processor)
 up-infra:
     docker compose up -d {{infra}}
 
@@ -70,6 +70,7 @@ check:
     cargo clippy --workspace --all-targets --exclude e2e -- -D warnings
     cargo test --workspace --exclude e2e
     cargo xtask openapi
+    git diff --exit-code swagger.json
 
 # Run unit/integration tests (e.g. `just test some_test`). Excludes the e2e crate.
 test *args:

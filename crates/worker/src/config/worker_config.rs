@@ -28,6 +28,10 @@ pub struct WorkerConfig {
     pub redis_lock_host: String,
     pub redis_lock_port: String,
 
+    // Image processor microservice
+    pub image_processor_url: String,
+    pub image_processor_timeout_secs: u64,
+
     // Frontend & Project
     pub frontend_host: String,
     pub project_name: String,
@@ -35,14 +39,14 @@ pub struct WorkerConfig {
     pub frontend_path_reset_password: String,
     pub frontend_path_confirm_email_change: String,
 
-    // Database (Write only - worker does indexing, cleanup, etc.)
-    pub db_write_host: String,
-    pub db_write_port: String,
-    pub db_write_name: String,
-    pub db_write_user: String,
-    pub db_write_password: String,
-    pub db_write_max_connection: u32,
-    pub db_write_min_connection: u32,
+    // Database endpoint used by worker jobs.
+    pub db_host: String,
+    pub db_port: String,
+    pub db_name: String,
+    pub db_user: String,
+    pub db_password: String,
+    pub db_max_connection: u32,
+    pub db_min_connection: u32,
 
     // Cron
     pub cron_timezone: String,
@@ -71,20 +75,6 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         };
     }
 
-    macro_rules! require_any {
-        ($name:expr, $legacy:expr) => {
-            env::var($name)
-                .or_else(|_| env::var($legacy))
-                .unwrap_or_else(|_| {
-                    errors.push(format!(
-                        "  - {} (missing; legacy {} also missing)",
-                        $name, $legacy
-                    ));
-                    String::new()
-                })
-        };
-    }
-
     // Required string vars
     let smtp_host = require!("SMTP_HOST");
     let smtp_user = require!("SMTP_USER");
@@ -95,16 +85,16 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     let frontend_path_verify_email = require!("FRONTEND_PATH_VERIFY_EMAIL");
     let frontend_path_reset_password = require!("FRONTEND_PATH_RESET_PASSWORD");
     let frontend_path_confirm_email_change = require!("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE");
-    let db_write_host = require_any!("POSTGRES_HOST", "POSTGRES_WRITE_HOST");
-    let db_write_port = require_any!("POSTGRES_PORT", "POSTGRES_WRITE_PORT");
-    let db_write_name = require_any!("POSTGRES_NAME", "POSTGRES_WRITE_NAME");
-    let db_write_user = require_any!("POSTGRES_USER", "POSTGRES_WRITE_USER");
-    let db_write_password = require_any!("POSTGRES_PASSWORD", "POSTGRES_WRITE_PASSWORD");
+    let db_host = require!("POSTGRES_HOST");
+    let db_port = require!("POSTGRES_PORT");
+    let db_name = require!("POSTGRES_NAME");
+    let db_user = require!("POSTGRES_USER");
+    let db_password = require!("POSTGRES_PASSWORD");
     let r2_endpoint = require!("R2_ENDPOINT");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
-    let r2_assets_bucket_name = require_any!("R2_ASSETS_BUCKET_NAME", "R2_BUCKET_NAME");
-    let r2_assets_public_domain = require_any!("R2_ASSETS_PUBLIC_DOMAIN", "R2_PUBLIC_DOMAIN");
+    let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
+    let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
 
     // Panic with all errors at once
     if !errors.is_empty() {
@@ -147,6 +137,14 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         redis_lock_host: env::var("REDIS_LOCK_HOST").unwrap_or_else(|_| "127.0.0.1".into()),
         redis_lock_port: env::var("REDIS_LOCK_PORT").unwrap_or_else(|_| "6381".into()),
 
+        // Image processor microservice
+        image_processor_url: env::var("IMAGE_PROCESSOR_URL")
+            .unwrap_or_else(|_| "http://127.0.0.1:6701".into()),
+        image_processor_timeout_secs: env::var("IMAGE_PROCESSOR_TIMEOUT_SECS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(30),
+
         // Frontend & Project
         frontend_host,
         project_name,
@@ -154,19 +152,17 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         frontend_path_reset_password,
         frontend_path_confirm_email_change,
 
-        // Database (Write only)
-        db_write_host,
-        db_write_port,
-        db_write_name,
-        db_write_user,
-        db_write_password,
-        db_write_max_connection: env::var("POSTGRES_MAX_CONNECTION")
-            .or_else(|_| env::var("POSTGRES_WRITE_MAX_CONNECTION"))
+        // Database
+        db_host,
+        db_port,
+        db_name,
+        db_user,
+        db_password,
+        db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(10),
-        db_write_min_connection: env::var("POSTGRES_MIN_CONNECTION")
-            .or_else(|_| env::var("POSTGRES_WRITE_MIN_CONNECTION"))
+        db_min_connection: env::var("POSTGRES_MIN_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(2),
@@ -208,11 +204,7 @@ impl WorkerConfig {
     pub fn database_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
-            self.db_write_user,
-            self.db_write_password,
-            self.db_write_host,
-            self.db_write_port,
-            self.db_write_name
+            self.db_user, self.db_password, self.db_host, self.db_port, self.db_name
         )
     }
 }

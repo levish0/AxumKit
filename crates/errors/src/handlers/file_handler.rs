@@ -7,7 +7,12 @@ use tracing::warn;
 pub fn log_error(error: &Errors) {
     match error {
         // File-related errors - warn! level
-        Errors::FileUploadError(_) | Errors::FileNotFound | Errors::FileReadError(_) => {
+        Errors::FileUploadError(_)
+        | Errors::FileNotFound
+        | Errors::FileReadError(_)
+        | Errors::FileUnsupportedType(_)
+        | Errors::FileProcessingTimeout(_)
+        | Errors::FileProcessingUnavailable(_) => {
             warn!("File/processing error: {:?}", error);
         }
 
@@ -27,6 +32,21 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::FileReadError(msg) => {
             Some((StatusCode::BAD_REQUEST, FILE_READ_ERROR, Some(msg.clone())))
         }
+        Errors::FileUnsupportedType(msg) => Some((
+            StatusCode::UNSUPPORTED_MEDIA_TYPE,
+            FILE_UNSUPPORTED_TYPE,
+            Some(msg.clone()),
+        )),
+        Errors::FileProcessingTimeout(msg) => Some((
+            StatusCode::GATEWAY_TIMEOUT,
+            FILE_PROCESSING_TIMEOUT,
+            Some(msg.clone()),
+        )),
+        Errors::FileProcessingUnavailable(msg) => Some((
+            StatusCode::BAD_GATEWAY,
+            FILE_PROCESSING_UNAVAILABLE,
+            Some(msg.clone()),
+        )),
 
         _ => None, // Return None for errors from other domains
     }

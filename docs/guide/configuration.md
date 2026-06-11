@@ -80,14 +80,16 @@ redis_session_host: env::var("REDIS_SESSION_HOST")
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `POSTGRES_WRITE_HOST` | Yes | — | Primary DB host |
-| `POSTGRES_WRITE_PORT` | Yes | — | Primary DB port |
-| `POSTGRES_WRITE_NAME` | Yes | — | Primary DB name |
-| `POSTGRES_WRITE_USER` | Yes | — | Primary DB user |
-| `POSTGRES_WRITE_PASSWORD` | Yes | — | Primary DB password |
-| `POSTGRES_WRITE_MAX_CONNECTION` | No | `100` | Max pool connections |
-| `POSTGRES_WRITE_MIN_CONNECTION` | No | `10` | Min pool connections |
-| `POSTGRES_READ_*` | Yes | — | Same set for read replica |
+| `POSTGRES_HOST` | Yes | — | PostgreSQL or PgDog host |
+| `POSTGRES_PORT` | Yes | — | PostgreSQL or PgDog port |
+| `POSTGRES_NAME` | Yes | — | Database name |
+| `POSTGRES_USER` | Yes | — | Database user |
+| `POSTGRES_PASSWORD` | Yes | — | Database password |
+| `POSTGRES_MAX_CONNECTION` | No | `30` server / `10` worker | Max pool connections |
+| `POSTGRES_MIN_CONNECTION` | No | `5` server / `2` worker | Min pool connections |
+
+For Docker environments, use `POSTGRES_HOST=pgdog` and `POSTGRES_PORT=6432`
+when the app should connect through PgDog.
 
 ### Redis
 
@@ -108,5 +110,12 @@ redis_session_host: env::var("REDIS_SESSION_HOST")
 | `STABILITY_CONCURRENCY_LIMIT` | No | `500` | Max concurrent requests |
 | `STABILITY_BUFFER_SIZE` | No | `1024` | Request queue size |
 | `STABILITY_TIMEOUT_SECS` | No | `30` | Per-request timeout (seconds) |
+
+### Image Processor
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `IMAGE_PROCESSOR_URL` | No | `http://127.0.0.1:6701` | smol-image-processor base URL |
+| `IMAGE_PROCESSOR_TIMEOUT_SECS` | No | `30` | Image processing request timeout |
 
 See [Environment Variables](/reference/environment) for the full list including OAuth, R2, CORS, SMTP, and more.
