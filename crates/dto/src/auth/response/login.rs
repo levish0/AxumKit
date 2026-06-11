@@ -4,6 +4,7 @@ use config::ServerConfig;
 use cookie::{Cookie, SameSite, time::Duration};
 use errors::errors::Errors;
 
+/// Creates login response.
 pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Response, Errors> {
     let config = ServerConfig::get();
     let is_dev = config.is_dev;

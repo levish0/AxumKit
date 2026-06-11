@@ -2,6 +2,7 @@ use dotenvy::dotenv;
 use sea_orm_migration::prelude::*;
 use std::env;
 
+/// 환경변수를 읽는 헬퍼. 기본 키를 먼저 시도하고 없으면 legacy 키를 사용한다.
 fn required_env(name: &str, legacy_name: &str) -> String {
     env::var(name)
         .or_else(|_| env::var(legacy_name))
