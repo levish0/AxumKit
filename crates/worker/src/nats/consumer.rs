@@ -36,6 +36,7 @@ pub struct NatsConsumer {
 }
 
 impl NatsConsumer {
+    /// Helper function for new.
     pub fn new(
         jetstream: Arc<JetStream>,
         stream_name: &str,
@@ -51,6 +52,7 @@ impl NatsConsumer {
         }
     }
 
+    /// Helper function for with backoff.
     pub fn with_backoff(mut self, backoff: Vec<Duration>) -> Self {
         self.backoff = backoff;
         self
@@ -75,9 +77,9 @@ impl NatsConsumer {
                     max_deliver,
                     backoff: self.backoff,
                     ack_wait: ACK_WAIT,
-                    // Do not deliver more messages than this consumer can process.
-                    // Otherwise messages buffered behind the semaphore burn ack_wait
-                    // while waiting and can be redelivered as duplicates.
+                    // Don't deliver more than we can process concurrently; otherwise
+                    // messages buffered behind the semaphore burn their ack_wait
+                    // while waiting and get redelivered as duplicates.
                     max_ack_pending: self.concurrency as i64,
                     ..Default::default()
                 },
@@ -127,11 +129,14 @@ impl NatsConsumer {
                     }
                 };
 
+                // Run the handler while sending in-progress acks so handlers that
+                // outlive ack_wait (reindex batches, large notification fan-outs)
+                // are not redelivered mid-processing.
                 let result = {
                     let mut handler_future = pin!(handler(job));
                     let mut heartbeat = tokio::time::interval(ACK_WAIT / 2);
                     heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
-                    heartbeat.tick().await;
+                    heartbeat.tick().await; // first tick fires immediately; skip it
 
                     loop {
                         tokio::select! {
@@ -154,6 +159,8 @@ impl NatsConsumer {
                     Err(e) => {
                         let delivered = msg.info().map(|info| info.delivered).unwrap_or(0);
                         if delivered >= max_deliver {
+                            // Final attempt: terminate so the message doesn't sit in the
+                            // WorkQueue stream forever (it would never be redelivered).
                             tracing::error!(
                                 consumer = %consumer_name,
                                 error = %e,
@@ -165,7 +172,7 @@ impl NatsConsumer {
                             }
                         } else {
                             tracing::warn!(consumer = %consumer_name, error = %e, delivered, "Job failed");
-                            // Nak with None delay: NATS uses the consumer backoff config.
+                            // Nak with None delay - NATS uses the backoff config automatically
                             if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
                                 tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak message");
                             }

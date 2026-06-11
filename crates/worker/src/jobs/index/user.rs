@@ -9,17 +9,20 @@ use serde_json::{Value as JsonValue, json};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Worker job payload for index user job.
 pub struct IndexUserJob {
     pub user_id: Uuid,
     pub action: UserIndexAction,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Enum describing user index action.
 pub enum UserIndexAction {
     Index,
     Delete,
 }
 
+/// Constant value for users index.
 pub const USERS_INDEX: &str = "users";
 
 /// Build a search document JSON from user model
@@ -88,8 +91,8 @@ pub async fn ensure_index_settings(
     ensure_index_settings_for(client, USERS_INDEX).await
 }
 
-/// Ensure the given index uid exists with user index settings.
-/// Reindexing uses this to prepare a temp index before swapping it live.
+/// Ensure the given index uid exists with user index settings
+/// (used by reindex to prepare its temp index)
 pub async fn ensure_index_settings_for(
     client: &meilisearch_sdk::client::Client,
     index_uid: &str,

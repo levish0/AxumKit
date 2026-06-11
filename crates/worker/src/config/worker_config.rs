@@ -3,6 +3,7 @@ use std::env;
 use std::sync::LazyLock;
 
 #[derive(Debug, Clone)]
+/// Configuration model for worker config.
 pub struct WorkerConfig {
     // SMTP
     pub smtp_host: String,
@@ -185,10 +186,12 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
 });
 
 impl WorkerConfig {
+    /// Helper function for get.
     pub fn get() -> &'static WorkerConfig {
         &CONFIG
     }
 
+    /// Helper function for redis cache url.
     pub fn redis_cache_url(&self) -> String {
         format!(
             "redis://{}:{}",
@@ -196,10 +199,12 @@ impl WorkerConfig {
         )
     }
 
+    /// Helper function for redis lock url.
     pub fn redis_lock_url(&self) -> String {
         format!("redis://{}:{}", self.redis_lock_host, self.redis_lock_port)
     }
 
+    /// Helper function for database url.
     pub fn database_url(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",

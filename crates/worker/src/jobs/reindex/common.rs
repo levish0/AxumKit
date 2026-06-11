@@ -6,18 +6,24 @@ use std::time::Duration;
 
 /// Default batch size for reindex operations.
 /// Kept modest because a whole batch is held in memory and sent to MeiliSearch
-/// as a single payload.
+/// as a single payload (default limit ~100MB).
 pub const DEFAULT_BATCH_SIZE: u32 = 1_000;
 
+/// Polling interval while waiting for the swap task
 const SWAP_WAIT_INTERVAL: Duration = Duration::from_secs(1);
+/// Max time to wait for the swap task (it queues behind all add_documents tasks)
 const SWAP_WAIT_TIMEOUT: Duration = Duration::from_secs(300);
 
+/// Temp index uid used to build a reindex before swapping it into place
 pub fn reindex_temp_uid(index_uid: &str) -> String {
     format!("{index_uid}_reindex")
 }
 
 /// Atomically swap the freshly built temp index into place, then delete the
 /// temp index, which holds the pre-reindex data after the swap.
+///
+/// MeiliSearch processes tasks in queue order, so the swap only runs after all
+/// previously enqueued add_documents tasks for the temp index have completed.
 pub async fn promote_reindexed_index(
     client: &SearchClient,
     index_uid: &str,
@@ -38,6 +44,7 @@ pub async fn promote_reindexed_index(
         .await
     {
         Ok(task) if task.is_success() => {
+            // The temp index now holds the old data; drop it.
             if let Err(e) = client.delete_index(&temp_uid).await {
                 tracing::warn!(
                     temp_index = %temp_uid,
@@ -48,11 +55,16 @@ pub async fn promote_reindexed_index(
             tracing::info!(index = index_uid, "Index swap completed");
             Ok(())
         }
-        Ok(task) => Err(anyhow::anyhow!("index swap task failed: {:?}", task)),
+        Ok(task) => {
+            // The swap task itself failed, so no swap happened and the live
+            // index is untouched. Failing the job lets NATS retry it safely.
+            Err(anyhow::anyhow!("index swap task failed: {:?}", task))
+        }
         Err(e) => {
-            // The swap is already enqueued. Retrying this job could enqueue a
-            // second swap and restore the old data, so assume the queued task
-            // will complete unless MeiliSearch reported a concrete failed task.
+            // Timeout or network error: the swap is already enqueued and will
+            // still run. Do NOT fail the job - a retry would enqueue a second
+            // swap and revert to the old data. The leftover temp index is
+            // reset by the next reindex.
             tracing::warn!(
                 index = index_uid,
                 error = %e,
