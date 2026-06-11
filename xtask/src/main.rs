@@ -14,14 +14,6 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Set up the development environment (docker + migrate)
-    Dev,
-    /// Start development Docker infrastructure services
-    DockerUp,
-    /// Stop and remove development Docker services (volumes are preserved)
-    DockerDown,
-    /// Show development Docker service status
-    DockerStatus,
     /// Build and push GHCR Docker images
     DockerPublish {
         /// Version tag to publish, for example 0.8.0
@@ -34,10 +26,6 @@ enum Commands {
         #[arg(long, value_enum, default_value_t = PublishTarget::All)]
         target: PublishTarget,
     },
-    /// Run database migrations
-    Migrate,
-    /// Drop everything and re-run all migrations
-    MigrateFresh,
     /// Export merged OpenAPI schema to swagger.json
     Openapi,
 }
@@ -49,88 +37,19 @@ enum PublishTarget {
     Worker,
 }
 
-const COMPOSE_FILE: &str = "docker-compose.dev.yml";
-const INFRA_SERVICES: &[&str] = &[
-    "postgres",
-    "pgdog",
-    "redis-session",
-    "redis-cache",
-    "redis-lock",
-    "nats",
-    "meilisearch",
-];
-
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Dev => dev()?,
-        Commands::DockerUp => docker_up()?,
-        Commands::DockerDown => docker_down()?,
-        Commands::DockerStatus => docker_status()?,
         Commands::DockerPublish {
             tag,
             latest,
             target,
         } => docker_publish(&tag, latest, target)?,
-        Commands::Migrate => migrate()?,
-        Commands::MigrateFresh => migrate_fresh()?,
         Commands::Openapi => openapi()?,
     }
 
     Ok(())
-}
-
-fn dev() -> Result<()> {
-    println!("Setting up development environment...\n");
-    docker_up()?;
-
-    println!("\n--- Running migrations ---\n");
-    migrate()?;
-
-    println!("\n=== Development environment ready! ===");
-    println!("\nStart the server:");
-    println!("  cargo run -p server");
-    println!("\nStart the worker in another terminal:");
-    println!("  cargo run -p worker");
-
-    Ok(())
-}
-
-fn compose(args: &[&str]) -> Result<()> {
-    let status = Command::new("docker")
-        .args(["compose", "-f", COMPOSE_FILE])
-        .args(args)
-        .status()
-        .context("Failed to run docker compose")?;
-
-    if !status.success() {
-        anyhow::bail!("docker compose {} failed", args.join(" "));
-    }
-
-    Ok(())
-}
-
-fn docker_up() -> Result<()> {
-    println!("Starting Docker infrastructure services...\n");
-
-    let mut args = vec!["up", "-d"];
-    args.extend(INFRA_SERVICES);
-    compose(&args)?;
-
-    println!("\nAll Docker infrastructure services started.");
-    Ok(())
-}
-
-fn docker_down() -> Result<()> {
-    println!("Stopping Docker services...\n");
-    compose(&["down"])?;
-    println!("\nServices stopped. Volumes are preserved.");
-    Ok(())
-}
-
-fn docker_status() -> Result<()> {
-    compose(&["ps", "-a"])
 }
 
 fn docker_publish(tag: &str, latest: bool, target: PublishTarget) -> Result<()> {
@@ -219,32 +138,6 @@ fn publish_docker_image(
     println!("Published {version_tag}");
     if latest {
         println!("Published {latest_tag}");
-    }
-
-    Ok(())
-}
-
-fn migrate() -> Result<()> {
-    let status = Command::new("cargo")
-        .args(["run", "-p", "migration"])
-        .status()
-        .context("Failed to run migration")?;
-
-    if !status.success() {
-        anyhow::bail!("Migration failed");
-    }
-
-    Ok(())
-}
-
-fn migrate_fresh() -> Result<()> {
-    let status = Command::new("cargo")
-        .args(["run", "-p", "migration", "fresh"])
-        .status()
-        .context("Failed to run fresh migration")?;
-
-    if !status.success() {
-        anyhow::bail!("Fresh migration failed");
     }
 
     Ok(())
