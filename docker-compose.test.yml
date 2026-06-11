@@ -89,7 +89,7 @@ services:
   mailpit:
     image: axllent/mailpit:latest
     ports:
-      - "18025:8025"
+      - "${MAILPIT_HOST_PORT:-18025}:8025"
     environment:
       MP_SMTP_AUTH_ACCEPT_ANY: "true"
       MP_SMTP_AUTH_ALLOW_INSECURE: "true"
@@ -122,7 +122,7 @@ services:
       - .envs/.test/.r2
       - .envs/.test/.server
     ports:
-      - "18000:8000"
+      - "${E2E_SERVER_PORT:-18000}:8000"
     depends_on:
       migration:
         condition: service_completed_successfully
