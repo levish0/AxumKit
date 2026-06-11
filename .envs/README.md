@@ -11,8 +11,8 @@ Concern-grouped dotenv files, one tree per environment.
 ```
 
 Compose services load only the concern files they need. For example, `server`
-loads `.postgres`, `.r2`, and `.server`; `worker` loads `.postgres`, `.r2`,
-and `.worker`.
+loads `postgres.env`, `r2.env`, and `server.env`; `worker` loads
+`postgres.env`, `r2.env`, and `worker.env`.
 
 ## Setup
 

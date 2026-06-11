@@ -8,7 +8,7 @@ services:
   postgres:
     image: postgres:18-alpine
     env_file:
-      - .envs/.test/.postgres
+      - .envs/.test/postgres.env
     tmpfs:
       - /var/lib/postgresql
     healthcheck:
@@ -106,7 +106,7 @@ services:
       target: server-runtime
     command: ["./migration"]
     env_file:
-      - .envs/.test/.postgres
+      - .envs/.test/postgres.env
     depends_on:
       postgres:
         condition: service_healthy
@@ -118,9 +118,9 @@ services:
       dockerfile: Dockerfile.dev
       target: server-runtime
     env_file:
-      - .envs/.test/.postgres
-      - .envs/.test/.r2
-      - .envs/.test/.server
+      - .envs/.test/postgres.env
+      - .envs/.test/r2.env
+      - .envs/.test/server.env
     ports:
       - "${E2E_SERVER_PORT:-18000}:8000"
     depends_on:
@@ -148,9 +148,9 @@ services:
       dockerfile: Dockerfile.dev
       target: worker-runtime
     env_file:
-      - .envs/.test/.postgres
-      - .envs/.test/.r2
-      - .envs/.test/.worker
+      - .envs/.test/postgres.env
+      - .envs/.test/r2.env
+      - .envs/.test/worker.env
     depends_on:
       migration:
         condition: service_completed_successfully

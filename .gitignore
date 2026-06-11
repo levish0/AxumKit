@@ -22,6 +22,8 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 *.env
+!.envs/.example/*.env
+!.envs/.test/*.env
 !e2e/e2e_env/*.env
 .envs/.local/
 .envs/.production/
