@@ -1,7 +1,7 @@
-use super::common::DEFAULT_BATCH_SIZE;
+use super::common::{DEFAULT_BATCH_SIZE, promote_reindexed_index, reindex_temp_uid};
 use super::{ReindexJobBase, ReindexUsersJob};
 use crate::jobs::WorkerContext;
-use crate::jobs::index::user::{USERS_INDEX, build_user_search_json, ensure_index_settings};
+use crate::jobs::index::user::{USERS_INDEX, build_user_search_json, ensure_index_settings_for};
 use crate::nats::JetStreamContext;
 use crate::nats::consumer::NatsConsumer;
 use crate::nats::publisher::publish_job;
@@ -26,13 +26,14 @@ async fn handle_reindex_users(
         "Processing user reindex batch"
     );
 
-    // First batch: ensure index settings and clear existing data
-    if job.base.after_id.is_none() {
-        ensure_index_settings(client).await?;
+    // Build into a temp index and swap at the end so search stays available
+    // and untouched on failure during reindex.
+    let temp_uid = reindex_temp_uid(USERS_INDEX);
 
-        // Clear all existing users before reindexing
-        let index = client.index(USERS_INDEX);
-        index.delete_all_documents().await?;
+    // First batch: prepare the temp index and clear leftovers from an aborted run.
+    if job.base.after_id.is_none() {
+        ensure_index_settings_for(client, &temp_uid).await?;
+        client.index(&temp_uid).delete_all_documents().await?;
 
         let total = users::Entity::find().count(db.as_ref()).await?;
         tracing::info!(
@@ -47,6 +48,7 @@ async fn handle_reindex_users(
         fetch_users_batch(db.as_ref(), job.base.after_id, job.base.batch_size).await?;
 
     if users_batch.is_empty() {
+        promote_reindexed_index(client, USERS_INDEX).await?;
         tracing::info!(
             reindex_id = %job.base.reindex_id,
             total_batches = job.base.batch_number,
@@ -58,8 +60,8 @@ async fn handle_reindex_users(
     // Build search documents
     let search_docs: Vec<_> = users_batch.iter().map(build_user_search_json).collect();
 
-    // Index batch to MeiliSearch
-    let index = client.index(USERS_INDEX);
+    // Index batch to MeiliSearch temp index.
+    let index = client.index(&temp_uid);
     index.add_documents(&search_docs, Some("id")).await?;
 
     let processed_count = users_batch.len();

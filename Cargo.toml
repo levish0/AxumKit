@@ -9,6 +9,10 @@ repository = "https://github.com/levish0/AxumKit"
 edition = "2024"
 rust-version = "1.93.0"
 
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+module_inception = "allow"
+
 
 [workspace.dependencies]
 # Internal crates

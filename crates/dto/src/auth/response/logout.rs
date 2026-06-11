@@ -23,10 +23,8 @@ pub fn create_logout_response() -> Result<Response, Errors> {
         .path("/")
         .max_age(Duration::seconds(0));
 
-    if !is_dev {
-        if let Some(ref domain) = config.cookie_domain {
-            cookie_builder = cookie_builder.domain(domain);
-        }
+    if !is_dev && let Some(ref domain) = config.cookie_domain {
+        cookie_builder = cookie_builder.domain(domain);
     }
 
     let clear_cookie = cookie_builder.build();

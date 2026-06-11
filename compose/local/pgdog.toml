@@ -1,0 +1,25 @@
+[general]
+host = "0.0.0.0"
+port = 6432
+admin_username = "pgdog"
+admin_password = "pgdog"
+pool_mode = "transaction"
+idle_timeout = 30000
+
+[[pools]]
+[pools.users.0]
+host = "postgres"
+port = 5432
+role = "primary"
+database_name = "axumkit"
+username = "axumkit"
+password = "axumkit_secret"
+
+# To add a read replica, uncomment and configure:
+# [pools.users.1]
+# host = "postgres-replica"
+# port = 5432
+# role = "replica"
+# database_name = "axumkit"
+# username = "axumkit"
+# password = "axumkit_secret"

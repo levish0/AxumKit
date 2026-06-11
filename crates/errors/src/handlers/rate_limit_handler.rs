@@ -5,11 +5,8 @@ use tracing::warn;
 
 /// Rate limit error logging handler
 pub fn log_error(error: &Errors) {
-    match error {
-        Errors::RateLimitExceeded => {
-            warn!("Rate limit exceeded");
-        }
-        _ => {}
+    if let Errors::RateLimitExceeded = error {
+        warn!("Rate limit exceeded");
     }
 }
 

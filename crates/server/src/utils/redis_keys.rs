@@ -1,4 +1,4 @@
-/// Redis key constants.
+//! Redis key constants.
 
 /// OAuth state key prefix (stores PKCE verifier)
 /// Format: oauth:state:{uuid}

@@ -1,0 +1,9 @@
+# Postgres shared by the postgres container and the app connection.
+POSTGRES_HOST=pgdog
+POSTGRES_PORT=6432
+POSTGRES_DB=axumkit
+POSTGRES_NAME=axumkit
+POSTGRES_USER=axumkit
+POSTGRES_PASSWORD=axumkit_secret
+POSTGRES_MAX_CONNECTION=30
+POSTGRES_MIN_CONNECTION=5

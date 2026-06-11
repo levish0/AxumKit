@@ -1,0 +1,185 @@
+# Development environment. Copy .envs/.example to .envs/.local before using.
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: axumkit-postgres
+    env_file:
+      - .envs/.local/.postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axumkit"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgdog:
+    image: ghcr.io/pgdogdev/pgdog:v0.1.31
+    container_name: axumkit-pgdog
+    volumes:
+      - ./compose/local/pgdog.toml:/etc/pgdog/pgdog.toml:ro
+    ports:
+      - "6432:6432"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-session:
+    image: redis:8-alpine
+    container_name: axumkit-redis-session
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy noeviction
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-session-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis-cache:
+    image: redis:8-alpine
+    container_name: axumkit-redis-cache
+    command: redis-server --port 6380 --maxmemory 1gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6380"
+    volumes:
+      - redis-cache-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  redis-lock:
+    image: redis:8-alpine
+    container_name: axumkit-redis-lock
+    command: redis-server --port 6381 --maxmemory 16mb --maxmemory-policy noeviction
+    ports:
+      - "6381:6381"
+    volumes:
+      - redis-lock-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  nats:
+    image: nats:2.12.4-alpine
+    container_name: axumkit-nats
+    command: ["--jetstream", "--store_dir=/data", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    volumes:
+      - nats-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.34.3
+    container_name: axumkit-meilisearch
+    env_file:
+      - .envs/.local/.meilisearch
+    ports:
+      - "7700:7700"
+    volumes:
+      - meili-data:/meili_data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  migration:
+    build:
+      context: .
+      target: server-runtime
+    command: ["./migration"]
+    env_file:
+      - .envs/.local/.postgres
+    depends_on:
+      pgdog:
+        condition: service_healthy
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      target: server-runtime
+    container_name: axumkit-server
+    env_file:
+      - .envs/.local/.postgres
+      - .envs/.local/.r2
+      - .envs/.local/.server
+    ports:
+      - "8000:8000"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      redis-session:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+      target: worker-runtime
+    container_name: axumkit-worker
+    env_file:
+      - .envs/.local/.postgres
+      - .envs/.local/.r2
+      - .envs/.local/.worker
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-lock:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  redis-session-data:
+  redis-cache-data:
+  redis-lock-data:
+  nats-data:
+  meili-data:

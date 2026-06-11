@@ -15,7 +15,6 @@ pub struct PasswordResetData {
     pub user_id: String,
 }
 
-///
 pub async fn service_forgot_password<C>(
     conn: &C,
     redis_conn: &ConnectionManager,

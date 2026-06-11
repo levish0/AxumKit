@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
+use server::api::openapi::ApiDoc;
+use std::fs;
 use std::process::Command;
 
 #[derive(Parser)]
 #[command(name = "xtask")]
-#[command(about = "AxumKit development environment management tool")]
+#[command(about = "AxumKit development helper commands")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -12,92 +14,50 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Full development setup (docker + migrate)
+    /// Set up the development environment (docker + migrate)
     Dev,
-    /// Start Docker services
+    /// Start development Docker infrastructure services
     DockerUp,
-    /// Stop and remove Docker services
+    /// Stop and remove development Docker services (volumes are preserved)
     DockerDown,
-    /// Check Docker service status
+    /// Show development Docker service status
     DockerStatus,
+    /// Build and push GHCR Docker images
+    DockerPublish {
+        /// Version tag to publish, for example 0.8.0
+        #[arg(long)]
+        tag: String,
+        /// Also publish the latest tag
+        #[arg(long)]
+        latest: bool,
+        /// Image target to publish
+        #[arg(long, value_enum, default_value_t = PublishTarget::All)]
+        target: PublishTarget,
+    },
     /// Run database migrations
     Migrate,
-    /// Fresh migration (drop and recreate)
+    /// Drop everything and re-run all migrations
     MigrateFresh,
+    /// Export merged OpenAPI schema to swagger.json
+    Openapi,
 }
 
-struct DockerService {
-    name: &'static str,
-    image: &'static str,
-    ports: &'static [&'static str],
-    env: &'static [&'static str],
-    volumes: &'static [&'static str],
-    extra_args: &'static [&'static str],
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+enum PublishTarget {
+    All,
+    Server,
+    Worker,
 }
 
-const SERVICES: &[DockerService] = &[
-    DockerService {
-        name: "redis-session",
-        image: "redis:8-alpine",
-        ports: &["6379:6379"],
-        env: &[],
-        volumes: &["redis-session-data:/data"],
-        extra_args: &[
-            "redis-server",
-            "--appendonly",
-            "yes",
-            "--maxmemory",
-            "512mb",
-            "--maxmemory-policy",
-            "volatile-ttl",
-        ],
-    },
-    DockerService {
-        name: "redis-cache",
-        image: "redis:8-alpine",
-        ports: &["6380:6379"],
-        env: &[],
-        volumes: &["redis-cache-data:/data"],
-        extra_args: &[
-            "redis-server",
-            "--maxmemory",
-            "1gb",
-            "--maxmemory-policy",
-            "allkeys-lru",
-        ],
-    },
-    DockerService {
-        name: "redis-lock",
-        image: "redis:8-alpine",
-        ports: &["6381:6379"],
-        env: &[],
-        volumes: &["redis-lock-data:/data"],
-        extra_args: &[
-            "redis-server",
-            "--appendonly",
-            "yes",
-            "--maxmemory",
-            "256mb",
-            "--maxmemory-policy",
-            "noeviction",
-        ],
-    },
-    DockerService {
-        name: "nats",
-        image: "nats:2.12.3-alpine",
-        ports: &["4222:4222", "8222:8222"],
-        env: &[],
-        volumes: &["nats-data:/data"],
-        extra_args: &["--jetstream", "--store_dir=/data", "-m", "8222"],
-    },
-    DockerService {
-        name: "meilisearch",
-        image: "getmeili/meilisearch:v1.34.3",
-        ports: &["7700:7700"],
-        env: &[],
-        volumes: &["meili_data:/meili_data"],
-        extra_args: &[],
-    },
+const COMPOSE_FILE: &str = "docker-compose.dev.yml";
+const INFRA_SERVICES: &[&str] = &[
+    "postgres",
+    "pgdog",
+    "redis-session",
+    "redis-cache",
+    "redis-lock",
+    "nats",
+    "meilisearch",
 ];
 
 fn main() -> Result<()> {
@@ -108,8 +68,14 @@ fn main() -> Result<()> {
         Commands::DockerUp => docker_up()?,
         Commands::DockerDown => docker_down()?,
         Commands::DockerStatus => docker_status()?,
+        Commands::DockerPublish {
+            tag,
+            latest,
+            target,
+        } => docker_publish(&tag, latest, target)?,
         Commands::Migrate => migrate()?,
         Commands::MigrateFresh => migrate_fresh()?,
+        Commands::Openapi => openapi()?,
     }
 
     Ok(())
@@ -117,181 +83,180 @@ fn main() -> Result<()> {
 
 fn dev() -> Result<()> {
     println!("Setting up development environment...\n");
-
-    // 1. Start Docker services
     docker_up()?;
 
-    // 2. Run migrations
     println!("\n--- Running migrations ---\n");
     migrate()?;
 
     println!("\n=== Development environment ready! ===");
     println!("\nStart the server:");
     println!("  cargo run -p server");
-    println!("\nStart the worker (in a separate terminal):");
+    println!("\nStart the worker in another terminal:");
     println!("  cargo run -p worker");
 
     Ok(())
 }
 
-fn docker_up() -> Result<()> {
-    println!("Starting Docker services...\n");
+fn compose(args: &[&str]) -> Result<()> {
+    let status = Command::new("docker")
+        .args(["compose", "-f", COMPOSE_FILE])
+        .args(args)
+        .status()
+        .context("Failed to run docker compose")?;
 
-    for service in SERVICES {
-        start_service(service)?;
+    if !status.success() {
+        anyhow::bail!("docker compose {} failed", args.join(" "));
     }
-
-    println!("\nAll Docker services started!");
 
     Ok(())
 }
 
-fn start_service(service: &DockerService) -> Result<()> {
-    // Check if already running
-    let check = Command::new("docker")
-        .args(["ps", "-q", "-f", &format!("name={}", service.name)])
-        .output()
-        .context("Failed to check docker status")?;
+fn docker_up() -> Result<()> {
+    println!("Starting Docker infrastructure services...\n");
 
-    if !check.stdout.is_empty() {
-        println!("[{}] Already running", service.name);
-        return Ok(());
-    }
+    let mut args = vec!["up", "-d"];
+    args.extend(INFRA_SERVICES);
+    compose(&args)?;
 
-    // Check if container exists but stopped
-    let check_stopped = Command::new("docker")
-        .args(["ps", "-aq", "-f", &format!("name={}", service.name)])
-        .output()
-        .context("Failed to check docker status")?;
-
-    if !check_stopped.stdout.is_empty() {
-        println!("[{}] Starting existing container...", service.name);
-        let status = Command::new("docker")
-            .args(["start", service.name])
-            .status()
-            .context("Failed to start container")?;
-
-        if status.success() {
-            println!("[{}] Started", service.name);
-        } else {
-            println!("[{}] Failed to start", service.name);
-        }
-        return Ok(());
-    }
-
-    // Create new container
-    println!("[{}] Creating container...", service.name);
-
-    let mut args = vec!["run", "-d", "--name", service.name];
-
-    for port in service.ports {
-        args.push("-p");
-        args.push(port);
-    }
-
-    for env in service.env {
-        args.push("-e");
-        args.push(env);
-    }
-
-    for volume in service.volumes {
-        args.push("-v");
-        args.push(volume);
-    }
-
-    args.push(service.image);
-    args.extend(service.extra_args);
-
-    let status = Command::new("docker")
-        .args(&args)
-        .status()
-        .context(format!("Failed to create {}", service.name))?;
-
-    if status.success() {
-        println!("[{}] Created and started", service.name);
-    } else {
-        println!("[{}] Failed to create", service.name);
-    }
-
+    println!("\nAll Docker infrastructure services started.");
     Ok(())
 }
 
 fn docker_down() -> Result<()> {
-    println!("Stopping all Docker services...\n");
-
-    let names: Vec<&str> = SERVICES.iter().map(|s| s.name).collect();
-
-    // Stop containers
-    let _ = Command::new("docker").arg("stop").args(&names).status();
-
-    // Remove containers
-    let _ = Command::new("docker").arg("rm").args(&names).status();
-
-    println!("\nAll services stopped and removed.");
-    println!("Note: Volumes are preserved. Use 'docker volume rm <name>' to delete data.");
-
+    println!("Stopping Docker services...\n");
+    compose(&["down"])?;
+    println!("\nServices stopped. Volumes are preserved.");
     Ok(())
 }
 
 fn docker_status() -> Result<()> {
-    println!("Docker Service Status:\n");
+    compose(&["ps", "-a"])
+}
 
-    for service in SERVICES {
-        let output = Command::new("docker")
-            .args([
-                "ps",
-                "-a",
-                "--format",
-                "{{.Status}}",
-                "-f",
-                &format!("name=^{}$", service.name),
-            ])
-            .output()
-            .context("Failed to check docker status")?;
+fn docker_publish(tag: &str, latest: bool, target: PublishTarget) -> Result<()> {
+    if tag.trim().is_empty() {
+        anyhow::bail!("--tag must not be empty");
+    }
 
-        let status_str = String::from_utf8_lossy(&output.stdout);
-        let status_str = status_str.trim();
-
-        if status_str.is_empty() {
-            println!("  {:15} Not created", service.name);
-        } else {
-            println!("  {:15} {}", service.name, status_str);
+    match target {
+        PublishTarget::All => {
+            publish_docker_image(
+                "server",
+                "server-runtime",
+                "ghcr.io/levish0/axumkit",
+                tag,
+                latest,
+            )?;
+            publish_docker_image(
+                "worker",
+                "worker-runtime",
+                "ghcr.io/levish0/axumkit-worker",
+                tag,
+                latest,
+            )?;
         }
+        PublishTarget::Server => publish_docker_image(
+            "server",
+            "server-runtime",
+            "ghcr.io/levish0/axumkit",
+            tag,
+            latest,
+        )?,
+        PublishTarget::Worker => publish_docker_image(
+            "worker",
+            "worker-runtime",
+            "ghcr.io/levish0/axumkit-worker",
+            tag,
+            latest,
+        )?,
+    }
+
+    Ok(())
+}
+
+fn publish_docker_image(
+    label: &str,
+    docker_target: &str,
+    image: &str,
+    tag: &str,
+    latest: bool,
+) -> Result<()> {
+    println!("Publishing {label} image...");
+
+    let version_tag = format!("{image}:{tag}");
+    let latest_tag = format!("{image}:latest");
+
+    let mut args = vec![
+        "buildx",
+        "build",
+        "--platform",
+        "linux/amd64",
+        "--file",
+        "Dockerfile",
+        "--target",
+        docker_target,
+        "--tag",
+        &version_tag,
+    ];
+
+    if latest {
+        args.push("--tag");
+        args.push(&latest_tag);
+    }
+
+    args.push("--push");
+    args.push(".");
+
+    let status = Command::new("docker")
+        .args(args)
+        .status()
+        .with_context(|| format!("Failed to build and push {label} image"))?;
+
+    if !status.success() {
+        anyhow::bail!("Failed to publish {label} image");
+    }
+
+    println!("Published {version_tag}");
+    if latest {
+        println!("Published {latest_tag}");
     }
 
     Ok(())
 }
 
 fn migrate() -> Result<()> {
-    println!("Running migrations...\n");
-
     let status = Command::new("cargo")
         .args(["run", "-p", "migration"])
         .status()
         .context("Failed to run migration")?;
 
-    if status.success() {
-        println!("\nMigration completed!");
-    } else {
-        println!("\nMigration failed!");
+    if !status.success() {
+        anyhow::bail!("Migration failed");
     }
 
     Ok(())
 }
 
 fn migrate_fresh() -> Result<()> {
-    println!("Running fresh migration (drop and recreate)...\n");
-
     let status = Command::new("cargo")
         .args(["run", "-p", "migration", "fresh"])
         .status()
-        .context("Failed to run migration")?;
+        .context("Failed to run fresh migration")?;
 
-    if status.success() {
-        println!("\nFresh migration completed!");
-    } else {
-        println!("\nFresh migration failed!");
+    if !status.success() {
+        anyhow::bail!("Fresh migration failed");
     }
 
+    Ok(())
+}
+
+fn openapi() -> Result<()> {
+    println!("Exporting OpenAPI schema to swagger.json...\n");
+
+    let json = serde_json::to_string_pretty(&ApiDoc::merged())
+        .context("Failed to serialize OpenAPI schema")?;
+    fs::write("swagger.json", format!("{json}\n")).context("Failed to write swagger.json")?;
+
+    println!("OpenAPI schema exported to swagger.json");
     Ok(())
 }

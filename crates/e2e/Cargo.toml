@@ -1,0 +1,17 @@
+[package]
+name = "e2e"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+tokio = { workspace = true }
+reqwest = { workspace = true, features = ["cookies"] }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }

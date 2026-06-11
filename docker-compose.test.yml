@@ -1,0 +1,184 @@
+# Disposable end-to-end test stack.
+# Usage:
+#   docker compose -f docker-compose.test.yml up -d --build --wait
+#   E2E_BASE_URL=http://localhost:8000 MAILPIT_URL=http://localhost:8025 cargo test -p e2e
+#   docker compose -f docker-compose.test.yml down -v
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    env_file:
+      - .envs/.test/.postgres
+    tmpfs:
+      - /var/lib/postgresql
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axumkit"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-session:
+    image: redis:8-alpine
+    command: redis-server --appendonly no --maxmemory 256mb --maxmemory-policy noeviction
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-cache:
+    image: redis:8-alpine
+    command: redis-server --port 6380 --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6380"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis-lock:
+    image: redis:8-alpine
+    command: redis-server --port 6381 --maxmemory 16mb --maxmemory-policy noeviction
+    ports:
+      - "6381:6381"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nats:
+    image: nats:2.12.4-alpine
+    command: ["--jetstream", "--store_dir=/data", "-m", "8222"]
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.34.3
+    environment:
+      MEILI_ENV: development
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "7700:7700"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:3.97
+    command: server -s3 -dir=/data -ip=seaweedfs -master.volumeSizeLimitMB=128
+    ports:
+      - "8333:8333"
+
+  seaweedfs-init:
+    image: amazon/aws-cli:2.15.30
+    depends_on:
+      seaweedfs:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: testsecret
+      AWS_DEFAULT_REGION: us-east-1
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until aws --endpoint-url http://seaweedfs:8333 s3 ls; do
+          echo "waiting for seaweedfs s3..."; sleep 2;
+        done
+        aws --endpoint-url http://seaweedfs:8333 s3 mb s3://assets || true
+        echo "buckets ready"
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "true"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "true"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025/readyz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migration:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: server-runtime
+    command: ["./migration"]
+    env_file:
+      - .envs/.test/.postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: server-runtime
+    env_file:
+      - .envs/.test/.postgres
+      - .envs/.test/.r2
+      - .envs/.test/.server
+    ports:
+      - "8000:8000"
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      redis-session:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      seaweedfs-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: worker-runtime
+    env_file:
+      - .envs/.test/.postgres
+      - .envs/.test/.r2
+      - .envs/.test/.worker
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      nats:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-lock:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      mailpit:
+        condition: service_healthy
+      seaweedfs-init:
+        condition: service_completed_successfully

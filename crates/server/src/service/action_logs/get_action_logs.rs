@@ -19,7 +19,6 @@ pub async fn service_get_action_logs(
         resource_id: payload.resource_id,
         resource_type: payload.resource_type,
         actions: payload.actions,
-        ..Default::default()
     };
 
     let mut logs = repository_find_action_logs(

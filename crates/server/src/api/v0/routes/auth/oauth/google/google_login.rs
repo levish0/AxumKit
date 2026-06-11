@@ -16,7 +16,6 @@ use dto::validator::json_validator::ValidatedJson;
 use errors::errors::Errors;
 use std::net::SocketAddr;
 
-///
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/google/login",

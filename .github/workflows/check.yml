@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: check-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -22,10 +26,55 @@ jobs:
           workspaces: "."
 
       - name: Check
-        run: cargo check --all-targets
+        run: cargo check --workspace --all-targets --exclude e2e
 
       - name: Clippy
-        run: cargo clippy --all-targets
+        run: cargo clippy --workspace --all-targets --exclude e2e
 
       - name: Format
-        run: cargo fmt --check
+        run: cargo fmt --all --check
+
+      - name: Test
+        run: cargo test --workspace --exclude e2e
+
+  migrations:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: axumkit
+          POSTGRES_PASSWORD: axumkit
+          POSTGRES_DB: axumkit
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U axumkit"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      POSTGRES_NAME: axumkit
+      POSTGRES_USER: axumkit
+      POSTGRES_PASSWORD: axumkit
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: "."
+
+      - name: Apply migrations to a fresh database
+        run: cargo run -p migration
+
+      - name: Migration status
+        run: cargo run -p migration status

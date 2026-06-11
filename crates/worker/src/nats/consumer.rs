@@ -4,9 +4,15 @@ use async_nats::jetstream::{
 use futures::StreamExt;
 use serde::de::DeserializeOwned;
 use std::future::Future;
+use std::pin::pin;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Semaphore;
+
+/// Ack wait for in-flight messages. Long-running handlers are kept alive by
+/// in-progress acks sent every `ACK_WAIT / 2`, so this only bounds how fast a
+/// message is redelivered after a worker crash.
+const ACK_WAIT: Duration = Duration::from_secs(30);
 
 /// Default exponential backoff durations for retries
 /// 1s, 2s, 4s, 8s, 16s (5 retries total)
@@ -68,7 +74,11 @@ impl NatsConsumer {
                     durable_name: Some(self.consumer_name.clone()),
                     max_deliver,
                     backoff: self.backoff,
-                    ack_wait: Duration::from_secs(30),
+                    ack_wait: ACK_WAIT,
+                    // Do not deliver more messages than this consumer can process.
+                    // Otherwise messages buffered behind the semaphore burn ack_wait
+                    // while waiting and can be redelivered as duplicates.
+                    max_ack_pending: self.concurrency as i64,
                     ..Default::default()
                 },
             )
@@ -108,26 +118,57 @@ impl NatsConsumer {
                 let job: T = match serde_json::from_slice(&msg.payload) {
                     Ok(j) => j,
                     Err(e) => {
-                        tracing::error!("[{}] Failed to deserialize job: {}", consumer_name, e);
-                        // Acknowledge bad messages to prevent infinite retry
-                        if let Err(e) = msg.ack().await {
-                            tracing::error!("[{}] Failed to ack bad message: {}", consumer_name, e);
+                        tracing::error!(consumer = %consumer_name, error = %e, "Failed to deserialize job");
+                        // Terminate bad messages to prevent infinite retry.
+                        if let Err(e) = msg.ack_with(AckKind::Term).await {
+                            tracing::error!(consumer = %consumer_name, error = %e, "Failed to terminate bad message");
                         }
                         return;
                     }
                 };
 
-                match handler(job).await {
+                let result = {
+                    let mut handler_future = pin!(handler(job));
+                    let mut heartbeat = tokio::time::interval(ACK_WAIT / 2);
+                    heartbeat.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Delay);
+                    heartbeat.tick().await;
+
+                    loop {
+                        tokio::select! {
+                            result = &mut handler_future => break result,
+                            _ = heartbeat.tick() => {
+                                if let Err(e) = msg.ack_with(AckKind::Progress).await {
+                                    tracing::warn!(consumer = %consumer_name, error = %e, "Failed to send in-progress ack");
+                                }
+                            }
+                        }
+                    }
+                };
+
+                match result {
                     Ok(()) => {
                         if let Err(e) = msg.ack().await {
-                            tracing::error!("[{}] Failed to ack message: {}", consumer_name, e);
+                            tracing::error!(consumer = %consumer_name, error = %e, "Failed to ack message");
                         }
                     }
                     Err(e) => {
-                        tracing::warn!("[{}] Job failed: {}", consumer_name, e);
-                        // Nak with None delay - NATS uses the backoff config automatically
-                        if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
-                            tracing::error!("[{}] Failed to nak message: {}", consumer_name, e);
+                        let delivered = msg.info().map(|info| info.delivered).unwrap_or(0);
+                        if delivered >= max_deliver {
+                            tracing::error!(
+                                consumer = %consumer_name,
+                                error = %e,
+                                delivered,
+                                "Job failed permanently after max deliveries; terminating message"
+                            );
+                            if let Err(e) = msg.ack_with(AckKind::Term).await {
+                                tracing::error!(consumer = %consumer_name, error = %e, "Failed to terminate message");
+                            }
+                        } else {
+                            tracing::warn!(consumer = %consumer_name, error = %e, delivered, "Job failed");
+                            // Nak with None delay: NATS uses the consumer backoff config.
+                            if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
+                                tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak message");
+                            }
                         }
                     }
                 }

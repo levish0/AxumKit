@@ -6,6 +6,9 @@ authors.workspace = true
 repository.workspace = true
 description = "axumkit API Data Transfer Objects"
 
+[lints]
+workspace = true
+
 [dependencies]
 # Internal crates
 config.workspace = true

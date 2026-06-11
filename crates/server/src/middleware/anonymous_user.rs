@@ -51,10 +51,8 @@ pub async fn anonymous_user_middleware(
             .path("/")
             .max_age(Duration::days(365)); // 1 year
 
-        if !is_dev {
-            if let Some(ref domain) = config.cookie_domain {
-                cookie_builder = cookie_builder.domain(domain);
-            }
+        if !is_dev && let Some(ref domain) = config.cookie_domain {
+            cookie_builder = cookie_builder.domain(domain);
         }
 
         cookies.add(cookie_builder.build());

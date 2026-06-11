@@ -22,9 +22,10 @@ Production-ready Rust web backend template.
 git clone https://github.com/levish0/AxumKit.git && cd AxumKit
 cp .env.example .env  # edit with your config
 
-cd crates/migration && cargo run && cd ../..  # migrations
-cargo run -p server                   # API server
-cargo run -p worker                   # worker (separate terminal)
+just up-infra
+just migrate
+cargo run -p server   # API server
+cargo run -p worker   # worker (separate terminal)
 ```
 
 ## Project Structure
@@ -38,12 +39,15 @@ crates/
 ├── dto                # Request / response types
 ├── entity             # SeaORM models
 ├── errors             # Centralized error handling
+├── e2e                # Black-box end-to-end tests
 └── migration          # DB migrations
 ```
 
 ## Configuration
 
-Env vars from `.env`, validated at startup. See [`.env.example`](.env.example) for the full list.
+Host `cargo run` loads `.env`. Docker Compose loads concern-grouped files in
+[`.envs`](.envs/README.md). Copy `.envs/.example` to `.envs/.local` for local
+containers, and run `just e2e` for the disposable test stack.
 
 ## License
 

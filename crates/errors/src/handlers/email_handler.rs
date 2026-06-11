@@ -5,13 +5,9 @@ use tracing::debug;
 
 /// Email-related error logging handler
 pub fn log_error(error: &Errors) {
-    match error {
-        // Business logic errors - debug! level (client mistakes)
-        Errors::EmailAlreadyVerified => {
-            debug!("Client error: {:?}", error);
-        }
-
-        _ => {}
+    // Business logic errors - debug! level (client mistakes)
+    if let Errors::EmailAlreadyVerified = error {
+        debug!("Client error: {:?}", error);
     }
 }
 

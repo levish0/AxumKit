@@ -85,7 +85,16 @@ async fn handle_index_user(
 pub async fn ensure_index_settings(
     client: &meilisearch_sdk::client::Client,
 ) -> Result<(), anyhow::Error> {
-    let index = client.index(USERS_INDEX);
+    ensure_index_settings_for(client, USERS_INDEX).await
+}
+
+/// Ensure the given index uid exists with user index settings.
+/// Reindexing uses this to prepare a temp index before swapping it live.
+pub async fn ensure_index_settings_for(
+    client: &meilisearch_sdk::client::Client,
+    index_uid: &str,
+) -> Result<(), anyhow::Error> {
+    let index = client.index(index_uid);
 
     // Check if index exists by trying to get stats
     match index.get_stats().await {
@@ -97,13 +106,13 @@ pub async fn ensure_index_settings(
             if e.error_code == meilisearch_sdk::errors::ErrorCode::IndexNotFound =>
         {
             // Index doesn't exist, create it
-            tracing::info!("Creating users index...");
-            let task = client.create_index(USERS_INDEX, Some("id")).await?;
+            tracing::info!(index = index_uid, "Creating users index");
+            let task = client.create_index(index_uid, Some("id")).await?;
             task.wait_for_completion(client, None, None).await?;
 
             // Apply settings
-            tracing::info!("Applying users index settings...");
-            let index = client.index(USERS_INDEX);
+            tracing::info!(index = index_uid, "Applying users index settings");
+            let index = client.index(index_uid);
             let task = index.set_settings(&user_index_settings()).await?;
             task.wait_for_completion(client, None, None).await?;
 

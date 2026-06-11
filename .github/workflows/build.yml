@@ -24,4 +24,4 @@ jobs:
           workspaces: "."
 
       - name: Release Build
-        run: cargo build --release
+        run: cargo build --release --workspace --exclude e2e

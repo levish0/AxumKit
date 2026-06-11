@@ -168,31 +168,28 @@ impl SessionService {
             Errors::SysInternalError(format!("Redis session retrieval failed: {}", e))
         })?;
 
-        match session_data {
-            Some(data) => {
-                let session: Session = serde_json::from_str(&data).map_err(|e| {
-                    Errors::SysInternalError(format!("Session deserialization failed: {}", e))
+        if let Some(data) = session_data {
+            let session: Session = serde_json::from_str(&data).map_err(|e| {
+                Errors::SysInternalError(format!("Session deserialization failed: {}", e))
+            })?;
+
+            let management_key = Self::session_management_key(&session.management_id);
+            let user_sessions_key = Self::user_sessions_key(&session.user_id);
+
+            redis::pipe()
+                .del(&key)
+                .ignore()
+                .del(&management_key)
+                .ignore()
+                .cmd("ZREM")
+                .arg(&user_sessions_key)
+                .arg(&session.management_id)
+                .ignore()
+                .query_async::<()>(&mut conn)
+                .await
+                .map_err(|e| {
+                    Errors::SysInternalError(format!("Redis session deletion failed: {}", e))
                 })?;
-
-                let management_key = Self::session_management_key(&session.management_id);
-                let user_sessions_key = Self::user_sessions_key(&session.user_id);
-
-                redis::pipe()
-                    .del(&key)
-                    .ignore()
-                    .del(&management_key)
-                    .ignore()
-                    .cmd("ZREM")
-                    .arg(&user_sessions_key)
-                    .arg(&session.management_id)
-                    .ignore()
-                    .query_async::<()>(&mut conn)
-                    .await
-                    .map_err(|e| {
-                        Errors::SysInternalError(format!("Redis session deletion failed: {}", e))
-                    })?;
-            }
-            None => {}
         }
 
         Ok(())
@@ -329,7 +326,7 @@ impl SessionService {
 
         Self::remove_user_management_ids(redis, user_id, &stale_management_ids).await?;
 
-        sessions.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        sessions.sort_by_key(|session| std::cmp::Reverse(session.created_at));
 
         Ok(sessions)
     }

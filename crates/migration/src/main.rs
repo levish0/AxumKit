@@ -2,18 +2,23 @@ use dotenvy::dotenv;
 use sea_orm_migration::prelude::*;
 use std::env;
 
+fn required_env(name: &str, legacy_name: &str) -> String {
+    env::var(name)
+        .or_else(|_| env::var(legacy_name))
+        .unwrap_or_else(|_| panic!("{name} not set (legacy {legacy_name} also missing)"))
+}
+
 #[async_std::main]
 async fn main() {
     dotenv().ok();
 
-    let db_user = env::var("POSTGRES_WRITE_USER").expect("POSTGRES_WRITE_USER not set");
-    let db_password = env::var("POSTGRES_WRITE_PASSWORD").expect("POSTGRES_WRITE_PASSWORD not set");
-    let db_host = env::var("POSTGRES_WRITE_HOST").expect("POSTGRES_WRITE_HOST not set");
-    let db_port = env::var("POSTGRES_WRITE_PORT")
-        .expect("POSTGRES_WRITE_PORT not set")
+    let db_user = required_env("POSTGRES_USER", "POSTGRES_WRITE_USER");
+    let db_password = required_env("POSTGRES_PASSWORD", "POSTGRES_WRITE_PASSWORD");
+    let db_host = required_env("POSTGRES_HOST", "POSTGRES_WRITE_HOST");
+    let db_port = required_env("POSTGRES_PORT", "POSTGRES_WRITE_PORT")
         .parse::<u16>()
-        .expect("Invalid POSTGRES_WRITE_PORT");
-    let db_name = env::var("POSTGRES_WRITE_NAME").expect("POSTGRES_WRITE_NAME not set");
+        .expect("Invalid POSTGRES_PORT");
+    let db_name = required_env("POSTGRES_NAME", "POSTGRES_WRITE_NAME");
 
     let database_url = format!(
         "postgres://{}:{}@{}:{}/{}",

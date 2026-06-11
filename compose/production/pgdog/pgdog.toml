@@ -1,0 +1,18 @@
+[general]
+host = "0.0.0.0"
+port = 6432
+pooler_mode = "transaction"
+min_pool_size = 10
+default_pool_size = 100
+idle_timeout = 30000
+
+[[databases]]
+name = "axumkit"
+host = "postgres"
+port = 5432
+role = "primary"
+database_name = "axumkit"
+user = "axumkit"
+password = "CHANGE_ME"
+
+# To add a read replica, add another [[databases]] entry with role = "replica".

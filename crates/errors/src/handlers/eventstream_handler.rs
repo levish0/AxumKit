@@ -5,11 +5,8 @@ use tracing::warn;
 
 /// EventStream error logging handler
 pub fn log_error(error: &Errors) {
-    match error {
-        Errors::EventStreamPublishFailed => {
-            warn!("EventStream error: {:?}", error);
-        }
-        _ => {}
+    if let Errors::EventStreamPublishFailed = error {
+        warn!("EventStream error: {:?}", error);
     }
 }
 

@@ -1,0 +1,3667 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "server",
+    "description": "server",
+    "contact": {
+      "name": "Levi Laine",
+      "email": "shiueo.csh@gmail.com"
+    },
+    "license": {
+      "name": ""
+    },
+    "version": "0.7.5"
+  },
+  "paths": {
+    "/health-check": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "operationId": "health_check",
+        "responses": {
+          "204": {
+            "description": "Service is healthy and running"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v0/action-logs": {
+      "get": {
+        "tags": [
+          "Action Logs"
+        ],
+        "operationId": "get_action_logs",
+        "parameters": [
+          {
+            "name": "cursor_id",
+            "in": "query",
+            "description": "Cursor ID for pagination. None means get latest.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor_direction",
+            "in": "query",
+            "description": "Cursor direction (default: Older when cursor_id is provided)",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CursorDirection"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Number of items to return (max: 100)",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Filter by user ID (for contributions)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Filter by resource ID",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "description": "Filter by resource type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ActionResourceType"
+            }
+          },
+          {
+            "name": "actions",
+            "in": "query",
+            "description": "Filter by actions",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ActionLogAction"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Action logs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionLogListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid query parameters or validation error"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        }
+      }
+    },
+    "/v0/auth/change-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_change_email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Verification email sent to new address"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, or incorrect password"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/change-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_change_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password changed successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, or incorrect password"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/complete-signup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_complete_signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteSignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Signup completed successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON or validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Token expired or invalid"
+          },
+          "409": {
+            "description": "Conflict - Handle or email already exists"
+          },
+          "500": {
+            "description": "Internal Server Error - Database or Redis error"
+          }
+        }
+      }
+    },
+    "/v0/auth/confirm-email-change": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_confirm_email_change",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmEmailChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Email changed successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid or expired token"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_forgot_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password reset email sent if account exists"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON or validation error"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "TOTP required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpRequiredResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Login successful"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON or validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid credentials or password not set"
+          },
+          "404": {
+            "description": "Not Found - User not found"
+          },
+          "500": {
+            "description": "Internal Server Error - Database or Redis error"
+          }
+        }
+      }
+    },
+    "/v0/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_logout",
+        "responses": {
+          "204": {
+            "description": "Logout successful"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error - Redis error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/oauth/connections": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "list_oauth_connections",
+        "responses": {
+          "200": {
+            "description": "OAuth connections list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthConnectionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/oauth/connections/unlink": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "unlink_oauth_connection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlinkOAuthRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "OAuth unlinked successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, or cannot unlink last authentication method"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "404": {
+            "description": "Not Found - User or OAuth connection not found"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/oauth/github/authorize": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_github_authorize",
+        "parameters": [
+          {
+            "name": "flow",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OAuthAuthorizeFlow"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth URL generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthUrlResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Redis or OAuth URL generation error"
+          }
+        }
+      }
+    },
+    "/v0/auth/oauth/github/link": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_github_link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "OAuth linked successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, invalid or expired state/code"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "409": {
+            "description": "Conflict - OAuth account already linked to this or another user"
+          },
+          "500": {
+            "description": "Internal Server Error - Database, Redis, or OAuth provider error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/oauth/github/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_github_login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "New user - pending signup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthPendingSignupResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Login successful (existing user)"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, invalid/expired state/code, or no verified email"
+          },
+          "409": {
+            "description": "Conflict - Email already exists"
+          },
+          "500": {
+            "description": "Internal Server Error - Database, Redis, or OAuth provider error"
+          }
+        }
+      }
+    },
+    "/v0/auth/oauth/google/authorize": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_google_authorize",
+        "parameters": [
+          {
+            "name": "flow",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/OAuthAuthorizeFlow"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth URL generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthUrlResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Redis or OAuth URL generation error"
+          }
+        }
+      }
+    },
+    "/v0/auth/oauth/google/link": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_google_link",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "OAuth linked successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, invalid or expired state/code"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "409": {
+            "description": "Conflict - OAuth account already linked to this or another user"
+          },
+          "500": {
+            "description": "Internal Server Error - Database, Redis, or OAuth provider error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/oauth/google/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_google_login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "New user - pending signup required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthPendingSignupResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Login successful (existing user)"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, or invalid/expired state/code"
+          },
+          "409": {
+            "description": "Conflict - Email already exists"
+          },
+          "500": {
+            "description": "Internal Server Error - Database, Redis, or OAuth provider error"
+          }
+        }
+      }
+    },
+    "/v0/auth/oauth/google/one-tap/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign in with Google One Tap",
+        "description": "Validates the Google ID token on the server. Existing linked accounts receive a session immediately. New identities receive a pending signup token that must be completed via POST /v0/auth/complete-signup.",
+        "operationId": "auth_google_one_tap_login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleOneTapLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Google identity was accepted but profile completion is still required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthPendingSignupResponse"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Google identity matched an existing account and a session cookie was issued"
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, invalid ID token, or the Google account email is not verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A local account already uses the same email address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database, Redis, JWKS, or Google OAuth error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/auth/resend-verification-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resend the pending signup verification email",
+        "description": "Looks up an existing email and password signup that is still pending and resends the same verification token with its remaining validity window. Returns 204 No Content even when no pending signup exists to avoid email enumeration.",
+        "operationId": "auth_resend_verification_email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResendVerificationEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Verification email was resent when a pending signup existed"
+          },
+          "400": {
+            "description": "Malformed JSON payload or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected Redis error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Worker service rejected the verification email job or returned an invalid response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Worker service could not be reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/auth/reset-password": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "auth_reset_password",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Password reset successfully"
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON, validation error, or invalid/expired token"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/auth/sessions": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "List the authenticated user's active sessions",
+        "description": "Returns every active session bound to the current user, marking the session used by this request with is_current=true. Sessions are sorted by created_at descending.",
+        "operationId": "auth_list_sessions",
+        "responses": {
+          "200": {
+            "description": "Active session list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListSessionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, or expired session cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected session store error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/sessions/{management_id}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Revoke one of the authenticated user's active sessions",
+        "description": "Deletes the specified session from the server. The user must own the session; revoking another user's session returns 404. If the revoked session is the one used by this request, the response also clears the session cookie.",
+        "operationId": "auth_revoke_session",
+        "parameters": [
+          {
+            "name": "management_id",
+            "in": "path",
+            "description": "Public session management identifier to revoke",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The session was revoked"
+          },
+          "401": {
+            "description": "Missing, invalid, or expired session cookie",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session does not exist or does not belong to the current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected session store error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/signup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Start an email and password signup",
+        "description": "Validates the requested email, handle, and password, stores a pending signup in Redis, and queues a verification email. The user account is created only after the token is submitted to POST /v0/auth/verify-email.",
+        "operationId": "auth_signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Verification email queued and pending signup stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The email or handle is already in use or reserved by another pending signup",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database or Redis error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Worker service rejected the verification email job or returned an invalid response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Worker service could not be reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/auth/totp/backup-codes/regenerate": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_regenerate_backup_codes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpRegenerateBackupCodesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Backup codes regenerated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpBackupCodesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid TOTP code or TOTP not enabled"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/totp/disable": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_disable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpDisableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "TOTP disabled"
+          },
+          "400": {
+            "description": "Invalid TOTP code or TOTP not enabled"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/totp/enable": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_enable",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpEnableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "TOTP enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpEnableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid TOTP code"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "TOTP already enabled"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/totp/setup": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_setup",
+        "responses": {
+          "200": {
+            "description": "TOTP setup initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpSetupResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "409": {
+            "description": "TOTP already enabled"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/totp/status": {
+      "get": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_status",
+        "responses": {
+          "200": {
+            "description": "TOTP status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpStatusResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/auth/totp/verify": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "operationId": "totp_verify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "TOTP verified, login successful"
+          },
+          "400": {
+            "description": "Invalid TOTP code or temp token"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/auth/verify-email": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Complete an email signup with a verification token",
+        "description": "Consumes the pending email verification token, creates the user account if the email and handle are still available, and then schedules background indexing. The token is only cleaned up after the database commit succeeds.",
+        "operationId": "auth_verify_email",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Verification token accepted and the account was created"
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, or invalid verification token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The email or handle became unavailable before the account was created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database or Redis error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/eventstream/actions": {
+      "get": {
+        "tags": [
+          "EventStream"
+        ],
+        "operationId": "stream_actions",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Filter by user ID (for contributions)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "description": "Filter by resource ID",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "description": "Filter by resource type",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ActionResourceType"
+            }
+          },
+          {
+            "name": "actions",
+            "in": "query",
+            "description": "Filter by actions",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ActionLogAction"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "SSE stream of action logs",
+            "content": {
+              "text/event-stream": {}
+            }
+          }
+        }
+      }
+    },
+    "/v0/moderation/logs": {
+      "get": {
+        "tags": [
+          "Moderation"
+        ],
+        "operationId": "list_moderation_logs",
+        "parameters": [
+          {
+            "name": "cursor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor_direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/CursorDirection"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "actor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "resource_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/ModerationResourceType"
+            }
+          },
+          {
+            "name": "resource_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "actions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ModerationAction"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Moderation logs retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListModerationLogsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid query parameters or validation error"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        }
+      }
+    },
+    "/v0/search/users": {
+      "get": {
+        "tags": [
+          "Search"
+        ],
+        "operationId": "search_users",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Search query for handle, display_name, or bio. Empty or omitted returns all users.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchUsersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid query parameters or validation error"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/user/me": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_my_profile",
+        "responses": {
+          "200": {
+            "description": "Current user info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "update_my_profile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMyProfileRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/user/me/banner-image": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "upload_banner_image",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUserImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Banner image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUserImageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid image or validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "413": {
+            "description": "Payload Too Large - Image exceeds size limit"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "delete_banner_image",
+        "responses": {
+          "204": {
+            "description": "Banner image deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "404": {
+            "description": "Not Found - No banner image to delete"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/user/me/profile-image": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "upload_profile_image",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUserImageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Profile image uploaded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUserImageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid image or validation error"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "413": {
+            "description": "Payload Too Large - Image exceeds size limit"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "delete_profile_image",
+        "responses": {
+          "204": {
+            "description": "Profile image deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or expired session"
+          },
+          "404": {
+            "description": "Not Found - No profile image to delete"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/users/ban": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Ban a user",
+        "description": "Bans the requested user account and returns the resulting moderation record.",
+        "operationId": "ban_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BanUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User banned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BanUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - User already banned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/users/handle/{handle}/available": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "check_handle_available",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Handle availability checked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckHandleAvailableResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid handle format"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/users/profile": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_profile",
+        "parameters": [
+          {
+            "name": "handle",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid query parameters"
+          },
+          "404": {
+            "description": "Not Found - User not found"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        }
+      }
+    },
+    "/v0/users/profile/id": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "operationId": "get_user_profile_by_id",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicUserProfile"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid query parameters"
+          },
+          "404": {
+            "description": "Not Found - User not found"
+          },
+          "500": {
+            "description": "Internal Server Error - Database error"
+          }
+        }
+      }
+    },
+    "/v0/users/roles/grant": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Grant a user role",
+        "description": "Grants the requested role to the target user account.",
+        "operationId": "grant_role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Role granted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GrantRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid JSON or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - User already has this role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/users/roles/revoke": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Revoke a user role",
+        "description": "Removes the requested role from the target user account.",
+        "operationId": "revoke_role",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokeRoleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Role revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeRoleResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - User does not have this role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/users/unban": {
+      "post": {
+        "tags": [
+          "User Management"
+        ],
+        "summary": "Unban a user",
+        "description": "Removes the active ban from the requested user account.",
+        "operationId": "unban_user",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnbanUserRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "User unbanned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnbanUserResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - User is not banned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ActionLogAction": {
+        "type": "string",
+        "description": "Action Log Action enum (stored in action_logs.action field)\nFormat: \"{resource}:{operation}\"",
+        "enum": [
+          "post:create",
+          "post:edit",
+          "post:delete",
+          "user:create",
+          "user:edit",
+          "auth:login",
+          "auth:logout",
+          "auth:oauth_login",
+          "oauth:link",
+          "oauth:unlink"
+        ]
+      },
+      "ActionLogListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "has_newer",
+          "has_older"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionLogResponse"
+            }
+          },
+          "has_newer": {
+            "type": "boolean",
+            "description": "Whether there are newer (more recent) action logs"
+          },
+          "has_older": {
+            "type": "boolean",
+            "description": "Whether there are older action logs"
+          }
+        }
+      },
+      "ActionLogResponse": {
+        "type": "object",
+        "description": "Response payload for action log response.",
+        "required": [
+          "id",
+          "action",
+          "resource_type",
+          "summary",
+          "created_at"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "resource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resource_type": {
+            "$ref": "#/components/schemas/ActionResourceType"
+          },
+          "summary": {
+            "type": "string"
+          }
+        }
+      },
+      "ActionResourceType": {
+        "type": "string",
+        "enum": [
+          "User"
+        ]
+      },
+      "BanUserRequest": {
+        "type": "object",
+        "description": "Request payload for ban user request.",
+        "required": [
+          "user_id",
+          "reason"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Ban expiration time (None = permanent ban)"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "BanUserResponse": {
+        "type": "object",
+        "description": "Response payload for ban user response.",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ChangeEmailRequest": {
+        "type": "object",
+        "required": [
+          "password",
+          "new_email"
+        ],
+        "properties": {
+          "new_email": {
+            "type": "string",
+            "description": "New email address"
+          },
+          "password": {
+            "type": "string",
+            "description": "Current password (for identity verification)"
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "description": "Current password"
+          },
+          "new_password": {
+            "type": "string",
+            "description": "New password"
+          }
+        }
+      },
+      "CheckHandleAvailablePath": {
+        "type": "object",
+        "description": "Request payload for check handle available path.",
+        "required": [
+          "handle"
+        ],
+        "properties": {
+          "handle": {
+            "type": "string"
+          }
+        }
+      },
+      "CheckHandleAvailableResponse": {
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "properties": {
+          "available": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CompleteSignupRequest": {
+        "type": "object",
+        "description": "Request body for completing an OAuth signup after a provider login for a new user.",
+        "required": [
+          "pending_token",
+          "handle",
+          "display_name"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Display name shown in the UI.\n\n- Length: 1-50 characters\n- Unicode letters, spaces, and punctuation are permitted\n- Emoji, control characters, and invisible Unicode are not allowed",
+            "example": "John Doe",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "handle": {
+            "type": "string",
+            "description": "Unique user handle.\n\n- Length: 4–15 characters\n- Allowed characters: `a-z`, `A-Z`, `0-9`, `_`\n- Cannot start or end with `_`\n- No consecutive underscores (`__`)\n- Reserved words are not allowed (e.g. `admin`, `support`, `help`, `system`)",
+            "example": "john_doe",
+            "maxLength": 15,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$"
+          },
+          "pending_token": {
+            "type": "string",
+            "description": "Pending signup token (returned during OAuth sign-in)"
+          }
+        }
+      },
+      "ConfirmEmailChangeRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Email change token (?token= value from the email link)"
+          }
+        }
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "description": "Request body for starting an email and password signup.",
+        "required": [
+          "email",
+          "handle",
+          "display_name",
+          "password"
+        ],
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "description": "Display name shown in the UI.\n\n- Length: 1–50 characters\n- Unicode letters, spaces, and punctuation are permitted\n- Emoji, control characters, and invisible Unicode are not allowed",
+            "example": "John Doe",
+            "maxLength": 50,
+            "minLength": 1
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "handle": {
+            "type": "string",
+            "description": "Unique user handle.\n\n- Length: 4–15 characters\n- Allowed characters: `a-z`, `A-Z`, `0-9`, `_`\n- Cannot start or end with `_`\n- No consecutive underscores (`__`)\n- Reserved words are not allowed (e.g. `admin`, `support`, `help`, `system`)",
+            "example": "john_doe",
+            "maxLength": 15,
+            "minLength": 4,
+            "pattern": "^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateUserResponse": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "CursorDirection": {
+        "type": "string",
+        "description": "Common cursor direction for bidirectional pagination",
+        "enum": [
+          "Older",
+          "Newer"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "status",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "details": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        }
+      },
+      "ForgotPasswordRequest": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email address to request password reset for"
+          }
+        }
+      },
+      "GetActionLogsRequest": {
+        "type": "object",
+        "required": [
+          "limit"
+        ],
+        "properties": {
+          "actions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ActionLogAction"
+            },
+            "description": "Filter by actions"
+          },
+          "cursor_direction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CursorDirection",
+                "description": "Cursor direction (default: Older when cursor_id is provided)"
+              }
+            ]
+          },
+          "cursor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Cursor ID for pagination. None means get latest."
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Number of items to return (max: 100)",
+            "minimum": 0
+          },
+          "resource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Filter by resource ID"
+          },
+          "resource_type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ActionResourceType",
+                "description": "Filter by resource type"
+              }
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Filter by user ID (for contributions)"
+          }
+        }
+      },
+      "GetUserProfileByIdRequest": {
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetUserProfileRequest": {
+        "type": "object",
+        "required": [
+          "handle"
+        ],
+        "properties": {
+          "handle": {
+            "type": "string"
+          }
+        }
+      },
+      "GithubLinkRequest": {
+        "type": "object",
+        "description": "GitHub OAuth link request",
+        "required": [
+          "code",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Authorization code from GitHub OAuth callback"
+          },
+          "state": {
+            "type": "string",
+            "description": "State parameter for CSRF protection"
+          }
+        }
+      },
+      "GithubLoginRequest": {
+        "type": "object",
+        "description": "GitHub OAuth sign-in request",
+        "required": [
+          "code",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Authorization code from GitHub OAuth callback"
+          },
+          "state": {
+            "type": "string",
+            "description": "State parameter for CSRF protection"
+          }
+        }
+      },
+      "GoogleLinkRequest": {
+        "type": "object",
+        "description": "Google OAuth link request",
+        "required": [
+          "code",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Authorization code from Google OAuth callback"
+          },
+          "state": {
+            "type": "string",
+            "description": "State parameter for CSRF protection"
+          }
+        }
+      },
+      "GoogleLoginRequest": {
+        "type": "object",
+        "description": "Google OAuth sign-in request",
+        "required": [
+          "code",
+          "state"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Authorization code from Google OAuth callback"
+          },
+          "state": {
+            "type": "string",
+            "description": "State parameter for CSRF protection"
+          }
+        }
+      },
+      "GoogleOneTapLoginRequest": {
+        "type": "object",
+        "description": "Request body for signing in with Google One Tap.",
+        "required": [
+          "credential"
+        ],
+        "properties": {
+          "credential": {
+            "type": "string",
+            "description": "Google One Tap credential JWT"
+          }
+        }
+      },
+      "GrantRoleRequest": {
+        "type": "object",
+        "description": "Request payload for grant role request.",
+        "required": [
+          "user_id",
+          "role",
+          "reason"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Role expiration time (None = permanent)"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GrantRoleResponse": {
+        "type": "object",
+        "description": "Response payload for grant role response.",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ListModerationLogsRequest": {
+        "type": "object",
+        "required": [
+          "limit"
+        ],
+        "properties": {
+          "actions": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/ModerationAction"
+            }
+          },
+          "actor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "cursor_direction": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CursorDirection"
+              }
+            ]
+          },
+          "cursor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "resource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resource_type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ModerationResourceType"
+              }
+            ]
+          }
+        }
+      },
+      "ListModerationLogsResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "has_newer",
+          "has_older"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModerationLogListItem"
+            }
+          },
+          "has_newer": {
+            "type": "boolean"
+          },
+          "has_older": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ListSessionsResponse": {
+        "type": "object",
+        "description": "List of active sessions for the authenticated user.",
+        "required": [
+          "sessions"
+        ],
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionInfo"
+            }
+          }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string"
+          },
+          "remember_me": {
+            "type": "boolean",
+            "description": "Remember me (checked: 30 days, unchecked: expires when browser is closed)",
+            "example": false
+          }
+        }
+      },
+      "ModerationAction": {
+        "type": "string",
+        "enum": [
+          "user:ban",
+          "user:unban",
+          "user:grant_role",
+          "user:revoke_role",
+          "search:reindex"
+        ]
+      },
+      "ModerationLogListItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "resource_type",
+          "reason",
+          "created_at"
+        ],
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "actor_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "metadata": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          },
+          "resource_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "resource_type": {
+            "$ref": "#/components/schemas/ModerationResourceType"
+          }
+        }
+      },
+      "ModerationResourceType": {
+        "type": "string",
+        "enum": [
+          "User",
+          "System"
+        ]
+      },
+      "OAuthAuthorizeFlow": {
+        "type": "string",
+        "enum": [
+          "login",
+          "link"
+        ]
+      },
+      "OAuthAuthorizeQuery": {
+        "type": "object",
+        "properties": {
+          "flow": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/OAuthAuthorizeFlow"
+              }
+            ]
+          }
+        }
+      },
+      "OAuthConnectionListResponse": {
+        "type": "object",
+        "description": "OAuth connection list response",
+        "required": [
+          "connections"
+        ],
+        "properties": {
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OAuthConnectionResponse"
+            }
+          }
+        }
+      },
+      "OAuthConnectionResponse": {
+        "type": "object",
+        "description": "OAuth connection info response",
+        "required": [
+          "provider",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Connection creation time"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/OAuthProvider",
+            "description": "OAuth provider (Google, Github)"
+          }
+        }
+      },
+      "OAuthPendingSignupResponse": {
+        "type": "object",
+        "description": "Response body returned when OAuth sign-in requires profile completion.",
+        "required": [
+          "pending_token",
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Email received from the OAuth provider"
+          },
+          "pending_token": {
+            "type": "string",
+            "description": "One-time token for completing pending signup"
+          }
+        }
+      },
+      "OAuthProvider": {
+        "type": "string",
+        "description": "OAuth provider: social login provider",
+        "enum": [
+          "Google",
+          "Github",
+          "Discord",
+          "X",
+          "Microsoft"
+        ]
+      },
+      "OAuthUrlResponse": {
+        "type": "object",
+        "description": "OAuth authorization URL response",
+        "required": [
+          "auth_url"
+        ],
+        "properties": {
+          "auth_url": {
+            "type": "string",
+            "description": "Google/GitHub OAuth authorization URL (includes state parameter)"
+          }
+        }
+      },
+      "PublicUserProfile": {
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "display_name",
+          "is_verified",
+          "created_at"
+        ],
+        "properties": {
+          "banner_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "profile_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ResendVerificationEmailRequest": {
+        "type": "object",
+        "description": "Request body for resending a pending signup verification email.",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "Verification email recipient address"
+          }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "properties": {
+          "new_password": {
+            "type": "string",
+            "description": "New password"
+          },
+          "token": {
+            "type": "string",
+            "description": "Password reset token (?token= value from the email link)"
+          }
+        }
+      },
+      "RevokeRoleRequest": {
+        "type": "object",
+        "description": "Request payload for revoke role request.",
+        "required": [
+          "user_id",
+          "role",
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "RevokeRoleResponse": {
+        "type": "object",
+        "description": "Response payload for revoke role response.",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "mod",
+          "admin"
+        ]
+      },
+      "SearchUsersRequest": {
+        "type": "object",
+        "required": [
+          "page",
+          "page_size"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "page_size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "query": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Search query for handle, display_name, or bio. Empty or omitted returns all users."
+          }
+        }
+      },
+      "SearchUsersResponse": {
+        "type": "object",
+        "required": [
+          "users",
+          "page",
+          "page_size",
+          "total_hits",
+          "total_pages"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "page_size": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "total_hits": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "total_pages": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserSearchItem"
+            }
+          }
+        }
+      },
+      "SessionInfo": {
+        "type": "object",
+        "description": "Active session entry for the authenticated user.",
+        "required": [
+          "management_id",
+          "created_at",
+          "expires_at",
+          "max_expires_at",
+          "is_current"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ip_address": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "is_current": {
+            "type": "boolean"
+          },
+          "management_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Public session management identifier."
+          },
+          "max_expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "user_agent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "Asc",
+          "Desc"
+        ]
+      },
+      "TotpBackupCodesResponse": {
+        "type": "object",
+        "description": "Backup code regeneration response",
+        "required": [
+          "backup_codes"
+        ],
+        "properties": {
+          "backup_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Newly generated list of backup codes (10 codes, 8-character alphanumeric)"
+          }
+        }
+      },
+      "TotpDisableRequest": {
+        "type": "object",
+        "description": "TOTP disable request",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Current TOTP code (6 digits) or backup code (8 digits)"
+          }
+        }
+      },
+      "TotpEnableRequest": {
+        "type": "object",
+        "description": "TOTP enable request (first code verification after setup)",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "6-digit TOTP code generated by the authenticator app"
+          }
+        }
+      },
+      "TotpEnableResponse": {
+        "type": "object",
+        "description": "TOTP enable response (returns backup codes)",
+        "required": [
+          "backup_codes"
+        ],
+        "properties": {
+          "backup_codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of backup codes (10 codes, 8-character alphanumeric)"
+          }
+        }
+      },
+      "TotpRegenerateBackupCodesRequest": {
+        "type": "object",
+        "description": "Backup code regeneration request",
+        "required": [
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Current TOTP code (6 digits)"
+          }
+        }
+      },
+      "TotpRequiredResponse": {
+        "type": "object",
+        "description": "TOTP required response during login (202 Accepted)",
+        "required": [
+          "temp_token"
+        ],
+        "properties": {
+          "temp_token": {
+            "type": "string",
+            "description": "Temporary token for TOTP verification"
+          }
+        }
+      },
+      "TotpSetupResponse": {
+        "type": "object",
+        "description": "TOTP setup response",
+        "required": [
+          "qr_code_base64",
+          "qr_code_uri"
+        ],
+        "properties": {
+          "qr_code_base64": {
+            "type": "string",
+            "description": "QR code PNG image (Base64 encoded)"
+          },
+          "qr_code_uri": {
+            "type": "string",
+            "description": "otpauth:// URI (for manual entry)"
+          }
+        }
+      },
+      "TotpStatusResponse": {
+        "type": "object",
+        "description": "TOTP status response",
+        "required": [
+          "enabled"
+        ],
+        "properties": {
+          "backup_codes_remaining": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Remaining backup code count (only when enabled)",
+            "minimum": 0
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether TOTP is enabled"
+          },
+          "enabled_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "TOTP activation time (only when enabled)"
+          }
+        }
+      },
+      "TotpVerifyRequest": {
+        "type": "object",
+        "description": "TOTP verification request (two-factor authentication during login)",
+        "required": [
+          "temp_token",
+          "code"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "TOTP code (6 digits) or backup code (8 digits)"
+          },
+          "temp_token": {
+            "type": "string",
+            "description": "Temporary token received during login"
+          }
+        }
+      },
+      "UnbanUserRequest": {
+        "type": "object",
+        "description": "Request payload for unban user request.",
+        "required": [
+          "user_id",
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UnbanUserResponse": {
+        "type": "object",
+        "description": "Response payload for unban user response.",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "UnlinkOAuthRequest": {
+        "type": "object",
+        "description": "OAuth unlink request",
+        "required": [
+          "provider"
+        ],
+        "properties": {
+          "provider": {
+            "$ref": "#/components/schemas/OAuthProvider",
+            "description": "OAuth provider to unlink (Google or Github)"
+          }
+        }
+      },
+      "UpdateMyProfileRequest": {
+        "type": "object",
+        "description": "Request payload for update my profile request.",
+        "properties": {
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Display name shown in the UI.\n\n- Length: 1–50 characters\n- Unicode letters, spaces, and punctuation are permitted\n- Emoji, control characters, and invisible Unicode are not allowed",
+            "example": "John Doe",
+            "maxLength": 50,
+            "minLength": 1
+          }
+        }
+      },
+      "UploadUserImageRequest": {
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "Image file binary data",
+            "contentMediaType": "image/*"
+          }
+        }
+      },
+      "UploadUserImageResponse": {
+        "type": "object",
+        "required": [
+          "image_url"
+        ],
+        "properties": {
+          "image_url": {
+            "type": "string",
+            "description": "URL of the uploaded image"
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "handle",
+          "display_name",
+          "is_verified",
+          "created_at"
+        ],
+        "properties": {
+          "banner_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_verified": {
+            "type": "boolean"
+          },
+          "profile_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "UserSearchItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "handle",
+          "display_name"
+        ],
+        "properties": {
+          "bio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "display_name": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "profile_image": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "VerifyEmailRequest": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Email verification token"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "anonymous_id_cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "anonymous_user_id"
+      },
+      "session_id_cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session_id"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Health endpoints"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "User",
+      "description": "User endpoints"
+    },
+    {
+      "name": "User Management",
+      "description": "User management endpoints (admin only)"
+    },
+    {
+      "name": "Search",
+      "description": "Search endpoints"
+    },
+    {
+      "name": "Action Logs",
+      "description": "User activity logs"
+    },
+    {
+      "name": "Moderation",
+      "description": "Moderation logs"
+    }
+  ]
+}

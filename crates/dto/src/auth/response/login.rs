@@ -23,10 +23,8 @@ pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Re
         .path("/");
 
     // Set cookie domain for cross-subdomain sharing (production only)
-    if !is_dev {
-        if let Some(ref domain) = config.cookie_domain {
-            cookie_builder = cookie_builder.domain(domain);
-        }
+    if !is_dev && let Some(ref domain) = config.cookie_domain {
+        cookie_builder = cookie_builder.domain(domain);
     }
 
     // remember_me=true: persistent cookie (maximum session lifetime)

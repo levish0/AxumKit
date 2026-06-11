@@ -6,6 +6,9 @@ authors.workspace = true
 repository.workspace = true
 description = "Shared image processing utilities for AxumKit crates"
 
+[lints]
+workspace = true
+
 [dependencies]
 errors.workspace = true
 

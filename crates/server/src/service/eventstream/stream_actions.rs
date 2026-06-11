@@ -16,28 +16,28 @@ pub fn service_stream_actions(
             match result {
                 Ok(event) => {
                     // Apply user_id filter (matches actor_id)
-                    if let Some(user_id) = params.user_id {
-                        if event.actor_id != Some(user_id) {
-                            return None;
-                        }
+                    if let Some(user_id) = params.user_id
+                        && event.actor_id != Some(user_id)
+                    {
+                        return None;
                     }
                     // Apply resource_id filter
-                    if let Some(resource_id) = params.resource_id {
-                        if event.resource_id != Some(resource_id) {
-                            return None;
-                        }
+                    if let Some(resource_id) = params.resource_id
+                        && event.resource_id != Some(resource_id)
+                    {
+                        return None;
                     }
                     // Apply resource_type filter
-                    if let Some(ref rt) = params.resource_type {
-                        if &event.resource_type != rt {
-                            return None;
-                        }
+                    if let Some(ref rt) = params.resource_type
+                        && &event.resource_type != rt
+                    {
+                        return None;
                     }
                     // Apply actions filter
-                    if let Some(ref actions) = params.actions {
-                        if !actions.iter().any(|a| a.as_str() == event.action) {
-                            return None;
-                        }
+                    if let Some(ref actions) = params.actions
+                        && !actions.iter().any(|a| a.as_str() == event.action)
+                    {
+                        return None;
                     }
                     Some(event)
                 }
