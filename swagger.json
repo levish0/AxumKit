@@ -207,6 +207,8 @@
         "tags": [
           "Auth"
         ],
+        "summary": "OAuth pending signup을 완료하고 세션을 발급합니다.",
+        "description": "pending_token으로 Redis의 임시 OAuth 데이터를 조회한 뒤 계정을 생성하고\n204 No Content + Set-Cookie로 응답합니다.",
         "operationId": "auth_complete_signup",
         "requestBody": {
           "content": {
@@ -513,6 +515,8 @@
         "tags": [
           "Auth"
         ],
+        "summary": "GitHub OAuth 로그인을 처리합니다.",
+        "description": "- 기존 사용자: 204 No Content + Set-Cookie\n- 신규 사용자: 200 OK + pending signup 토큰 (complete-signup 필요)",
         "operationId": "auth_github_login",
         "requestBody": {
           "content": {
@@ -628,6 +632,8 @@
         "tags": [
           "Auth"
         ],
+        "summary": "Google OAuth 로그인을 처리합니다.",
+        "description": "- 기존 사용자: 204 No Content + Set-Cookie\n- 신규 사용자: 200 OK + pending signup 토큰 (complete-signup 필요)",
         "operationId": "auth_google_login",
         "requestBody": {
           "content": {
