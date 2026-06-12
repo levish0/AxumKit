@@ -1,3 +1,3 @@
-pub mod search_users;
+pub mod users;
 
-pub use search_users::*;
+pub use users::*;

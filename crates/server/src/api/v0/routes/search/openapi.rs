@@ -4,7 +4,7 @@ use utoipa::OpenApi;
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        super::search_users::search_users,
+        super::users::search_users,
     ),
     components(
         schemas(

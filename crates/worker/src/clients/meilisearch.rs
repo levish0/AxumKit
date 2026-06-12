@@ -1,5 +1,5 @@
 use crate::SearchClient;
-use crate::config::WorkerConfig;
+use config::WorkerConfig;
 use meilisearch_sdk::client::Client as MeiliClient;
 use std::sync::Arc;
 

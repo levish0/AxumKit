@@ -1,8 +1,3 @@
-use crate::handlers::{
-    email_handler, eventstream_handler, file_handler, general_handler, meilisearch_handler,
-    oauth_handler, password_handler, rate_limit_handler, session_handler, system_handler,
-    token_handler, totp_handler, turnstile_handler, user_handler, worker_handler,
-};
 use axum::Json;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
@@ -13,6 +8,27 @@ use tracing::error;
 use utoipa::ToSchema;
 
 pub type ServiceResult<T> = Result<T, Errors>;
+type ErrorMapping = (StatusCode, &'static str, Option<String>);
+
+macro_rules! domain_error_handlers {
+    ($($handler:ident),+ $(,)?) => {
+        fn log_domain_error(error: &Errors) {
+            $(
+                crate::handlers::$handler::log_error(error);
+            )+
+        }
+
+        fn map_domain_response(error: &Errors) -> Option<ErrorMapping> {
+            [
+                $(
+                    crate::handlers::$handler::map_response as fn(&Errors) -> Option<ErrorMapping>,
+                )+
+            ]
+            .into_iter()
+            .find_map(|map_response| map_response(error))
+        }
+    };
+}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ErrorResponse {
@@ -183,45 +199,32 @@ pub enum Errors {
     TotpQrGenerationFailed,
 }
 
+domain_error_handlers!(
+    user_handler,
+    oauth_handler,
+    session_handler,
+    password_handler,
+    token_handler,
+    totp_handler,
+    email_handler,
+    file_handler,
+    worker_handler,
+    eventstream_handler,
+    rate_limit_handler,
+    turnstile_handler,
+    meilisearch_handler,
+    system_handler,
+    general_handler,
+);
+
 impl IntoResponse for Errors {
     fn into_response(self) -> Response {
-        // Central logging via domain handlers
-        user_handler::log_error(&self);
-        oauth_handler::log_error(&self);
-        session_handler::log_error(&self);
-        password_handler::log_error(&self);
-        token_handler::log_error(&self);
-        totp_handler::log_error(&self);
-        email_handler::log_error(&self);
-        file_handler::log_error(&self);
-        worker_handler::log_error(&self);
-        eventstream_handler::log_error(&self);
-        rate_limit_handler::log_error(&self);
-        turnstile_handler::log_error(&self);
-        meilisearch_handler::log_error(&self);
-        system_handler::log_error(&self);
-        general_handler::log_error(&self);
+        log_domain_error(&self);
 
-        // HTTP response mapping via domain handlers
-        let (status, code, details) = user_handler::map_response(&self)
-            .or_else(|| oauth_handler::map_response(&self))
-            .or_else(|| session_handler::map_response(&self))
-            .or_else(|| password_handler::map_response(&self))
-            .or_else(|| token_handler::map_response(&self))
-            .or_else(|| totp_handler::map_response(&self))
-            .or_else(|| email_handler::map_response(&self))
-            .or_else(|| file_handler::map_response(&self))
-            .or_else(|| worker_handler::map_response(&self))
-            .or_else(|| eventstream_handler::map_response(&self))
-            .or_else(|| rate_limit_handler::map_response(&self))
-            .or_else(|| turnstile_handler::map_response(&self))
-            .or_else(|| meilisearch_handler::map_response(&self))
-            .or_else(|| system_handler::map_response(&self))
-            .or_else(|| general_handler::map_response(&self))
-            .unwrap_or_else(|| {
-                error!("Unhandled error: {:?}", self);
-                (StatusCode::INTERNAL_SERVER_ERROR, "UNKNOWN_ERROR", None)
-            });
+        let (status, code, details) = map_domain_response(&self).unwrap_or_else(|| {
+            error!("Unhandled error: {:?}", self);
+            (StatusCode::INTERNAL_SERVER_ERROR, "UNKNOWN_ERROR", None)
+        });
 
         // Only include details in dev mode
         let is_dev = ServerConfig::get().is_dev;

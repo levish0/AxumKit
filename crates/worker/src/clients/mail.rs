@@ -1,6 +1,6 @@
 use crate::Mailer;
-use crate::config::WorkerConfig;
 use anyhow::Result;
+use config::WorkerConfig;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, Tokio1Executor};
 use std::sync::Arc;

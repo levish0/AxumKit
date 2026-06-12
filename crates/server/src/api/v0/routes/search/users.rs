@@ -1,4 +1,4 @@
-use crate::service::search::search_users::service_search_users;
+use crate::service::search::service_search_users;
 use crate::state::AppState;
 use axum::extract::State;
 use dto::search::{SearchUsersRequest, SearchUsersResponse};

@@ -1,5 +1,4 @@
 pub mod clients;
-pub mod config;
 pub mod connection;
 pub mod jobs;
 pub mod nats;

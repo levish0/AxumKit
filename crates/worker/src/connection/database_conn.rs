@@ -1,5 +1,5 @@
-use crate::config::WorkerConfig;
 use anyhow::Result;
+use config::WorkerConfig;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};

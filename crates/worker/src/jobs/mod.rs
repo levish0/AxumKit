@@ -7,10 +7,10 @@ pub mod reindex;
 // Re-exports for backward compatibility with server
 pub use index::user as user_index;
 
-use crate::config::WorkerConfig;
 use crate::connection::R2AssetsClient;
 use crate::nats::JetStreamContext;
 use crate::{CacheClient, DbPool, LockClient, Mailer, SearchClient};
+use config::WorkerConfig;
 
 /// Shared context for worker registration
 #[derive(Clone)]

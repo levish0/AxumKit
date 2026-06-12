@@ -1,6 +1,6 @@
-use crate::config::WorkerConfig;
 use crate::connection::R2AssetsClient;
 use chrono::{DateTime, FixedOffset, Utc};
+use config::WorkerConfig;
 use sea_orm::DatabaseConnection;
 use sitemap_rs::sitemap::Sitemap;
 use sitemap_rs::sitemap_index::SitemapIndex;

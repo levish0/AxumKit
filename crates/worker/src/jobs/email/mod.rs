@@ -1,8 +1,8 @@
 use crate::Mailer;
-use crate::config::WorkerConfig;
 use crate::jobs::WorkerContext;
 use crate::nats::consumer::NatsConsumer;
 use crate::nats::streams::{EMAIL_CONSUMER, EMAIL_STREAM};
+use config::WorkerConfig;
 use lettre::message::{Mailbox, header::ContentType};
 use lettre::{AsyncTransport, Message};
 use serde::{Deserialize, Serialize};

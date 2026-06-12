@@ -1,4 +1,4 @@
-use crate::config::WorkerConfig;
+use config::WorkerConfig;
 use storage::{R2Config, create_r2_client};
 use tracing::info;
 

@@ -1,4 +1,5 @@
 use anyhow::Result;
+use config::WorkerConfig;
 use futures::FutureExt;
 use std::any::Any;
 use std::panic::AssertUnwindSafe;
@@ -7,7 +8,6 @@ use std::time::Duration;
 use tokio::task::JoinSet;
 use tracing::{error, info};
 use worker::clients;
-use worker::config::WorkerConfig;
 use worker::connection;
 use worker::jobs::{self, WorkerContext};
 use worker::nats::streams::initialize_all_streams;

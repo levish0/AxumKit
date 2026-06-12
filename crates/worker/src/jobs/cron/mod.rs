@@ -3,8 +3,8 @@ pub mod sitemap;
 
 use crate::DbPool;
 use crate::LockClient;
-use crate::config::WorkerConfig;
 use chrono_tz::Tz;
+use config::WorkerConfig;
 use redis::Script;
 use std::pin::pin;
 use std::sync::Arc;

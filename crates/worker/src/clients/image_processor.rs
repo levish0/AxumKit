@@ -1,5 +1,5 @@
-use crate::config::WorkerConfig;
 use anyhow::{Context, anyhow};
+use config::WorkerConfig;
 use reqwest::Client as HttpClient;
 use serde::Deserialize;
 use std::sync::LazyLock;
