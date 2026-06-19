@@ -30,7 +30,7 @@ tokio = { version = "1.52.3", features = ["full"] }
 axum = { version = "0.8.9", features = ["multipart", "macros"] }
 axum-extra = { version = "0.12.6", features = ["typed-header", "query"] }
 tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
-tower-http = { version = "0.6.11", features = ["cors", "auth", "trace", "request-id"] }
+tower-http = { version = "0.7.0", features = ["cors", "auth", "trace", "request-id"] }
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
