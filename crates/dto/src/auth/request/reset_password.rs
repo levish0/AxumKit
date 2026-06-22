@@ -10,9 +10,9 @@ pub struct ResetPasswordRequest {
 
     /// New password
     #[validate(length(
-        min = 6,
-        max = 20,
-        message = "Password must be between 6 and 20 characters."
+        min = 12,
+        max = 128,
+        message = "Password must be between 12 and 128 characters."
     ))]
     pub new_password: String,
 }

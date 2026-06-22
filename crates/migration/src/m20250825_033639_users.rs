@@ -23,7 +23,10 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Users::Handle).text().not_null().unique_key())
                     .col(ColumnDef::new(Users::DisplayName).text().not_null())
                     .col(ColumnDef::new(Users::Bio).text().null())
-                    .col(string_len(Users::Email, 254).not_null().unique_key())
+                    // Uniqueness is enforced case-insensitively by a lower(email)
+                    // functional unique index (created below), not a plain unique
+                    // constraint, so Foo@x.com and foo@x.com cannot both exist.
+                    .col(string_len(Users::Email, 254).not_null())
                     .col(ColumnDef::new(Users::Password).text().null())
                     .col(
                         ColumnDef::new(Users::VerifiedAt)
@@ -65,16 +68,20 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // Create index on email column (optimize login/search performance)
+        // Case-insensitive unique email. The app normalizes email to lowercase at
+        // the repository boundary (normalize_email) and looks up via lower(email),
+        // so this functional unique index both enforces uniqueness and serves those
+        // lookups (replacing the plain idx_users_email). Defense-in-depth: even a
+        // write that bypassed normalization could not create a case-variant duplicate.
         manager
-            .create_index(
-                Index::create()
-                    .name("idx_users_email")
-                    .table(Users::Table)
-                    .col(Users::Email)
-                    .to_owned(),
+            .get_connection()
+            .execute_unprepared(
+                "CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_key \
+                 ON users (lower(email));",
             )
-            .await
+            .await?;
+
+        Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {

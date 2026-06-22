@@ -12,6 +12,17 @@ use errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::DatabaseConnection;
 
+/// Uniform signup response. The same message is returned whether or not the email
+/// is already taken, so signup cannot be used to probe which emails are registered.
+const VERIFICATION_SENT_MESSAGE: &str =
+    "Verification email sent. Complete signup from the link in your inbox.";
+
+fn verification_sent() -> CreateUserResponse {
+    CreateUserResponse {
+        message: VERIFICATION_SENT_MESSAGE.to_string(),
+    }
+}
+
 /// Accept a signup request and defer user creation until email verification.
 pub async fn service_signup(
     db: &DatabaseConnection,
@@ -21,9 +32,12 @@ pub async fn service_signup(
 ) -> ServiceResult<CreateUserResponse> {
     let config = ServerConfig::get();
 
+    // Enumeration-safe: an already-registered email returns the same response as a
+    // fresh signup — no account/pending is created and no email is sent — so signup
+    // does not reveal whether an email is registered (OWASP / WSTG-ATHN-03).
     let existing_user_by_email = repository_find_user_by_email(db, payload.email.clone()).await?;
     if existing_user_by_email.is_some() {
-        return Err(Errors::UserEmailAlreadyExists);
+        return Ok(verification_sent());
     }
 
     // If a pending signup already exists for this email, return success without
@@ -33,10 +47,7 @@ pub async fn service_signup(
         .await?
         .is_some()
     {
-        return Ok(CreateUserResponse {
-            message: "Verification email sent. Complete signup from the link in your inbox."
-                .to_string(),
-        });
+        return Ok(verification_sent());
     }
 
     let existing_user_by_handle =
@@ -73,8 +84,5 @@ pub async fn service_signup(
     )
     .await?;
 
-    Ok(CreateUserResponse {
-        message: "Verification email sent. Complete signup from the link in your inbox."
-            .to_string(),
-    })
+    Ok(verification_sent())
 }

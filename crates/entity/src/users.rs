@@ -14,7 +14,9 @@ pub struct Model {
     pub handle: String, // Unique
     #[sea_orm(column_type = "Text", nullable)]
     pub bio: Option<String>,
-    #[sea_orm(string_len = 254, not_null, unique)]
+    // Case-insensitive uniqueness is enforced by a lower(email) functional unique
+    // index (see the users migration), not a plain column unique constraint.
+    #[sea_orm(string_len = 254, not_null)]
     pub email: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub password: Option<String>,

@@ -2,6 +2,7 @@ use entity::users::{ActiveModel as UserActiveModel, Model as UserModel};
 use errors::errors::Errors;
 
 use crate::utils::crypto::password::hash_password;
+use crate::utils::email::normalize_email;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 
 pub async fn repository_create_user<C>(
@@ -21,7 +22,7 @@ where
         display_name: Set(display_name),
         handle: Set(handle),
         bio: Set(None),
-        email: Set(email),
+        email: Set(normalize_email(&email)),
         password: Set(Some(hashed_password)),
         verified_at: Set(None),
         profile_image: Set(None),
@@ -53,7 +54,7 @@ where
         display_name: Set(display_name),
         handle: Set(handle),
         bio: Set(None),
-        email: Set(email),
+        email: Set(normalize_email(&email)),
         password: Set(Some(password_hash)),
         verified_at: Set(None),
         profile_image: Set(None),

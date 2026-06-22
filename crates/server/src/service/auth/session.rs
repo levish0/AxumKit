@@ -1,4 +1,5 @@
 use crate::service::auth::session_types::Session;
+use crate::utils::crypto::token::{generate_secure_token, hash_token};
 use chrono::Utc;
 use config::ServerConfig;
 use errors::errors::Errors;
@@ -106,6 +107,12 @@ impl SessionService {
     /// - `Session::new`
     /// - Redis pipeline (`session:*`, `session_mgmt:*`, `user_sessions:*`)
     ///
+    /// # Returns
+    /// `(raw_token, session)`: the **raw** 256-bit bearer token to put in the
+    /// cookie (returned to the caller and never stored), and the stored [`Session`]
+    /// whose `session_id` is the *hash* of that token. Everything in Redis is keyed
+    /// by the hash, so a store leak yields no usable session tokens.
+    ///
     /// # Errors
     /// - 직렬화/Redis 저장 실패 시 `Errors::SysInternalError`
     pub async fn create_session(
@@ -113,9 +120,13 @@ impl SessionService {
         user_id: String,
         user_agent: Option<String>,
         ip_address: Option<String>,
-    ) -> Result<Session, Errors> {
+    ) -> Result<(String, Session), Errors> {
         let config = ServerConfig::get();
+        // Raw bearer token (cookie only) and its hash (the server-side identifier).
+        let raw_token = generate_secure_token();
+        let session_id = hash_token(&raw_token);
         let session = Session::new(
+            session_id,
             user_id.clone(),
             config.auth_session_sliding_ttl_hours,
             config.auth_session_max_lifetime_hours,
@@ -154,7 +165,7 @@ impl SessionService {
             .await
             .map_err(|e| Errors::SysInternalError(format!("Failed to create session: {}", e)))?;
 
-        Ok(session)
+        Ok((raw_token, session))
     }
 
     /// 세션 ID로 세션 payload를 조회한다.

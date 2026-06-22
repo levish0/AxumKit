@@ -4,6 +4,8 @@ use sea_orm::prelude::DateTimeUtc;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, EntityTrait, IntoActiveModel, Set};
 use uuid::Uuid;
 
+use crate::utils::email::normalize_email;
+
 /// User update parameters
 /// - `Option<T>`: None = no change, Some(value) = change to value
 /// - `Option<Option<T>>`: None = no change, Some(None) = set to NULL, Some(Some(value)) = set to value
@@ -47,7 +49,7 @@ where
     let mut user_active: UserActiveModel = user.into_active_model();
 
     if let Some(email) = params.email {
-        user_active.email = Set(email);
+        user_active.email = Set(normalize_email(&email));
     }
     if let Some(display_name) = params.display_name {
         user_active.display_name = Set(display_name);

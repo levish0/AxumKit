@@ -1,7 +1,7 @@
 use crate::bridge::worker_client;
 use crate::repository::user::repository_find_user_by_email;
 use crate::state::WorkerClient;
-use crate::utils::crypto::token::generate_secure_token;
+use crate::utils::crypto::token::{generate_secure_token, hash_token};
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
 use config::ServerConfig;
 use errors::errors::ServiceResult;
@@ -55,10 +55,12 @@ where
 
     // 5. Redis에 토큰 저장 (분 단위 → 초 단위 변환)
     let ttl_seconds = (config.auth_password_reset_token_expire_time * 60) as u64;
+    // Store under the hashed token id so the raw token never lives in Redis;
+    // the raw token is returned and only ever sent in the email link.
     let token = issue_token_and_store_json_with_ttl(
         redis_conn,
         generate_secure_token,
-        constants::password_reset_key,
+        |token| constants::password_reset_key(&hash_token(token)),
         &reset_data,
         ttl_seconds,
     )

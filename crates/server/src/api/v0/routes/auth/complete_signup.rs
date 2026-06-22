@@ -57,6 +57,7 @@ pub async fn auth_complete_signup(
     )
     .await?;
 
-    // Return 204 with login cookie (session max lifetime is server-configured).
-    create_login_response(session_id, true)
+    // Non-persistent session cookie (no remember-me in the OAuth signup flow);
+    // the server still enforces the absolute session lifetime.
+    create_login_response(session_id, false)
 }

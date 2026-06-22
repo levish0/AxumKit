@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-22
+
+### Security
+
+OWASP-aligned authentication hardening. **Breaking:** the initial users migration
+was edited in place (email column-unique replaced by a `lower(email)` functional
+unique index), so existing databases must be re-migrated with `cargo run -- fresh`.
+
+- **Session tokens are now high-entropy and stored hashed**
+  - session identifiers are 256-bit CSPRNG bearer tokens instead of predictable `UUIDv7`
+  - only the blake3 hash of the token is stored in Redis; the raw token lives only in the cookie, so a store leak yields no usable sessions
+  - `SessionService::create_session` returns `(raw_token, session)` and the session extractor resolves the cookie token to its hash before every lookup
+
+- **One-time email tokens stored hashed at rest**
+  - email-verification, password-reset, and email-change tokens are keyed by their blake3 hash in Redis (raw token only ever sent in the email link)
+  - pending-signup email/handle indices store the hashed id; verification resend now mints a fresh token within the remaining window and invalidates the previous link
+
+- **Constant-time login (account-enumeration defense)**
+  - every login path performs exactly one Argon2 verification (against a fixed dummy hash when the account is missing or password-less), so failures take uniform time
+  - a `MAX_PASSWORD_BYTES` (1 KiB) ceiling bounds Argon2 input as a DoS guard
+
+- **Enumeration-safe signup**
+  - an already-registered email returns the same "verification sent" response as a fresh signup, no longer revealing which emails are registered
+
+- **Case-insensitive email identity**
+  - emails are normalized (trim + lowercase) at the repository boundary on every create/update/find, with OAuth provisioning included
+  - a `lower(email)` functional unique index enforces case-insensitive uniqueness as defense-in-depth
+
+- **TOTP replay protection (RFC 6238 §5.2)**
+  - a verified TOTP code is claimed single-use in Redis for its validity window, blocking replay through a fresh temp token
+
+- **Cookie name prefixes**
+  - the production session cookie uses `__Host-` (or `__Secure-` with a configured domain) to block sibling-origin cookie injection/fixation
+
+- **OAuth hardening**
+  - GitHub sign-in always derives identity from `/user/emails` and accepts only a primary **and** verified address, never the unverified public-profile email
+  - OAuth sign-in / complete-signup now issue a non-persistent session cookie (no implicit 30-day remember-me)
+  - a unique-constraint violation during OAuth user creation maps to `409` instead of a generic `500`
+
+- **Stronger password policy**
+  - signup / reset / change now require 12–128 characters (OWASP ASVS), up from 6–20
+  - login and re-authentication password fields are no longer length-validated (verification candidates only)
+
 ## [0.8.0] - 2026-06-12
 
 ### Added

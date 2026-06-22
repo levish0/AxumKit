@@ -8,9 +8,9 @@ use uuid::Uuid;
 use crate::service::auth::session::SessionService;
 use crate::service::auth::session_types::SessionContext;
 use crate::state::AppState;
+use crate::utils::crypto::token::hash_token;
+use dto::auth::response::session_cookie_name;
 use errors::errors::Errors;
-
-pub const SESSION_COOKIE_NAME: &str = "session_id";
 
 /// Required session extractor - fails with error if session is not present or invalid
 ///
@@ -40,10 +40,11 @@ where
             .get::<Cookies>()
             .ok_or(Errors::UserUnauthorized)?;
 
-        // Extract session_id from cookie
+        // The cookie carries the raw bearer token; everything server-side is keyed
+        // by its hash, so resolve to the stored id before any lookup.
         let session_id = cookies
-            .get(SESSION_COOKIE_NAME)
-            .map(|cookie| cookie.value().to_string())
+            .get(&session_cookie_name())
+            .map(|cookie| hash_token(cookie.value()))
             .ok_or(Errors::UserUnauthorized)?;
 
         // Get session from Redis
@@ -109,11 +110,11 @@ where
             return Ok(OptionalSession(None));
         };
 
-        // Try to extract session_id from cookie
-        let Some(cookie) = cookies.get(SESSION_COOKIE_NAME) else {
+        // Try to extract the raw bearer token from cookie and resolve to its hash.
+        let Some(cookie) = cookies.get(&session_cookie_name()) else {
             return Ok(OptionalSession(None));
         };
-        let session_id = cookie.value().to_string();
+        let session_id = hash_token(cookie.value());
 
         // Try to get session from Redis
         let Ok(Some(session)) =

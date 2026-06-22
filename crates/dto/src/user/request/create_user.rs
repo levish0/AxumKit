@@ -48,9 +48,9 @@ pub struct CreateUserRequest {
     #[validate(custom(function = "validate_display_name"))]
     pub display_name: String,
     #[validate(length(
-        min = 6,
-        max = 20,
-        message = "Password must be between 6 and 20 characters."
+        min = 12,
+        max = 128,
+        message = "Password must be between 12 and 128 characters."
     ))]
     pub password: String,
 }

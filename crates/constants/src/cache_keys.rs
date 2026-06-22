@@ -31,8 +31,22 @@ pub fn oauth_pending_lock_key(token: &str) -> String {
     format!("{}{}", OAUTH_PENDING_LOCK_PREFIX, token)
 }
 
+/// TOTP used-code TTL in seconds. Covers a code's full acceptance window
+/// (period 30s with skew ±1 ≈ 90s), after which the code is time-invalid anyway.
+pub const TOTP_USED_CODE_TTL_SECONDS: u64 = 90;
+
+/// Used-TOTP-code key prefix (single-use replay guard, per user + code).
+/// Format: "totp:used:{user_id}:{code}"
+pub const TOTP_USED_CODE_PREFIX: &str = "totp:used:";
+
+/// Build used-TOTP-code key. A successfully verified TOTP code is claimed here so
+/// the same code cannot be accepted twice within its validity window (RFC 6238 §5.2).
+pub fn totp_used_code_key(user_id: &str, code: &str) -> String {
+    format!("{}{}:{}", TOTP_USED_CODE_PREFIX, user_id, code)
+}
+
 /// Email verification token prefix.
-/// Format: "email_verification:{token}"
+/// Format: "email_verification:{blake3(token)}"
 pub const EMAIL_VERIFICATION_PREFIX: &str = "email_verification:";
 
 /// Password reset token prefix.

@@ -2,7 +2,8 @@ use crate::bridge::worker_client;
 use crate::repository::user::{repository_find_user_by_email, repository_get_user_by_id};
 use crate::state::WorkerClient;
 use crate::utils::crypto::password::verify_password;
-use crate::utils::crypto::token::generate_secure_token;
+use crate::utils::crypto::token::{generate_secure_token, hash_token};
+use crate::utils::email::normalize_email;
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
 use config::ServerConfig;
 use dto::auth::request::ChangeEmailRequest;
@@ -36,13 +37,18 @@ where
     let password_hash = user.password.ok_or(Errors::UserPasswordNotSet)?;
     verify_password(&payload.password, &password_hash)?;
 
-    if user.email == payload.new_email {
+    // Canonicalize once so the comparison and storage match the repository, which
+    // normalizes email on lookup/write.
+    let new_email = normalize_email(&payload.new_email);
+
+    // Reject if unchanged (case/whitespace-insensitive).
+    if user.email == new_email {
         return Err(Errors::BadRequestError(
             "New email must be different from current email.".to_string(),
         ));
     }
 
-    if repository_find_user_by_email(conn, payload.new_email.clone())
+    if repository_find_user_by_email(conn, new_email.clone())
         .await?
         .is_some()
     {
@@ -51,14 +57,16 @@ where
 
     let change_data = EmailChangeData {
         user_id: user.id.to_string(),
-        new_email: payload.new_email.clone(),
+        new_email,
     };
 
     let ttl_seconds = (config.auth_email_change_token_expire_time * 60) as u64;
+    // Store under the hashed token id so the raw token never lives in Redis;
+    // the raw token is returned and only ever sent in the email link.
     let token = issue_token_and_store_json_with_ttl(
         redis_conn,
         generate_secure_token,
-        constants::email_change_key,
+        |token| constants::email_change_key(&hash_token(token)),
         &change_data,
         ttl_seconds,
     )
@@ -66,7 +74,7 @@ where
 
     worker_client::send_email_change_verification(
         worker,
-        &payload.new_email,
+        &change_data.new_email,
         &user.handle,
         &token,
         config.auth_email_change_token_expire_time as u64,

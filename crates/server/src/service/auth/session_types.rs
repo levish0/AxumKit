@@ -22,13 +22,24 @@ pub struct Session {
 }
 
 impl Session {
-    pub fn new(user_id: String, sliding_ttl_hours: i64, max_lifetime_hours: i64) -> Self {
+    /// `session_id` is the server-side identifier — the **hash** of the raw bearer
+    /// token (see `crate::utils::crypto::token::hash_token`), never the raw token
+    /// itself, so the raw token is never persisted. The caller (`create_session`)
+    /// holds the raw token and returns it for the cookie. `management_id` is a
+    /// separate, non-secret public handle used only for listing/revoking sessions
+    /// (ownership-checked), so a UUID is sufficient there.
+    pub fn new(
+        session_id: String,
+        user_id: String,
+        sliding_ttl_hours: i64,
+        max_lifetime_hours: i64,
+    ) -> Self {
         let now = Utc::now();
         let expires_at = now + Duration::hours(sliding_ttl_hours);
         let max_expires_at = now + Duration::hours(max_lifetime_hours);
 
         Self {
-            session_id: Uuid::now_v7().to_string(),
+            session_id,
             management_id: Uuid::now_v7().to_string(),
             user_id,
             created_at: now,

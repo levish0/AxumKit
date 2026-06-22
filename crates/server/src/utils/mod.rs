@@ -1,4 +1,5 @@
 pub mod crypto;
+pub mod email;
 pub mod extract;
 pub mod logger;
 pub mod r2_url;

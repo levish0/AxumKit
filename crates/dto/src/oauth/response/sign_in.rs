@@ -46,12 +46,14 @@ impl OAuthSignInResponse {
         }
     }
 
-    /// Converts to HTTP response (remember_me=true for OAuth, 30-day session)
+    /// Converts to HTTP response. OAuth has no remember-me input, so it issues a
+    /// non-persistent browser session cookie (remember_me=false). The server's
+    /// absolute session TTL still applies.
     pub fn into_response_result(self) -> Result<axum::response::Response, Errors> {
         match self {
             OAuthSignInResponse::Success { session_id } => {
-                // OAuth sign-in always persists for 30 days (remember_me=true)
-                create_login_response(session_id, true)
+                // No remember-me in the OAuth flow → non-persistent session cookie.
+                create_login_response(session_id, false)
             }
             OAuthSignInResponse::PendingSignup(response) => Ok(response.into_response()),
         }

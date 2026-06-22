@@ -66,7 +66,7 @@ where
         repository_find_user_by_oauth(conn, OAuthProvider::Google, &user_info.id).await?
     {
         // Existing user - create session and return Success
-        let session = SessionService::create_session(
+        let (raw_token, _session) = SessionService::create_session(
             redis_conn,
             existing_user.id.to_string(),
             user_agent,
@@ -74,7 +74,7 @@ where
         )
         .await?;
 
-        return Ok(SignInResult::Success(session.session_id));
+        return Ok(SignInResult::Success(raw_token));
     }
 
     // 5. New user - check for email duplication

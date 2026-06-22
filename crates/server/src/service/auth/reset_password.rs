@@ -2,6 +2,7 @@ use crate::repository::user::{UserUpdateParams, repository_update_user};
 use crate::service::auth::forgot_password::PasswordResetData;
 use crate::service::auth::session::SessionService;
 use crate::utils::crypto::password::hash_password;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::get_json_and_delete;
 use errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
@@ -20,7 +21,8 @@ pub async fn service_reset_password<C>(
 where
     C: ConnectionTrait,
 {
-    let token_key = constants::password_reset_key(token);
+    // Look up by the hashed token id (the raw token never lives in Redis).
+    let token_key = constants::password_reset_key(&hash_token(token));
     let reset_data: PasswordResetData = get_json_and_delete(
         redis_conn,
         &token_key,

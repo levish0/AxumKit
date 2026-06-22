@@ -2,8 +2,9 @@ use crate::repository::user::{
     repository_create_user_with_password_hash, repository_find_user_by_email,
     repository_find_user_by_handle,
 };
-use crate::utils::crypto::token::generate_secure_token;
-use crate::utils::redis_cache::{delete_key, get_json, get_ttl_seconds};
+use crate::utils::crypto::token::{generate_secure_token, hash_token};
+use crate::utils::email::normalize_email;
+use crate::utils::redis_cache::{delete_key, get_json, get_ttl_seconds, set_json_with_ttl};
 use errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
 use sea_orm::{DatabaseConnection, TransactionTrait};
@@ -33,12 +34,18 @@ pub async fn issue_pending_email_signup_token(
     ttl_seconds: u64,
 ) -> ServiceResult<String> {
     let token = generate_secure_token();
+    // Everything stored in Redis keys off the hashed token id; the raw token only
+    // ever leaves in the email link. The email/handle index values hold the id too
+    // (not the raw token), so a store leak yields no usable verification link.
+    let token_id = hash_token(&token);
 
-    let email_key = constants::email_signup_email_key(&signup_data.email);
+    // Email index is normalized (case-insensitive) so case variants dedup to one
+    // pending record; handle stays case-sensitive (handles are case-sensitive).
+    let email_key = constants::email_signup_email_key(&normalize_email(&signup_data.email));
     let handle_key = constants::email_signup_handle_key(&signup_data.handle);
-    let token_key = constants::email_verification_key(&token);
+    let token_key = constants::email_verification_key(&token_id);
 
-    let token_json = serde_json::to_string(&token).map_err(|e| {
+    let token_id_json = serde_json::to_string(&token_id).map_err(|e| {
         Errors::SysInternalError(format!("JSON serialization failed for token index: {}", e))
     })?;
 
@@ -54,7 +61,7 @@ pub async fn issue_pending_email_signup_token(
         .key(&email_key)
         .key(&handle_key)
         .key(&token_key)
-        .arg(&token_json)
+        .arg(&token_id_json)
         .arg(&payload_json)
         .arg(ttl_seconds)
         .invoke_async(&mut conn)
@@ -78,7 +85,11 @@ pub async fn find_pending_email_signup_by_email(
     redis_conn: &ConnectionManager,
     email: &str,
 ) -> ServiceResult<Option<(String, PendingEmailSignupData)>> {
-    find_pending_email_signup_by_index(redis_conn, &constants::email_signup_email_key(email)).await
+    find_pending_email_signup_by_index(
+        redis_conn,
+        &constants::email_signup_email_key(&normalize_email(email)),
+    )
+    .await
 }
 
 pub async fn find_pending_email_signup_by_handle(
@@ -95,7 +106,7 @@ pub async fn delete_pending_email_signup_indices(
 ) -> ServiceResult<()> {
     delete_key(
         redis_conn,
-        &constants::email_signup_email_key(&signup_data.email),
+        &constants::email_signup_email_key(&normalize_email(&signup_data.email)),
     )
     .await?;
     delete_key(
@@ -107,34 +118,62 @@ pub async fn delete_pending_email_signup_indices(
     Ok(())
 }
 
-/// Get the remaining TTL (in minutes, rounded up) of a pending signup token.
-pub async fn get_pending_signup_remaining_minutes(
+/// Re-issue a fresh verification token for an existing pending signup, preserving
+/// the remaining validity window and invalidating the previous token.
+///
+/// Used by resend: since only the hashed token id is stored, the original raw
+/// token cannot be recovered to re-send, so a new one is minted. The payload and
+/// email/handle indices are repointed at the new id and the old payload key is
+/// deleted, so the previous link stops working. Returns `(new_raw_token,
+/// remaining_minutes)`, or `None` if the pending signup has already expired.
+pub async fn reissue_pending_email_signup_token(
     redis_conn: &ConnectionManager,
-    token: &str,
-) -> ServiceResult<u64> {
-    let key = constants::email_verification_key(token);
-    match get_ttl_seconds(redis_conn, &key).await? {
-        Some(secs) => Ok(secs.div_ceil(60)),
-        None => Ok(0),
+    old_token_id: &str,
+    signup_data: &PendingEmailSignupData,
+) -> ServiceResult<Option<(String, u64)>> {
+    let old_key = constants::email_verification_key(old_token_id);
+    let Some(remaining_secs) = get_ttl_seconds(redis_conn, &old_key).await? else {
+        return Ok(None);
+    };
+    if remaining_secs == 0 {
+        return Ok(None);
     }
+
+    let new_token = generate_secure_token();
+    let new_token_id = hash_token(&new_token);
+    let new_key = constants::email_verification_key(&new_token_id);
+    // Email index is normalized (case-insensitive) so case variants dedup to one
+    // pending record; handle stays case-sensitive (handles are case-sensitive).
+    let email_key = constants::email_signup_email_key(&normalize_email(&signup_data.email));
+    let handle_key = constants::email_signup_handle_key(&signup_data.handle);
+
+    // Repoint payload + indices at the new id within the remaining window, then drop
+    // the old payload so the previous link no longer resolves.
+    set_json_with_ttl(redis_conn, &new_key, signup_data, remaining_secs).await?;
+    set_json_with_ttl(redis_conn, &email_key, &new_token_id, remaining_secs).await?;
+    set_json_with_ttl(redis_conn, &handle_key, &new_token_id, remaining_secs).await?;
+    delete_key(redis_conn, &old_key).await.ok();
+
+    Ok(Some((new_token, remaining_secs.div_ceil(60))))
 }
 
 async fn find_pending_email_signup_by_index(
     redis_conn: &ConnectionManager,
     index_key: &str,
 ) -> ServiceResult<Option<(String, PendingEmailSignupData)>> {
-    let Some(token) = get_json::<String>(redis_conn, index_key).await? else {
+    // The index value is the hashed token id (not the raw token).
+    let Some(token_id) = get_json::<String>(redis_conn, index_key).await? else {
         return Ok(None);
     };
 
-    let verification_key = constants::email_verification_key(&token);
+    let verification_key = constants::email_verification_key(&token_id);
     let Some(signup_data) =
         get_json::<PendingEmailSignupData>(redis_conn, &verification_key).await?
     else {
         return Ok(None);
     };
 
-    Ok(Some((token, signup_data)))
+    Ok(Some((token_id, signup_data)))
 }
 
 /// Verify a pending signup email token and create the user account.
@@ -143,7 +182,7 @@ pub async fn service_verify_email(
     redis_conn: &ConnectionManager,
     token: &str,
 ) -> ServiceResult<Uuid> {
-    let token_key = constants::email_verification_key(token);
+    let token_key = constants::email_verification_key(&hash_token(token));
 
     let signup_data: PendingEmailSignupData = get_json(redis_conn, &token_key)
         .await?

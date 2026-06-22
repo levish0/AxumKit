@@ -107,7 +107,7 @@ where
     if let Some(existing_user) =
         repository_find_user_by_oauth(conn, OAuthProvider::Google, &token_data.claims.sub).await?
     {
-        let session = SessionService::create_session(
+        let (raw_token, _session) = SessionService::create_session(
             redis_conn,
             existing_user.id.to_string(),
             user_agent,
@@ -115,7 +115,7 @@ where
         )
         .await?;
 
-        return Ok(SignInResult::Success(session.session_id));
+        return Ok(SignInResult::Success(raw_token));
     }
 
     // 2. New user path: reject if the email already belongs to another account.

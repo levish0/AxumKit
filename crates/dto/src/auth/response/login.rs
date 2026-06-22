@@ -4,6 +4,8 @@ use config::ServerConfig;
 use cookie::{Cookie, SameSite, time::Duration};
 use errors::errors::Errors;
 
+use super::cookie::session_cookie_name;
+
 /// Creates login response.
 pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Response, Errors> {
     let config = ServerConfig::get();
@@ -17,7 +19,7 @@ pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Re
         SameSite::Lax
     };
 
-    let mut cookie_builder = Cookie::build(("session_id", session_id))
+    let mut cookie_builder = Cookie::build((session_cookie_name(), session_id))
         .http_only(true)
         .secure(true)
         .same_site(same_site_attribute)

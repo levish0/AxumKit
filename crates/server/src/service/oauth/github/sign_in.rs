@@ -56,18 +56,18 @@ where
     // 3. Fetch user info with access token
     let user_info = fetch_github_user_info(http_client, &access_token).await?;
 
-    let email = if let Some(email) = user_info.email {
-        email
-    } else {
-        let emails = fetch_github_user_emails(http_client, &access_token).await?;
-        emails
-            .into_iter()
-            .find(|e| e.primary && e.verified)
-            .map(|e| e.email)
-            .ok_or(Errors::OauthUserInfoParseFailed(
-                "No verified primary email found in GitHub account".to_string(),
-            ))?
-    };
+    // Always derive the identity email from /user/emails and accept only a
+    // primary+verified address. The public profile email (`user_info.email`) is
+    // not guaranteed to be verified, so it must never be trusted for an
+    // authentication-grade decision (account linking / provisioning).
+    let emails = fetch_github_user_emails(http_client, &access_token).await?;
+    let email = emails
+        .into_iter()
+        .find(|e| e.primary && e.verified)
+        .map(|e| e.email)
+        .ok_or(Errors::OauthUserInfoParseFailed(
+            "No verified primary email found in GitHub account".to_string(),
+        ))?;
 
     // 4. Check for existing OAuth connection
     if let Some(existing_user) =
@@ -75,7 +75,7 @@ where
             .await?
     {
         // Existing user - create session and return Success
-        let session = SessionService::create_session(
+        let (raw_token, _session) = SessionService::create_session(
             redis_conn,
             existing_user.id.to_string(),
             user_agent,
@@ -83,7 +83,7 @@ where
         )
         .await?;
 
-        return Ok(SignInResult::Success(session.session_id));
+        return Ok(SignInResult::Success(raw_token));
     }
 
     // 5. New user - check for email duplication

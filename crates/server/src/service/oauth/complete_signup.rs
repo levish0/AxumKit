@@ -75,7 +75,7 @@ where
                     return Err(Errors::UserInvalidToken);
                 }
 
-                let session = SessionService::create_session(
+                let (raw_token, _session) = SessionService::create_session(
                     redis_conn,
                     user_id.to_string(),
                     user_agent,
@@ -83,7 +83,7 @@ where
                 )
                 .await?;
 
-                return Ok(session.session_id);
+                return Ok(raw_token);
             }
             PendingSignupTokenState::Pending { data } => data,
         };
@@ -112,7 +112,7 @@ where
             )
             .await;
 
-            let session = SessionService::create_session(
+            let (raw_token, _session) = SessionService::create_session(
                 redis_conn,
                 existing_user.id.to_string(),
                 user_agent,
@@ -120,7 +120,7 @@ where
             )
             .await?;
 
-            return Ok(session.session_id);
+            return Ok(raw_token);
         }
 
         // 3. Pre-check duplicates before the transaction.
@@ -224,7 +224,7 @@ where
             spawn_oauth_profile_image(worker, new_user.id, profile_image_url);
         }
 
-        let session = SessionService::create_session(
+        let (raw_token, _session) = SessionService::create_session(
             redis_conn,
             new_user.id.to_string(),
             user_agent,
@@ -232,7 +232,7 @@ where
         )
         .await?;
 
-        Ok(session.session_id)
+        Ok(raw_token)
     }
     .await;
 

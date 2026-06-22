@@ -2,6 +2,7 @@ use crate::repository::user::{
     UserUpdateParams, repository_find_user_by_email, repository_update_user,
 };
 use crate::service::auth::change_email::EmailChangeData;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::get_json_and_delete;
 use errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager;
@@ -14,7 +15,8 @@ pub async fn service_confirm_email_change(
     redis_conn: &ConnectionManager,
     token: &str,
 ) -> ServiceResult<()> {
-    let token_key = constants::email_change_key(token);
+    // Look up by the hashed token id (the raw token never lives in Redis).
+    let token_key = constants::email_change_key(&hash_token(token));
     let change_data: EmailChangeData = get_json_and_delete(
         redis_conn,
         &token_key,

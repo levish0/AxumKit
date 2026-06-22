@@ -1,10 +1,10 @@
 -- Atomically reserve a pending email signup.
 --
--- KEYS[1] = email index key   (email_signup:email:{email})
+-- KEYS[1] = email index key   (email_signup:email:{normalized_email})
 -- KEYS[2] = handle index key  (email_signup:handle:{handle})
--- KEYS[3] = token payload key (email_verification:{token})
+-- KEYS[3] = token payload key (email_verification:{blake3(token)})
 --
--- ARGV[1] = token value (stored in index keys)
+-- ARGV[1] = hashed token id (stored in index keys; never the raw token)
 -- ARGV[2] = JSON payload (stored in token key)
 -- ARGV[3] = TTL in seconds
 --

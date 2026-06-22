@@ -42,7 +42,7 @@ pub async fn auth_verify_email(
 
     spawn_index_user(&state.worker, user_id);
 
-    let session = SessionService::create_session(
+    let (raw_token, _session) = SessionService::create_session(
         &state.redis_session,
         user_id.to_string(),
         Some(user_agent),
@@ -50,5 +50,5 @@ pub async fn auth_verify_email(
     )
     .await?;
 
-    create_login_response(session.session_id, false)
+    create_login_response(raw_token, false)
 }

@@ -40,6 +40,20 @@ pub async fn service_totp_verify(
         if !verify_totp_code(&secret_base32, &user.email, code)? {
             return Err(Errors::TotpInvalidCode);
         }
+        // Replay guard (RFC 6238 §5.2): a valid TOTP code is single-use within its
+        // validity window. Atomically claim (user_id, code); if it was already used,
+        // reject — otherwise a captured code could be replayed via a fresh temp token.
+        let used_key = constants::totp_used_code_key(&token_data.user_id.to_string(), code);
+        let claimed = crate::utils::redis_cache::set_json_nx_with_ttl(
+            redis,
+            &used_key,
+            &true,
+            constants::TOTP_USED_CODE_TTL_SECONDS,
+        )
+        .await?;
+        if !claimed {
+            return Err(Errors::TotpInvalidCode);
+        }
     } else if code.len() == 8 {
         if backup_codes.is_empty() {
             return Err(Errors::TotpBackupCodeExhausted);
@@ -67,7 +81,8 @@ pub async fn service_totp_verify(
 
     txn.commit().await?;
 
-    let session = SessionService::create_session(
+    // raw_token goes out only in the cookie; the server stores its hash.
+    let (raw_token, _session) = SessionService::create_session(
         redis,
         token_data.user_id.to_string(),
         token_data.user_agent,
@@ -78,7 +93,7 @@ pub async fn service_totp_verify(
     info!(user_id = %token_data.user_id, "TOTP verified");
 
     Ok(TotpVerifyResult {
-        session_id: session.session_id,
+        session_id: raw_token,
         remember_me: token_data.remember_me,
     })
 }
