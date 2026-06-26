@@ -12,7 +12,8 @@ use validator::Validate;
 )]
 pub struct CompleteSignupRequest {
     /// Pending signup token (returned during OAuth sign-in)
-    #[validate(length(min = 1, message = "Pending token is required"))]
+    // Server-issued opaque token (UUID/CSPRNG); cap to bound abuse via Redis-key length.
+    #[validate(length(min = 1, max = 256, message = "Pending token is required"))]
     pub pending_token: String,
 
     /// Unique user handle.

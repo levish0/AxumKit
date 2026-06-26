@@ -1,0 +1,156 @@
+# APISIX standalone route/plugin definitions. Reloaded when this file changes.
+# NOTE: this file MUST end with the `#END` marker or APISIX ignores it.
+#
+# Model:
+#   - global_rule runs on every request: strip client-forged identity headers + normalize the
+#     real client IP (pre-function), then forward-auth resolves identity via /auth/check.
+#   - each route uses the `workflow` plugin to apply DIFFERENT rate limits by real auth status
+#     (workflow runs after forward-auth, so it sees the injected X-Auth-Status — no reliance on
+#     cookie presence, so an expired cookie can't sneak into the authenticated tier):
+#       authenticated → keyed per user (http_x_auth_user_id), higher limit
+#       anonymous     → keyed per real client IP (http_x_rl_client_ip), lower limit
+#   - the backend never trusts these headers for authz (it re-validates the session credential);
+#     forward-auth exists only to feed rate-limit keying here.
+
+upstreams:
+  - id: backend
+    type: roundrobin
+    nodes:
+      "server:8000": 1
+
+global_rules:
+  - id: identity
+    plugins:
+      # rewrite phase → runs before forward-auth (access phase) on every request.
+      serverless-pre-function:
+        phase: rewrite
+        functions:
+          - |
+            return function(conf, ctx)
+              local core = require("apisix.core")
+              -- SECURITY-CRITICAL: strip any client-supplied identity headers. A client must
+              -- never forge these — only forward-auth (from /auth/check) may set X-Auth-*.
+              -- Dropping X-RL-Client-IP also stops a client spoofing the rate-limit key to
+              -- dodge per-IP limits. Do not remove or reorder.
+              core.request.set_header(ctx, "X-Auth-Status", nil)
+              core.request.set_header(ctx, "X-Auth-User-Id", nil)
+              core.request.set_header(ctx, "X-Auth-Session-Id", nil)
+              core.request.set_header(ctx, "X-Auth-Management-Id", nil)
+              core.request.set_header(ctx, "X-RL-Client-IP", nil)
+
+              -- Normalize the real client IP for rate-limit keying, mirroring the backend's
+              -- extract_ip_address: trust X-Real-Client-IP only when X-Internal-Secret matches
+              -- the shared secret (SSR-proxied requests, where the double-CF hop overwrites
+              -- CF-Connecting-IP with the SSR egress IP); otherwise CF-Connecting-IP
+              -- (browser-direct through Cloudflare); else the connection peer.
+              local secret = os.getenv("INTERNAL_PROXY_SECRET")
+              local provided = core.request.header(ctx, "X-Internal-Secret")
+              local ip
+              if secret and secret ~= "" and provided == secret then
+                ip = core.request.header(ctx, "X-Real-Client-IP")
+              else
+                ip = core.request.header(ctx, "CF-Connecting-IP")
+              end
+              if not ip or ip == "" then
+                ip = ctx.var.remote_addr
+              end
+              core.request.set_header(ctx, "X-RL-Client-IP", ip)
+            end
+      # access phase → resolve identity for rate-limit keying. /auth/check always returns 200
+      # (authenticated|anonymous), so this never blocks. Anonymous (no cookie) is cheap on the
+      # backend (no Redis/DB). The backend ignores these headers for authz.
+      forward-auth:
+        uri: "http://server:8000/v0/auth/check"
+        request_method: GET
+        # Cookie → browser clients; Authorization → native-app clients (Bearer session token).
+        # /auth/check resolves either into the same identity, so app traffic is bucketed per-user.
+        request_headers:
+          - "Cookie"
+          - "Authorization"
+        upstream_headers:
+          - "X-Auth-Status"
+          - "X-Auth-User-Id"
+          - "X-Auth-Session-Id"
+          - "X-Auth-Management-Id"
+        timeout: 3000
+
+# How the limit-count actions below work (same fields everywhere, only the numbers differ):
+#   count + time_window : allow `count` requests per `time_window` seconds, per bucket.
+#                         e.g. count 120 / time_window 60 → 120 requests per minute.
+#   key + key_type:var  : what defines a "bucket" (who is being counted).
+#                           http_x_auth_user_id → one bucket per logged-in user
+#                           http_x_rl_client_ip → one bucket per real client IP (set by the
+#                                                 pre-function above)
+#                         The authenticated branch keys by user so one user on many devices /
+#                         behind a shared office IP isn't throttled as a group; the anonymous
+#                         branch keys by IP since there's no user.
+#   rejected_code: 429  : status returned once a bucket is over its limit.
+#   allow_degradation   : if the limiter itself errors (e.g. counter store unavailable), let the
+#                         request through (fail open) rather than 500 — availability over strictness.
+# Counters live in this APISIX node's shared memory (policy defaults to `local`). For multiple
+# APISIX nodes, add `policy: redis` + redis_host/port so they share one counter.
+routes:
+  # Auth credential endpoints (login / signup / token / OAuth / verification). Brute-force
+  # sensitive, so the anonymous tier is tight; both browser (/v0/auth/*) and native-app
+  # (/v0/app/auth/*) variants are covered.
+  - id: auth-write
+    uris:
+      - /v0/auth/*
+      - /v0/app/auth/*
+    methods:
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+    priority: 20
+    plugins:
+      workflow:
+        rules:
+          - case:
+              - ["http_x_auth_status", "==", "authenticated"]
+            actions:
+              - - "limit-count"
+                - count: 120
+                  time_window: 60
+                  rejected_code: 429
+                  key: "http_x_auth_user_id"
+                  key_type: "var"
+                  allow_degradation: true
+          - actions:
+              - - "limit-count"
+                - count: 30
+                  time_window: 60
+                  rejected_code: 429
+                  key: "http_x_rl_client_ip"
+                  key_type: "var"
+                  allow_degradation: true
+    upstream_id: backend
+
+  # Everything else: generous safety-net tier.
+  - id: default
+    uris:
+      - /*
+    priority: 0
+    plugins:
+      workflow:
+        rules:
+          - case:
+              - ["http_x_auth_status", "==", "authenticated"]
+            actions:
+              - - "limit-count"
+                - count: 2400
+                  time_window: 60
+                  rejected_code: 429
+                  key: "http_x_auth_user_id"
+                  key_type: "var"
+                  allow_degradation: true
+          - actions:
+              - - "limit-count"
+                - count: 900
+                  time_window: 60
+                  rejected_code: 429
+                  key: "http_x_rl_client_ip"
+                  key_type: "var"
+                  allow_degradation: true
+    upstream_id: backend
+#END

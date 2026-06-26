@@ -1,6 +1,8 @@
+pub mod auth_check;
 pub mod cookie;
 pub mod login;
 pub mod logout;
+pub mod session_token;
 pub mod sessions;
 pub mod totp_backup_codes;
 pub mod totp_enable;
@@ -8,9 +10,11 @@ pub mod totp_required;
 pub mod totp_setup;
 pub mod totp_status;
 
+pub use auth_check::{AuthCheckIdentity, create_auth_check_response};
 pub use cookie::session_cookie_name;
 pub use login::create_login_response;
 pub use logout::create_logout_response;
+pub use session_token::SessionTokenResponse;
 pub use sessions::{ListSessionsResponse, SessionInfo};
 pub use totp_backup_codes::TotpBackupCodesResponse;
 pub use totp_enable::TotpEnableResponse;

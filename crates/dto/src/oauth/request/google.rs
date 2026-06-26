@@ -22,3 +22,13 @@ pub struct GoogleOneTapLoginRequest {
     #[validate(length(min = 1, message = "Credential is required"))]
     pub credential: String,
 }
+
+/// Native-app Google sign-in request (provider-token flow).
+#[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for native-app Google sign-in with a provider ID token.")]
+pub struct GoogleTokenRequest {
+    /// Google ID token obtained by the app via the native Google SDK.
+    // Google ID tokens are compact JWTs (well under 4 KiB); cap to bound parse/DoS cost.
+    #[validate(length(min = 1, max = 8192, message = "ID token is required"))]
+    pub id_token: String,
+}

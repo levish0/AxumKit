@@ -1,0 +1,24 @@
+# APISIX core configuration (standalone / decless mode — no etcd).
+#
+# APISIX is the edge gateway: browser → Cloudflare → cloudflared (outside this repo) → APISIX
+# → server:8000. Its only jobs are forward-auth (resolve identity for rate limiting) and
+# tiered rate limiting. Authorization stays in the backend (the session credential is the sole
+# authz authority); APISIX never makes auth decisions.
+#
+# Route/plugin definitions live in apisix.yaml (mounted alongside this file).
+
+apisix:
+  node_listen: 9080
+  # No Admin API in standalone mode — config is the mounted apisix.yaml, not runtime-mutable.
+  enable_admin: false
+
+nginx_config:
+  # Expose INTERNAL_PROXY_SECRET to the Lua VM so the pre-function can read it via os.getenv.
+  # OpenResty only surfaces env vars to Lua when declared here (adds `env ...;` to nginx.conf).
+  envs:
+    - INTERNAL_PROXY_SECRET
+
+deployment:
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml

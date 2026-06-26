@@ -15,6 +15,10 @@ pub fn log_error(error: &Errors) {
         Errors::GoogleInvalidIdToken => {
             warn!("Google One Tap: invalid ID token");
         }
+        // GitHub provider-token flow - warn! level (token not issued for our app / revoked)
+        Errors::GithubInvalidToken => {
+            warn!("GitHub provider-token: access token not issued for this app");
+        }
 
         // Google One Tap - error! level (JWKS failures)
         Errors::GoogleJwksFetchFailed => {
@@ -100,6 +104,7 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::GoogleInvalidIdToken => {
             Some((StatusCode::BAD_REQUEST, GOOGLE_INVALID_ID_TOKEN, None))
         }
+        Errors::GithubInvalidToken => Some((StatusCode::BAD_REQUEST, GITHUB_INVALID_TOKEN, None)),
         Errors::GoogleJwksFetchFailed => Some((
             StatusCode::INTERNAL_SERVER_ERROR,
             GOOGLE_JWKS_FETCH_FAILED,

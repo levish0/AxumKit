@@ -1,13 +1,9 @@
 use super::{GoogleProvider, fetch_google_user_info};
-use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
-use crate::repository::user::find_by_email::repository_find_user_by_email;
-use crate::service::auth::session::SessionService;
-use crate::service::auth::verify_email::find_pending_email_signup_by_email;
 use crate::service::oauth::provider::client::exchange_code;
-use crate::service::oauth::types::{OAuthStateData, PendingSignupData, PendingSignupTokenState};
-use crate::utils::redis_cache::{get_json_and_delete, issue_token_and_store_json_with_ttl};
-use config::ServerConfig;
-use constants::{oauth_pending_key, oauth_state_key};
+use crate::service::oauth::resolve_sign_in::resolve_oauth_sign_in;
+use crate::service::oauth::types::OAuthStateData;
+use crate::utils::redis_cache::get_json_and_delete;
+use constants::oauth_state_key;
 use dto::oauth::internal::SignInResult;
 use dto::oauth::request::OAuthAuthorizeFlow;
 use entity::common::OAuthProvider;
@@ -61,61 +57,18 @@ where
         return Err(Errors::OauthEmailNotVerified);
     }
 
-    // 4. Check for existing OAuth connection
-    if let Some(existing_user) =
-        repository_find_user_by_oauth(conn, OAuthProvider::Google, &user_info.id).await?
-    {
-        // Existing user - create session and return Success
-        let (raw_token, _session) = SessionService::create_session(
-            redis_conn,
-            existing_user.id.to_string(),
-            user_agent,
-            ip_address,
-        )
-        .await?;
-
-        return Ok(SignInResult::Success(raw_token));
-    }
-
-    // 5. New user - check for email duplication
-    if repository_find_user_by_email(conn, user_info.email.clone())
-        .await?
-        .is_some()
-    {
-        return Err(Errors::OauthEmailAlreadyExists);
-    }
-
-    // 5b. Reject if a pending email/password signup already holds this email.
-    if find_pending_email_signup_by_email(redis_conn, &user_info.email)
-        .await?
-        .is_some()
-    {
-        return Err(Errors::OauthEmailAlreadyExists);
-    }
-
-    // 6. New user - store pending signup data in Redis
-    let config = ServerConfig::get();
-    let pending_data = PendingSignupData {
-        provider: OAuthProvider::Google,
-        provider_user_id: user_info.id,
-        anonymous_user_id: anonymous_user_id.to_string(),
-        email: user_info.email.clone(),
-        profile_image: Some(user_info.picture),
-    };
-
-    let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
-    let pending_state = PendingSignupTokenState::Pending { data: pending_data };
-    let pending_token = issue_token_and_store_json_with_ttl(
+    // 4. Resolve account / issue pending signup (shared with one-tap and native-app flows).
+    resolve_oauth_sign_in(
+        conn,
         redis_conn,
-        || uuid::Uuid::new_v4().to_string(),
-        oauth_pending_key,
-        &pending_state,
-        ttl_seconds,
+        OAuthProvider::Google,
+        &user_info.id,
+        user_info.email,
+        Some(user_info.picture),
+        // Browser flow: bind the pending token to the same anonymous browser context.
+        Some(anonymous_user_id),
+        user_agent,
+        ip_address,
     )
-    .await?;
-
-    Ok(SignInResult::PendingSignup {
-        pending_token,
-        email: user_info.email,
-    })
+    .await
 }

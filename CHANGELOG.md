@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-06-26
+
+### Added
+
+Native-app (non-browser) authentication and an APISIX edge gateway for tiered rate
+limiting. Browser flows are unchanged; the same opaque session token now also works
+for app clients over `Authorization: Bearer`.
+
+- **Native-app session tokens (`Authorization: Bearer`)**
+  - the session extractor now accepts the session token from either the `HttpOnly`
+    cookie (browser) or an `Authorization: Bearer` header (app); the cookie wins when
+    both are present, and validation is identical (same opaque token, hashed at rest)
+  - new `SessionTokenResponse` returns the token in the response body (`Cache-Control: no-store`)
+    for app clients, which have no cookie jar
+  - session resolution is centralized in `SessionService::resolve_session` (Redis +
+    DB user-existence check), shared by the extractors and the gateway `/auth/check`
+
+- **`/v0/app/auth/*` route family** — app variants of the cookie-minting flows that
+  return the token in the body: `login`, `totp/verify`, `verify-email`,
+  `complete-signup`, and OAuth `oauth/google/token` + `oauth/github/token`
+
+- **Native-app OAuth (provider-token flow, allauth `provider/token` pattern)**
+  - Google: app submits a Google ID token; verified directly (JWKS signature, `iss`,
+    `aud` pinned to our client id, `exp`, verified email) — extracted into a reusable
+    `verify_google_id_token` shared with One Tap
+  - GitHub: app submits an access token, verified via GitHub's token-introspection
+    endpoint (`POST /applications/{client_id}/token`) so a token minted for another
+    app is rejected — restoring the audience binding GitHub access tokens otherwise lack
+  - all provider flows (redirect, One Tap, provider-token) now share
+    `resolve_oauth_sign_in`; the pending-signup binding is `Some(anonymous)` for browser
+    flows and `None` for app flows (bound by the pending token's secrecy alone)
+
+- **APISIX edge gateway (`compose/production/apisix/`, `docker-compose.apisix.yml`)**
+  - `/v0/auth/check` forward-auth endpoint: always 200 with `X-Auth-*` identity headers
+    used only for rate-limit keying (per-user vs. per-IP); the backend never trusts
+    these for authorization and re-validates the session credential on every route
+  - global rule strips client-forged identity headers and normalizes the real client IP;
+    tiered `limit-count` rules for auth-credential endpoints and a default safety net
+  - `extract_ip_address` upgraded to trust `X-Real-Client-IP` only behind a matching
+    `X-Internal-Secret` (new optional `INTERNAL_PROXY_SECRET`), mirrored by the gateway
+
 ## [0.9.0] - 2026-06-22
 
 ### Security

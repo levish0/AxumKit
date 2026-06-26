@@ -48,6 +48,7 @@ pub mod oauth {
     pub const GOOGLE_INVALID_ID_TOKEN: &str = "google:invalid_id_token";
     pub const GOOGLE_JWKS_FETCH_FAILED: &str = "google:jwks_fetch_failed";
     pub const GOOGLE_JWKS_PARSE_FAILED: &str = "google:jwks_parse_failed";
+    pub const GITHUB_INVALID_TOKEN: &str = "github:invalid_token";
 }
 
 pub mod general {

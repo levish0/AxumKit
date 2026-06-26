@@ -3,7 +3,7 @@ use axum::{Json, response::IntoResponse};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::auth::response::create_login_response;
+use crate::auth::response::{SessionTokenResponse, create_login_response};
 use crate::oauth::internal::SignInResult;
 use errors::errors::Errors;
 
@@ -54,6 +54,18 @@ impl OAuthSignInResponse {
             OAuthSignInResponse::Success { session_id } => {
                 // No remember-me in the OAuth flow → non-persistent session cookie.
                 create_login_response(session_id, false)
+            }
+            OAuthSignInResponse::PendingSignup(response) => Ok(response.into_response()),
+        }
+    }
+
+    /// Native-app variant: an existing user receives the opaque session token in the response body
+    /// (`Authorization: Bearer` use, no cookie); a new user receives the same pending-signup
+    /// payload as the browser flow (already a JSON body) to finish via the app complete-signup.
+    pub fn into_app_response_result(self) -> Result<axum::response::Response, Errors> {
+        match self {
+            OAuthSignInResponse::Success { session_id } => {
+                Ok(SessionTokenResponse::new(session_id).into_response())
             }
             OAuthSignInResponse::PendingSignup(response) => Ok(response.into_response()),
         }
