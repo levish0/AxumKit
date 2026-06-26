@@ -125,6 +125,7 @@ pub enum Errors {
     OauthEmailAlreadyExists,
     OauthEmailNotVerified,
     GoogleInvalidIdToken,
+    GithubInvalidToken,
     GoogleJwksFetchFailed,
     GoogleJwksParseFailed,
 

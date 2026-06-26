@@ -5,12 +5,13 @@ use dto::auth::request::{
     VerifyEmailRequest,
 };
 use dto::auth::response::{
-    ListSessionsResponse, SessionInfo, TotpBackupCodesResponse, TotpEnableResponse,
-    TotpRequiredResponse, TotpSetupResponse, TotpStatusResponse,
+    ListSessionsResponse, SessionInfo, SessionTokenResponse, TotpBackupCodesResponse,
+    TotpEnableResponse, TotpRequiredResponse, TotpSetupResponse, TotpStatusResponse,
 };
 use dto::oauth::request::{
-    GithubLinkRequest, GithubLoginRequest, GoogleLinkRequest, GoogleLoginRequest,
-    GoogleOneTapLoginRequest, OAuthAuthorizeFlow, OAuthAuthorizeQuery, UnlinkOAuthRequest,
+    GithubLinkRequest, GithubLoginRequest, GithubTokenRequest, GoogleLinkRequest,
+    GoogleLoginRequest, GoogleOneTapLoginRequest, GoogleTokenRequest, OAuthAuthorizeFlow,
+    OAuthAuthorizeQuery, UnlinkOAuthRequest,
 };
 use dto::oauth::response::OAuthPendingSignupResponse;
 use dto::oauth::response::{
@@ -24,14 +25,18 @@ use utoipa::OpenApi;
     paths(
         super::signup::auth_signup,
         super::login::auth_login,
+        super::login::auth_login_app,
+        super::session::check::auth_check,
         super::logout::auth_logout,
         super::session::list_sessions::auth_list_sessions,
         super::session::revoke_session::auth_revoke_session,
         super::forgot_password::auth_forgot_password,
         super::reset_password::auth_reset_password,
         super::complete_signup::auth_complete_signup,
+        super::complete_signup::auth_complete_signup_app,
         super::totp::setup::totp_setup,
         super::totp::verify::totp_verify,
+        super::totp::verify::totp_verify_app,
         super::totp::enable::totp_enable,
         super::totp::disable::totp_disable,
         super::totp::status::totp_status,
@@ -39,9 +44,11 @@ use utoipa::OpenApi;
         super::oauth::google::google_authorize::auth_google_authorize,
         super::oauth::google::google_login::auth_google_login,
         super::oauth::google::google_one_tap_login::auth_google_one_tap_login,
+        super::oauth::google::google_token::auth_google_token_app,
         super::oauth::google::google_link::auth_google_link,
         super::oauth::github::github_authorize::auth_github_authorize,
         super::oauth::github::github_login::auth_github_login,
+        super::oauth::github::github_token::auth_github_token_app,
         super::oauth::github::github_link::auth_github_link,
         super::oauth::list_oauth_connections::list_oauth_connections,
         super::oauth::unlink_oauth_connection::unlink_oauth_connection,
@@ -67,7 +74,9 @@ use utoipa::OpenApi;
             OAuthAuthorizeQuery,
             GoogleLoginRequest,
             GoogleOneTapLoginRequest,
+            GoogleTokenRequest,
             GithubLoginRequest,
+            GithubTokenRequest,
             GoogleLinkRequest,
             GithubLinkRequest,
             UnlinkOAuthRequest,
@@ -84,6 +93,7 @@ use utoipa::OpenApi;
             TotpRequiredResponse,
             SessionInfo,
             ListSessionsResponse,
+            SessionTokenResponse,
             ChangePasswordRequest,
             ChangeEmailRequest,
             ConfirmEmailChangeRequest,

@@ -1,6 +1,7 @@
 pub mod crypto;
 pub mod email;
 pub mod extract;
+pub mod ip;
 pub mod logger;
 pub mod r2_url;
 pub mod redis_cache;

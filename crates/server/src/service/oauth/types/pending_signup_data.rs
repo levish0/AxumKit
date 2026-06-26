@@ -7,7 +7,12 @@ use uuid::Uuid;
 pub struct PendingSignupData {
     pub provider: OAuthProvider,
     pub provider_user_id: String,
-    pub anonymous_user_id: String,
+    /// Browser-context binding for the completion step. `Some` for the redirect/One-Tap flow
+    /// (the pending token must be completed from the same anonymous browser context, an extra
+    /// CSRF defense for the redirect dance). `None` for the native-app `provider/token` flow,
+    /// which has no cookie jar — there the single-use `pending_token` (delivered directly in the
+    /// HTTPS response body, short TTL) is the binding, matching allauth's session-bound approach.
+    pub anonymous_user_id: Option<String>,
     pub email: String,
     pub profile_image: Option<String>,
 }
@@ -26,6 +31,7 @@ pub enum PendingSignupTokenState {
         user_id: Uuid,
         provider: OAuthProvider,
         provider_user_id: String,
-        anonymous_user_id: String,
+        /// Same binding as the originating [`PendingSignupData::anonymous_user_id`] (see there).
+        anonymous_user_id: Option<String>,
     },
 }

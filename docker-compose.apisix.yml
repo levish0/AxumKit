@@ -1,0 +1,41 @@
+# APISIX edge-gateway overlay.
+#
+# Adds the APISIX gateway in front of the `server` service: forward-auth (identity for rate-limit
+# keying via /v0/auth/check) + tiered rate limiting. Authorization stays in the backend; APISIX
+# never makes auth decisions.
+#
+# Usage (compose merges this on top of the base file):
+#   docker compose -f docker-compose.dev.yml -f docker-compose.apisix.yml up -d
+#
+# SECURITY: in a real deployment, point your tunnel/ingress at APISIX (:9080) and do NOT publish
+# server:8000 to the public network, or APISIX's rate limiting can be bypassed. Set a strong
+# INTERNAL_PROXY_SECRET in server.env (shared with the backend + any SSR/BFF proxy) so the gateway
+# may forward the true client IP via X-Real-Client-IP.
+
+services:
+  apisix:
+    # Edge gateway: forward-auth (identity for rate limiting) + tiered rate limiting.
+    # Standalone/decless mode — config is the mounted YAML, no etcd.
+    image: apache/apisix:3.16.0-debian
+    container_name: axumkit-apisix
+    # INTERNAL_PROXY_SECRET (shared with backend + SSR) — the pre-function reads it to trust
+    # X-Real-Client-IP when normalizing the real client IP for rate-limit keying.
+    env_file:
+      - .envs/.local/server.env
+    volumes:
+      - ./compose/production/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ./compose/production/apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+    ports:
+      # Point your tunnel/ingress at this port so all traffic is gated here.
+      - "9080:9080"
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      # End-to-end: APISIX must be up AND able to proxy to the backend.
+      test: ["CMD", "curl", "-f", "http://localhost:9080/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s

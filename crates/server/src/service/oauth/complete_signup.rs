@@ -10,6 +10,7 @@ use crate::service::auth::verify_email::{
 use crate::service::oauth::types::PendingSignupTokenState;
 use crate::service::user::utils::{spawn_index_user, spawn_oauth_profile_image};
 use crate::state::WorkerClient;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::set_json_with_ttl;
 use constants::{oauth_pending_key, oauth_pending_lock_key};
 use errors::errors::{Errors, ServiceResult};
@@ -33,7 +34,9 @@ pub async fn service_complete_signup<C>(
     pending_token: &str,
     handle: &str,
     display_name: &str,
-    anonymous_user_id: &str,
+    // Caller's anonymous browser context. `Some` for the browser flow; `None` for the native-app
+    // flow (no cookie jar). Only enforced when the pending token carries a `Some` binding.
+    caller_anonymous_user_id: Option<&str>,
     user_agent: Option<String>,
     ip_address: Option<String>,
 ) -> ServiceResult<String>
@@ -41,8 +44,11 @@ where
     C: ConnectionTrait + TransactionTrait,
 {
     // 1. Acquire per-token lock so only one completion attempt runs at a time.
-    let pending_key = oauth_pending_key(pending_token);
-    let lock_key = oauth_pending_lock_key(pending_token);
+    // Keys are derived from the token's hash (the raw token never lives at rest in Redis; it is
+    // stored hashed in resolve_oauth_sign_in — session-token at-rest parity).
+    let token_hash = hash_token(pending_token);
+    let pending_key = oauth_pending_key(&token_hash);
+    let lock_key = oauth_pending_lock_key(&token_hash);
     let lock_token = Uuid::now_v7().to_string();
 
     if !try_acquire_pending_lock(redis_conn, &lock_key, &lock_token).await? {
@@ -71,7 +77,7 @@ where
                 anonymous_user_id: token_anonymous_user_id,
                 ..
             } => {
-                if token_anonymous_user_id != anonymous_user_id {
+                if !signup_binding_matches(&token_anonymous_user_id, caller_anonymous_user_id) {
                     return Err(Errors::UserInvalidToken);
                 }
 
@@ -88,14 +94,17 @@ where
             PendingSignupTokenState::Pending { data } => data,
         };
 
-        // Bind pending token to the same anonymous browser context used in login flow.
-        if pending_data.anonymous_user_id != anonymous_user_id {
+        // Bind pending token to the same anonymous browser context used in the login flow
+        // (browser flow only; the native-app flow stores `None` and relies on token secrecy).
+        if !signup_binding_matches(&pending_data.anonymous_user_id, caller_anonymous_user_id) {
             return Err(Errors::UserInvalidToken);
         }
 
         let provider = pending_data.provider.clone();
         let provider_user_id = pending_data.provider_user_id.clone();
         let email = pending_data.email.clone();
+        // Carry the originating binding forward so a post-commit retry re-checks the same way.
+        let pending_binding = pending_data.anonymous_user_id.clone();
 
         // If the DB commit succeeded but the response was lost before the token
         // state was updated, recover by treating the token as completed.
@@ -108,7 +117,7 @@ where
                 existing_user.id,
                 provider.clone(),
                 provider_user_id.clone(),
-                anonymous_user_id,
+                pending_binding.clone(),
             )
             .await;
 
@@ -208,7 +217,7 @@ where
             new_user.id,
             provider.clone(),
             provider_user_id.clone(),
-            anonymous_user_id,
+            pending_binding.clone(),
         )
         .await;
 
@@ -271,19 +280,36 @@ async fn try_acquire_pending_lock(
     Ok(matches!(result, Some(value) if value == "OK"))
 }
 
+/// Whether a caller may complete a pending signup, enforcing that the **completion channel
+/// matches the origination channel**.
+///
+/// - `Some(expected)` — created by a browser flow: requires the same anonymous browser context
+///   (an extra CSRF defense for the redirect dance). A native-app caller (`None`) cannot strip it.
+/// - `None` — created by a native-app `provider/token` flow: completable **only** by a native-app
+///   caller (`None`); the single-use pending token is itself the binding. Refusing a browser
+///   caller here keeps the browser endpoint's CSRF defense mandatory (it never silently completes
+///   an unbound pending and sets a session cookie).
+fn signup_binding_matches(stored: &Option<String>, caller: Option<&str>) -> bool {
+    match (stored, caller) {
+        (Some(expected), Some(provided)) => expected == provided,
+        (None, None) => true,
+        _ => false,
+    }
+}
+
 async fn store_completed_signup_state(
     redis_conn: &ConnectionManager,
     pending_key: &str,
     user_id: Uuid,
     provider: entity::common::OAuthProvider,
     provider_user_id: String,
-    anonymous_user_id: &str,
+    anonymous_user_id: Option<String>,
 ) {
     let completed_state = PendingSignupTokenState::Completed {
         user_id,
         provider,
         provider_user_id,
-        anonymous_user_id: anonymous_user_id.to_string(),
+        anonymous_user_id,
     };
 
     if let Err(err) = set_json_with_ttl(
@@ -321,4 +347,36 @@ async fn release_pending_lock(
         })?;
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::signup_binding_matches;
+
+    #[test]
+    fn browser_pending_requires_matching_anonymous_context() {
+        assert!(signup_binding_matches(
+            &Some("anon-a".to_string()),
+            Some("anon-a")
+        ));
+        assert!(!signup_binding_matches(
+            &Some("anon-a".to_string()),
+            Some("anon-b")
+        ));
+    }
+
+    #[test]
+    fn browser_pending_cannot_be_completed_by_app_caller() {
+        // A None caller (app endpoint) must not strip a browser pending's binding.
+        assert!(!signup_binding_matches(&Some("anon-a".to_string()), None));
+    }
+
+    #[test]
+    fn app_pending_only_completable_by_app_caller() {
+        // App-originated (None) pending is bound by token secrecy and the app channel only.
+        assert!(signup_binding_matches(&None, None));
+        // A browser caller (Some) must NOT complete an app pending — keeps the browser
+        // endpoint's CSRF defense mandatory.
+        assert!(!signup_binding_matches(&None, Some("anon-a")));
+    }
 }

@@ -1,12 +1,13 @@
 use super::change_email::auth_change_email;
 use super::change_password::auth_change_password;
-use super::complete_signup::auth_complete_signup;
+use super::complete_signup::{auth_complete_signup, auth_complete_signup_app};
 use super::confirm_email_change::auth_confirm_email_change;
 use super::forgot_password::auth_forgot_password;
-use super::login::auth_login;
+use super::login::{auth_login, auth_login_app};
 use super::logout::auth_logout;
 use super::resend_verification_email::auth_resend_verification_email;
 use super::reset_password::auth_reset_password;
+use super::session::check::auth_check;
 use super::session::list_sessions::auth_list_sessions;
 use super::session::revoke_session::auth_revoke_session;
 use super::signup::auth_signup;
@@ -15,15 +16,17 @@ use super::totp::enable::totp_enable;
 use super::totp::regenerate_backup_codes::totp_regenerate_backup_codes;
 use super::totp::setup::totp_setup;
 use super::totp::status::totp_status;
-use super::totp::verify::totp_verify;
-use super::verify_email::auth_verify_email;
+use super::totp::verify::{totp_verify, totp_verify_app};
+use super::verify_email::{auth_verify_email, auth_verify_email_app};
 use crate::api::v0::routes::auth::oauth::github::github_authorize::auth_github_authorize;
 use crate::api::v0::routes::auth::oauth::github::github_link::auth_github_link;
 use crate::api::v0::routes::auth::oauth::github::github_login::auth_github_login;
+use crate::api::v0::routes::auth::oauth::github::github_token::auth_github_token_app;
 use crate::api::v0::routes::auth::oauth::google::google_authorize::auth_google_authorize;
 use crate::api::v0::routes::auth::oauth::google::google_link::auth_google_link;
 use crate::api::v0::routes::auth::oauth::google::google_login::auth_google_login;
 use crate::api::v0::routes::auth::oauth::google::google_one_tap_login::auth_google_one_tap_login;
+use crate::api::v0::routes::auth::oauth::google::google_token::auth_google_token_app;
 use crate::api::v0::routes::auth::oauth::list_oauth_connections::list_oauth_connections;
 use crate::api::v0::routes::auth::oauth::unlink_oauth_connection::unlink_oauth_connection;
 use crate::state::AppState;
@@ -92,4 +95,18 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
             "/auth/confirm-email-change",
             post(auth_confirm_email_change),
         )
+        // Gateway forward-auth: resolve the session identity for rate-limit keying (always 200).
+        .route("/auth/check", get(auth_check))
+        // Native-app (non-browser) variants: same flows, but the session token is returned in the
+        // response body for `Authorization: Bearer` use instead of an HttpOnly cookie. Only the
+        // session-minting flows without a browser-cookie dependency are mirrored here; OAuth uses a
+        // browser-cookie-bound state/nonce and needs a separate provider-token flow for apps.
+        .route("/app/auth/login", post(auth_login_app))
+        .route("/app/auth/totp/verify", post(totp_verify_app))
+        .route("/app/auth/verify-email", post(auth_verify_email_app))
+        // Native-app OAuth: provider-token flow (app submits a provider id_token/access_token; the
+        // server verifies it directly — no redirect/state/anonymous-cookie binding).
+        .route("/app/auth/oauth/google/token", post(auth_google_token_app))
+        .route("/app/auth/oauth/github/token", post(auth_github_token_app))
+        .route("/app/auth/complete-signup", post(auth_complete_signup_app))
 }

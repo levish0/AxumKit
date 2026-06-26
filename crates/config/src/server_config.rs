@@ -78,6 +78,12 @@ pub struct ServerConfig {
     // Cookie Domain (e.g., ".example.com" for cross-subdomain cookies)
     pub cookie_domain: Option<String>,
 
+    // Shared secret authenticating the trusted SSR/BFF proxy (and API gateway). When set, the
+    // backend trusts `X-Real-Client-IP` on requests carrying a matching `X-Internal-Secret`
+    // (see `extract_ip_address`); when unset, that header is ignored so a public client can never
+    // spoof its rate-limit IP key.
+    pub internal_proxy_secret: Option<String>,
+
     // Stability Layer (protect DB pool from overload)
     pub stability_concurrency_limit: usize, // Max concurrent requests (default: 500)
     pub stability_buffer_size: usize,       // Request queue size (default: 1024)
@@ -319,6 +325,10 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         cors_max_age: env::var("CORS_MAX_AGE").ok().and_then(|v| v.parse().ok()),
 
         cookie_domain: env::var("COOKIE_DOMAIN").ok().filter(|d| !d.is_empty()),
+
+        internal_proxy_secret: env::var("INTERNAL_PROXY_SECRET")
+            .ok()
+            .filter(|s| !s.is_empty()),
 
         // Stability Layer
         stability_concurrency_limit: env::var("STABILITY_CONCURRENCY_LIMIT")

@@ -1,47 +1,17 @@
-use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
-use crate::repository::user::find_by_email::repository_find_user_by_email;
-use crate::service::auth::session::SessionService;
-use crate::service::auth::verify_email::find_pending_email_signup_by_email;
-use crate::service::oauth::types::{PendingSignupData, PendingSignupTokenState};
-use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
-use config::ServerConfig;
-use constants::oauth_pending_key;
+use super::id_token::verify_google_id_token;
+use crate::service::oauth::resolve_sign_in::resolve_oauth_sign_in;
 use dto::oauth::internal::SignInResult;
 use entity::common::OAuthProvider;
-use errors::errors::{Errors, ServiceResult};
-use jsonwebtoken::jwk::JwkSet;
-use jsonwebtoken::{Algorithm, DecodingKey, Validation, decode, decode_header};
+use errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
-use reqwest::header::{CACHE_CONTROL, HeaderValue};
 use sea_orm::ConnectionTrait;
-use serde::Deserialize;
-use std::sync::LazyLock;
-use std::time::{Duration, Instant};
-use tokio::sync::{Mutex, RwLock};
-use tracing::debug;
-
-const GOOGLE_JWKS_URL: &str = "https://www.googleapis.com/oauth2/v3/certs";
-const DEFAULT_JWKS_CACHE_TTL_SECONDS: u64 = 300;
-
-static GOOGLE_JWKS_CACHE: LazyLock<RwLock<Option<CachedGoogleJwks>>> =
-    LazyLock::new(|| RwLock::new(None));
-static GOOGLE_JWKS_REFRESH_LOCK: LazyLock<Mutex<()>> = LazyLock::new(|| Mutex::new(()));
-
-#[derive(Debug, Clone)]
-struct CachedGoogleJwks {
-    jwks: JwkSet,
-    expires_at: Instant,
-}
-
-#[derive(Debug, Deserialize)]
-struct GoogleIdTokenClaims {
-    sub: String,
-    email: String,
-    email_verified: bool,
-    picture: Option<String>,
-}
 
 /// Handle Google One Tap server-side sign-in.
+///
+/// Verifies the One Tap credential (a Google ID token) via the shared [`verify_google_id_token`]
+/// — JWKS signature, issuer, audience pinned to our client id, expiry, and verified email — then
+/// delegates account resolution / pending-signup issuance to [`resolve_oauth_sign_in`]. The
+/// browser context (`anonymous_user_id`) is carried as the pending-token completion binding.
 pub async fn service_google_one_tap_sign_in<C>(
     conn: &C,
     redis_conn: &ConnectionManager,
@@ -54,202 +24,19 @@ pub async fn service_google_one_tap_sign_in<C>(
 where
     C: ConnectionTrait,
 {
-    let header = decode_header(credential).map_err(|e| {
-        debug!(error = %e, "Failed to decode Google ID token header");
-        Errors::GoogleInvalidIdToken
-    })?;
-    let kid = header.kid.ok_or_else(|| {
-        debug!("Google ID token header missing 'kid' field");
-        Errors::GoogleInvalidIdToken
-    })?;
+    let claims = verify_google_id_token(http_client, credential).await?;
 
-    let (jwks, from_cache) = get_google_jwks(http_client, false).await?;
-    let decoding_key = if let Some(jwk) = jwks.find(&kid) {
-        DecodingKey::from_jwk(jwk).map_err(|e| {
-            debug!(error = %e, "Failed to build decoding key from JWK");
-            Errors::GoogleInvalidIdToken
-        })?
-    } else if from_cache {
-        // Google can rotate signing keys before our cached JWKS expires.
-        // Retry once with a forced refresh before classifying the token as invalid.
-        let (refreshed_jwks, _) = get_google_jwks(http_client, true).await?;
-        let jwk = refreshed_jwks.find(&kid).ok_or_else(|| {
-            debug!(kid = %kid, "kid not found in refreshed JWKS");
-            Errors::GoogleInvalidIdToken
-        })?;
-        DecodingKey::from_jwk(jwk).map_err(|e| {
-            debug!(error = %e, "Failed to build decoding key from refreshed JWK");
-            Errors::GoogleInvalidIdToken
-        })?
-    } else {
-        debug!(kid = %kid, "kid not found in freshly fetched JWKS");
-        return Err(Errors::GoogleInvalidIdToken);
-    };
-
-    let config = ServerConfig::get();
-    let mut validation = Validation::new(Algorithm::RS256);
-    validation.set_required_spec_claims(&["exp", "iss", "aud", "sub"]);
-    validation.validate_nbf = true;
-    validation.set_issuer(&["accounts.google.com", "https://accounts.google.com"]);
-    validation.set_audience(&[config.google_client_id.as_str()]);
-
-    let token_data = decode::<GoogleIdTokenClaims>(credential, &decoding_key, &validation)
-        .map_err(|e| {
-            debug!(error = %e, "Google ID token validation failed");
-            Errors::GoogleInvalidIdToken
-        })?;
-
-    if !token_data.claims.email_verified {
-        return Err(Errors::OauthEmailNotVerified);
-    }
-
-    // 1. Check whether this Google identity is already linked.
-    if let Some(existing_user) =
-        repository_find_user_by_oauth(conn, OAuthProvider::Google, &token_data.claims.sub).await?
-    {
-        let (raw_token, _session) = SessionService::create_session(
-            redis_conn,
-            existing_user.id.to_string(),
-            user_agent,
-            ip_address,
-        )
-        .await?;
-
-        return Ok(SignInResult::Success(raw_token));
-    }
-
-    // 2. New user path: reject if the email already belongs to another account.
-    if repository_find_user_by_email(conn, token_data.claims.email.clone())
-        .await?
-        .is_some()
-    {
-        return Err(Errors::OauthEmailAlreadyExists);
-    }
-
-    // 2b. Check if a pending email/password signup holds this email
-    if find_pending_email_signup_by_email(redis_conn, &token_data.claims.email)
-        .await?
-        .is_some()
-    {
-        return Err(Errors::OauthEmailAlreadyExists);
-    }
-
-    // 3. New user path: store pending-signup data in Redis.
-    let config = ServerConfig::get();
-    let pending_data = PendingSignupData {
-        provider: OAuthProvider::Google,
-        provider_user_id: token_data.claims.sub,
-        anonymous_user_id: anonymous_user_id.to_string(),
-        email: token_data.claims.email.clone(),
-        profile_image: token_data.claims.picture,
-    };
-
-    let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
-    let pending_state = PendingSignupTokenState::Pending { data: pending_data };
-    let pending_token = issue_token_and_store_json_with_ttl(
+    resolve_oauth_sign_in(
+        conn,
         redis_conn,
-        || uuid::Uuid::new_v4().to_string(),
-        oauth_pending_key,
-        &pending_state,
-        ttl_seconds,
+        OAuthProvider::Google,
+        &claims.sub,
+        claims.email,
+        claims.picture,
+        // Browser flow: bind the pending token to the same anonymous browser context.
+        Some(anonymous_user_id),
+        user_agent,
+        ip_address,
     )
-    .await?;
-
-    Ok(SignInResult::PendingSignup {
-        pending_token,
-        email: token_data.claims.email,
-    })
-}
-
-async fn get_google_jwks(
-    http_client: &reqwest::Client,
-    force_refresh: bool,
-) -> ServiceResult<(JwkSet, bool)> {
-    let now = Instant::now();
-    if !force_refresh {
-        let cache = GOOGLE_JWKS_CACHE.read().await;
-        if let Some(cached) = cache.as_ref()
-            && now < cached.expires_at
-        {
-            return Ok((cached.jwks.clone(), true));
-        }
-    }
-
-    let _refresh_guard = GOOGLE_JWKS_REFRESH_LOCK.lock().await;
-
-    // Double-check after acquiring the refresh lock so only one request fetches
-    // JWKS when the cache is cold or expired.
-    if !force_refresh {
-        let cache = GOOGLE_JWKS_CACHE.read().await;
-        if let Some(cached) = cache.as_ref()
-            && Instant::now() < cached.expires_at
-        {
-            return Ok((cached.jwks.clone(), true));
-        }
-    }
-
-    let (jwks, cache_ttl_seconds) = fetch_google_jwks(http_client).await?;
-
-    {
-        let mut cache = GOOGLE_JWKS_CACHE.write().await;
-        *cache = Some(CachedGoogleJwks {
-            jwks: jwks.clone(),
-            expires_at: Instant::now() + Duration::from_secs(cache_ttl_seconds),
-        });
-    }
-
-    Ok((jwks, false))
-}
-
-async fn fetch_google_jwks(http_client: &reqwest::Client) -> ServiceResult<(JwkSet, u64)> {
-    let response = http_client
-        .get(GOOGLE_JWKS_URL)
-        .send()
-        .await
-        .map_err(|_| Errors::GoogleJwksFetchFailed)?;
-
-    if !response.status().is_success() {
-        return Err(Errors::GoogleJwksFetchFailed);
-    }
-
-    let cache_ttl_seconds = response
-        .headers()
-        .get(CACHE_CONTROL)
-        .and_then(|value: &HeaderValue| value.to_str().ok())
-        .and_then(parse_cache_control_max_age)
-        .unwrap_or(DEFAULT_JWKS_CACHE_TTL_SECONDS);
-
-    let jwks = response
-        .json::<JwkSet>()
-        .await
-        .map_err(|_| Errors::GoogleJwksParseFailed)?;
-
-    Ok((jwks, cache_ttl_seconds))
-}
-
-fn parse_cache_control_max_age(cache_control: &str) -> Option<u64> {
-    cache_control.split(',').find_map(|directive| {
-        directive
-            .trim()
-            .strip_prefix("max-age=")
-            .and_then(|value| value.parse::<u64>().ok())
-    })
-}
-
-#[cfg(test)]
-mod tests {
-    use super::parse_cache_control_max_age;
-
-    #[test]
-    fn parses_max_age_from_cache_control() {
-        assert_eq!(
-            parse_cache_control_max_age("public, max-age=24131, must-revalidate"),
-            Some(24131)
-        );
-    }
-
-    #[test]
-    fn returns_none_when_max_age_missing() {
-        assert_eq!(parse_cache_control_max_age("public, must-revalidate"), None);
-    }
+    .await
 }

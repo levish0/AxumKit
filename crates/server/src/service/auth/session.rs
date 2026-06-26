@@ -1,10 +1,13 @@
-use crate::service::auth::session_types::Session;
+use crate::repository::user::repository_find_user_by_id;
+use crate::service::auth::session_types::{Session, SessionContext};
 use crate::utils::crypto::token::{generate_secure_token, hash_token};
 use chrono::Utc;
 use config::ServerConfig;
 use errors::errors::Errors;
 use redis::AsyncCommands;
 use redis::aio::ConnectionManager as RedisClient;
+use sea_orm::DatabaseConnection;
+use uuid::Uuid;
 
 /// Data structure for session service.
 pub struct SessionService;
@@ -197,6 +200,57 @@ impl SessionService {
             }
             None => Ok(None),
         }
+    }
+
+    /// Resolve a request's session credential into a [`SessionContext`].
+    ///
+    /// `session_token` is the **raw** bearer token a client carries — from the `HttpOnly` cookie
+    /// (browser) or an `Authorization: Bearer` header (native app); both are the same opaque token.
+    /// Everything server-side is keyed by the token's hash, so we hash first, then validate against
+    /// Redis (sliding TTL + absolute max lifetime) and the database (the user must still exist).
+    /// This is the single resolver shared by the auth extractors and the gateway `/auth/check`
+    /// endpoint, so all entry points agree on what a valid session is.
+    ///
+    /// `Ok(None)` means "no usable session" (absent/expired/unknown user); `Err` is a store/DB
+    /// failure.
+    pub async fn resolve_session(
+        redis: &RedisClient,
+        db: &DatabaseConnection,
+        session_token: &str,
+    ) -> Result<Option<SessionContext>, Errors> {
+        // The cookie/bearer value is the raw token; resolve to the stored hash before any lookup.
+        let session_id = hash_token(session_token);
+        let Some(session) = Self::get_session(redis, &session_id).await? else {
+            return Ok(None);
+        };
+
+        // Absolute expiration (independent of the sliding Redis TTL).
+        if Utc::now() >= session.max_expires_at {
+            return Err(Errors::SessionExpired);
+        }
+
+        let user_id =
+            Uuid::parse_str(&session.user_id).map_err(|_| Errors::SessionInvalidUserId)?;
+
+        // Reject if the user no longer exists: a deleted account must not stay authenticated even
+        // if the best-effort session purge on deletion failed. Drop the stale session if so.
+        if repository_find_user_by_id(db, user_id).await?.is_none() {
+            if let Err(e) = Self::delete_session(redis, &session_id).await {
+                tracing::warn!(error = ?e, "Failed to delete stale session for missing user");
+            }
+            return Ok(None);
+        }
+
+        // Conditionally refresh the session (sliding expiration). Errors are logged, not fatal.
+        if let Err(e) = Self::maybe_refresh_session(redis, &session).await {
+            tracing::warn!(error = ?e, "Failed to refresh session");
+        }
+
+        Ok(Some(SessionContext {
+            user_id,
+            session_id,
+            management_id: session.management_id,
+        }))
     }
 
     /// 세션 한 건을 삭제한다.

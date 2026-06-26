@@ -10,7 +10,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.8.0"
+    "version": "0.10.0"
   },
   "paths": {
     "/health-check": {
@@ -128,6 +128,336 @@
         }
       }
     },
+    "/v0/app/auth/complete-signup": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Complete an OAuth signup from a native app",
+        "description": "Native-app variant of POST /v0/auth/complete-signup. Consumes the pending signup token returned by a native provider-token sign-in for a new user, creates the user and OAuth connection, and returns the opaque session token in the body for `Authorization: Bearer` use. The pending token is single-use and short-lived; unlike the browser flow there is no anonymous-cookie binding (the app has no cookie jar), so the token's secrecy is the binding.",
+        "operationId": "auth_complete_signup_app",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteSignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Pending signup completed; session token returned in the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, or another completion attempt is already in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Pending signup token is missing, expired, or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The handle, email, or OAuth identity is already in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database, Redis, storage, or OAuth-related error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/app/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Authenticate with email and password (native-app client)",
+        "description": "Native-app variant of POST /v0/auth/login. On success the opaque session token is returned in the response body — for replay as `Authorization: Bearer <token>` — instead of an HttpOnly cookie, because app clients have no cookie jar. The TOTP branch is identical to the browser flow (202 + temporary token for POST /v0/app/auth/totp/verify). `remember_me` is ignored: there is no cookie to persist, and the server's sliding/absolute session lifetime applies regardless.",
+        "operationId": "auth_login_app",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Login succeeded; the session token is returned in the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokenResponse"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Primary credentials were accepted and TOTP verification is required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpRequiredResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload or validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials or this account cannot use password login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database or session store error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/app/auth/oauth/github/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign in with GitHub from a native app (provider-token flow)",
+        "description": "Native-app variant of the GitHub OAuth flow (allauth `provider/token` pattern). The app submits the GitHub access token it obtained through its own in-app authorization. Because a bare access token has no verifiable audience, the server validates it against GitHub's token introspection endpoint (`POST /applications/{client_id}/token`, authenticated with our client id + secret), which confirms the token was issued for our OAuth app — a token minted for another app is rejected. The verified primary email is then taken from `/user/emails`. An existing linked account receives the opaque session token in the body for `Authorization: Bearer` use. A new identity receives a pending signup token (bound only by its own secrecy) completed via POST /v0/app/auth/complete-signup.",
+        "operationId": "auth_github_token_app",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GithubTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Existing account signed in; session token returned in the body. A NEW identity instead returns 200 with OAuthPendingSignupResponse (profile completion required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, an access token not issued for our app, or no verified primary email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A local account already uses the same email address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database, Redis, or GitHub API error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/app/auth/oauth/google/token": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Sign in with Google from a native app (provider-token flow)",
+        "description": "Native-app variant of the Google OAuth flow (allauth `provider/token` pattern). The app obtains a Google ID token via the native Google SDK and submits it here; the server verifies the token directly (JWKS signature, `iss`, `aud` pinned to our client id, `exp`, verified email) with no server-side redirect, state, or browser-cookie binding. An existing linked account receives the opaque session token in the body for `Authorization: Bearer` use. A new identity receives a pending signup token (bound only by its own secrecy) that must be completed via POST /v0/app/auth/complete-signup.",
+        "operationId": "auth_google_token_app",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Existing account signed in; session token returned in the body. A NEW identity instead returns 200 with OAuthPendingSignupResponse (profile completion required).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, invalid ID token, or the Google account email is not verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A local account already uses the same email address",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database, Redis, JWKS, or Google OAuth error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v0/app/auth/totp/verify": {
+      "post": {
+        "tags": [
+          "Auth - TOTP"
+        ],
+        "summary": "Finish login with TOTP (native-app client)",
+        "description": "Native-app variant of POST /v0/auth/totp/verify. Consumes the temporary token returned by POST /v0/app/auth/login, verifies a 6-digit authenticator code or an 8-character backup code, and returns the opaque session token in the response body — for replay as `Authorization: Bearer <token>` — instead of a cookie. Backup codes are single-use and are removed after successful verification.",
+        "operationId": "totp_verify_app",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "TOTP verification succeeded; the session token is returned in the body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionTokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON payload, validation error, invalid or expired temporary token, or invalid verification code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "A backup code was submitted but no backup codes remain for this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected database or session store error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v0/auth/change-email": {
       "post": {
         "tags": [
@@ -200,6 +530,21 @@
             "session_id_cookie": []
           }
         ]
+      }
+    },
+    "/v0/auth/check": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Resolve the session identity for the gateway (forward-auth)",
+        "description": "Internal endpoint called by the API gateway (APISIX) on every request via forward-auth. It validates the session credential against the session store and the database, then always responds 200 with `X-Auth-Status: authenticated|anonymous` plus the user/session/management identifiers on success. The gateway uses these only to bucket rate limits (per-user vs. per-IP); it never blocks here. The backend does not consume these headers for authorization — each route re-validates the session credential itself.",
+        "operationId": "auth_check",
+        "responses": {
+          "200": {
+            "description": "Identity resolved; see X-Auth-* response headers"
+          }
+        }
       }
     },
     "/v0/auth/complete-signup": {
@@ -2363,7 +2708,7 @@
           },
           "password": {
             "type": "string",
-            "description": "Current password (for identity verification)"
+            "description": "Current password (for identity verification). Not length-validated here: it\nis only a verification candidate (the hashing util's byte cap still bounds\nit), and an empty value simply fails as a hash mismatch."
           }
         }
       },
@@ -2376,7 +2721,7 @@
         "properties": {
           "current_password": {
             "type": "string",
-            "description": "Current password"
+            "description": "Current password. Not length-validated here: it is only a verification\ncandidate (the hashing util's byte cap still bounds it), and an empty value\nsimply fails as a hash mismatch."
           },
           "new_password": {
             "type": "string",
@@ -2666,6 +3011,19 @@
           }
         }
       },
+      "GithubTokenRequest": {
+        "type": "object",
+        "description": "Request body for native-app GitHub sign-in with a provider access token.",
+        "required": [
+          "access_token"
+        ],
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "description": "GitHub OAuth access token obtained by the app via its own in-app authorization."
+          }
+        }
+      },
       "GoogleLinkRequest": {
         "type": "object",
         "description": "Google OAuth link request",
@@ -2712,6 +3070,19 @@
           "credential": {
             "type": "string",
             "description": "Google One Tap credential JWT"
+          }
+        }
+      },
+      "GoogleTokenRequest": {
+        "type": "object",
+        "description": "Request body for native-app Google sign-in with a provider ID token.",
+        "required": [
+          "id_token"
+        ],
+        "properties": {
+          "id_token": {
+            "type": "string",
+            "description": "Google ID token obtained by the app via the native Google SDK."
           }
         }
       },
@@ -2880,7 +3251,8 @@
             "example": "user@example.com"
           },
           "password": {
-            "type": "string"
+            "type": "string",
+            "description": "Password for the account. Not length-validated here: login only verifies the\ncandidate against the stored hash. Length policy is enforced at\nsignup/change/reset, and a byte cap in the hashing util bounds DoS."
           },
           "remember_me": {
             "type": "boolean",
@@ -3281,6 +3653,19 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "SessionTokenResponse": {
+        "type": "object",
+        "description": "Session token for native-app clients, returned in the response body.",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Opaque session token. Send it back verbatim in the `Authorization: Bearer` header."
           }
         }
       },

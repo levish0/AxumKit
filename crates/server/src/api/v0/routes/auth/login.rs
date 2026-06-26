@@ -11,10 +11,10 @@ use axum::{
 };
 use axum_extra::{TypedHeader, headers::UserAgent};
 use dto::auth::request::LoginRequest;
-use dto::auth::response::TotpRequiredResponse;
 use dto::auth::response::create_login_response;
+use dto::auth::response::{SessionTokenResponse, TotpRequiredResponse};
 use dto::validator::json_validator::ValidatedJson;
-use errors::errors::Errors;
+use errors::errors::{ErrorResponse, Errors};
 use std::net::SocketAddr;
 
 #[utoipa::path(
@@ -55,6 +55,51 @@ pub async fn auth_login(
             session_id,
             remember_me,
         } => create_login_response(session_id, remember_me),
+        LoginResult::TotpRequired(temp_token) => {
+            Ok(TotpRequiredResponse { temp_token }.into_response())
+        }
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/v0/app/auth/login",
+    summary = "Authenticate with email and password (native-app client)",
+    description = "Native-app variant of POST /v0/auth/login. On success the opaque session token is returned in the response body — for replay as `Authorization: Bearer <token>` — instead of an HttpOnly cookie, because app clients have no cookie jar. The TOTP branch is identical to the browser flow (202 + temporary token for POST /v0/app/auth/totp/verify). `remember_me` is ignored: there is no cookie to persist, and the server's sliding/absolute session lifetime applies regardless.",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "Login succeeded; the session token is returned in the body", body = SessionTokenResponse),
+        (status = 202, description = "Primary credentials were accepted and TOTP verification is required", body = TotpRequiredResponse),
+        (status = 400, description = "Malformed JSON payload or validation error", body = ErrorResponse),
+        (status = 401, description = "Invalid credentials or this account cannot use password login", body = ErrorResponse),
+        (status = 500, description = "Unexpected database or session store error", body = ErrorResponse)
+    ),
+    tag = "Auth"
+)]
+pub async fn auth_login_app(
+    user_agent: Option<TypedHeader<UserAgent>>,
+    headers: HeaderMap,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    State(state): State<AppState>,
+    ValidatedJson(payload): ValidatedJson<LoginRequest>,
+) -> Result<Response, Errors> {
+    let user_agent = extract_user_agent(user_agent);
+    let ip_address = extract_ip_address(&headers, addr);
+
+    let result = service_login(
+        &state.db,
+        &state.redis_session,
+        payload,
+        Some(user_agent),
+        Some(ip_address),
+    )
+    .await?;
+
+    match result {
+        LoginResult::SessionCreated { session_id, .. } => {
+            // App client holds the token itself → return it in the body (no cookie).
+            Ok(SessionTokenResponse::new(session_id).into_response())
+        }
         LoginResult::TotpRequired(temp_token) => {
             Ok(TotpRequiredResponse { temp_token }.into_response())
         }
