@@ -66,6 +66,7 @@ where
         let config = ServerConfig::get();
         let response = verify_turnstile_token(
             &app_state.http_client,
+            &config.turnstile_verify_url,
             &config.turnstile_secret_key,
             token,
             remote_ip,

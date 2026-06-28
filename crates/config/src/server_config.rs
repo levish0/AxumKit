@@ -38,6 +38,9 @@ pub struct ServerConfig {
 
     // Cloudflare Turnstile
     pub turnstile_secret_key: String,
+    // Verify endpoint — configurable so non-prod environments (tests, staging) can
+    // point at a local stub instead of calling Cloudflare on every protected request.
+    pub turnstile_verify_url: String,
 
     // Database (direct PostgreSQL or PgDog connection pooler)
     pub db_host: String,
@@ -269,6 +272,9 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 
         // Cloudflare Turnstile
         turnstile_secret_key,
+        turnstile_verify_url: env::var("TURNSTILE_VERIFY_URL").unwrap_or_else(|_| {
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify".to_string()
+        }),
 
         // Database (via PgDog connection pooler)
         db_host,

@@ -2,8 +2,6 @@ use errors::errors::Errors;
 use reqwest::Client as HttpClient;
 use serde::{Deserialize, Serialize};
 
-const TURNSTILE_VERIFY_URL: &str = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-
 /// Cloudflare Turnstile verification response
 #[derive(Debug, Deserialize)]
 pub struct TurnstileResponse {
@@ -39,6 +37,7 @@ struct TurnstileRequest<'a> {
 ///
 /// # Arguments
 /// * `http_client` - HTTP client
+/// * `verify_url` - siteverify endpoint (prod = Cloudflare, tests = local stub)
 /// * `secret_key` - Turnstile secret key
 /// * `token` - Token received from the client
 /// * `remote_ip` - Client IP (optional)
@@ -48,6 +47,7 @@ struct TurnstileRequest<'a> {
 /// * `Err(Errors::TurnstileServiceError)` - API call failed
 pub async fn verify_turnstile_token(
     http_client: &HttpClient,
+    verify_url: &str,
     secret_key: &str,
     token: &str,
     remote_ip: Option<&str>,
@@ -59,7 +59,7 @@ pub async fn verify_turnstile_token(
     };
 
     let response = http_client
-        .post(TURNSTILE_VERIFY_URL)
+        .post(verify_url)
         .json(&request_body)
         .send()
         .await

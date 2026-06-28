@@ -110,6 +110,31 @@ services:
       timeout: 5s
       retries: 10
 
+  # Local Turnstile siteverify stub: returns {"success":true} for any request, so e2e
+  # signups never make a real network call to Cloudflare. The shared "always-passes"
+  # test secret is globally rate-limited, and a burst of concurrent signups would
+  # otherwise stall on it up to the 30s client timeout. Wired in via TURNSTILE_VERIFY_URL.
+  turnstile-stub:
+    image: caddy:2.11.4-alpine
+    command:
+      [
+        "caddy",
+        "respond",
+        "--listen",
+        ":80",
+        "--status",
+        "200",
+        "--header",
+        "Content-Type: application/json",
+        "--body",
+        "{\"success\":true}",
+      ]
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80/"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   migration:
     build:
       context: .
@@ -137,6 +162,8 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
+      turnstile-stub:
+        condition: service_healthy
       redis-session:
         condition: service_healthy
       redis-cache:
