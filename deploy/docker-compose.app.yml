@@ -1,0 +1,131 @@
+# AxumKit — Application services (stateless).
+#
+# Parametrized for two environments (production + dev) via a compose env-file
+# (deploy/<env>.env): DEPLOY_ENV (selects ../.envs/.${DEPLOY_ENV}/), COMPOSE_PROJECT_NAME
+# (isolates containers/volumes/networks — same-host safe), APP_VERSION (GHCR image tag),
+# APISIX_HOST_PORT (tunnel/ingress target). Run from deploy/ (paths are relative to it):
+#   docker compose --env-file dev.env -f docker-compose.infra.yml -f docker-compose.app.yml up -d
+# Or use the justfile:  just up dev   /   just up production
+#
+# Prerequisite: infra layer (docker-compose.infra.yml) is always included.
+# The apisix/pgdog configs under compose/production/ are SHARED (env-agnostic).
+
+services:
+  migration:
+    image: ghcr.io/levish0/axumkit:${APP_VERSION}
+    command: ["./migration"]
+    # Concern-grouped env from .envs/.${DEPLOY_ENV} (run compose from deploy/, hence ../).
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/postgres.env
+    depends_on:
+      pgdog:
+        condition: service_healthy
+    restart: on-failure
+
+  server:
+    image: ghcr.io/levish0/axumkit:${APP_VERSION}
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/postgres.env
+      - ../.envs/.${DEPLOY_ENV}/r2.env
+      - ../.envs/.${DEPLOY_ENV}/server.env
+    # No host port — APISIX reaches the backend at server:8000 over the compose network,
+    # and the tunnel/ingress points at APISIX (not server). Use `exec` for debugging.
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      redis-session:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      image-processor:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  apisix:
+    # Edge gateway: forward-auth (identity for rate limiting) + tiered rate limiting.
+    # Standalone/decless mode — config is the mounted YAML, no etcd.
+    image: apache/apisix:3.16.0-debian
+    # INTERNAL_PROXY_SECRET (shared with backend + SSR) — the pre-function reads it to trust
+    # X-Real-Client-IP when normalizing the real client IP for rate-limit keying.
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/server.env
+    volumes:
+      - ../compose/production/apisix/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+      - ../compose/production/apisix/apisix.yaml:/usr/local/apisix/conf/apisix.yaml:ro
+    ports:
+      # tunnel/ingress points here so all traffic is gated. Localhost-only (host-side tunnel).
+      - "127.0.0.1:${APISIX_HOST_PORT}:9080"
+    depends_on:
+      server:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      # End-to-end: APISIX must be up AND able to proxy to the backend.
+      test: ["CMD", "curl", "-f", "http://localhost:9080/health-check"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  image-processor:
+    image: ghcr.io/levish0/smol-image-processor:0.1.1
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/image-processor.env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6701/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  worker:
+    image: ghcr.io/levish0/axumkit-worker:${APP_VERSION}
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/postgres.env
+      - ../.envs/.${DEPLOY_ENV}/r2.env
+      - ../.envs/.${DEPLOY_ENV}/worker.env
+    depends_on:
+      migration:
+        condition: service_completed_successfully
+      image-processor:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-lock:
+        condition: service_healthy
+      nats:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

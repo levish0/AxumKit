@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-06-28
+
+### Added
+
+- **Deployment bundle (`deploy/`)** — parametrized two-environment (dev + production)
+  deploy stack mirroring the production posture: layered compose
+  (`docker-compose.infra.yml` for stateful services + `docker-compose.app.yml` for
+  stateless app services) selected by a committed per-env compose env-file
+  (`deploy/{dev,production}.env`). `DEPLOY_ENV` picks `.envs/.<env>/`,
+  `COMPOSE_PROJECT_NAME` isolates containers/volumes/networks so both envs run on one
+  host, and `APP_VERSION` pins the GHCR image tag. Migrations run automatically via a
+  one-shot `migration` service; only APISIX is host-published
+  (`127.0.0.1:${APISIX_HOST_PORT}`), with infra and `server:8000` reached over the
+  compose network. A `deploy/justfile` wraps the common flows
+  (`just up <env>`, `down`, `ps`, `pull`, `logs`, `compose`).
+
+### Fixed
+
+- **Email link tokens are URL-encoded** — verification, password-reset, and
+  email-change links now wrap the token in `urlencoding::encode` so the link stays
+  valid regardless of token alphabet (defense-in-depth; current tokens are already
+  URL-safe base64).
+
 ## [0.10.1] - 2026-06-28
 
 ### Fixed

@@ -76,7 +76,9 @@ fn render_template(template: &EmailTemplate) -> Result<String, anyhow::Error> {
         } => {
             let verification_link = format!(
                 "{}{}?token={}",
-                config.frontend_host, config.frontend_path_verify_email, token
+                config.frontend_host,
+                config.frontend_path_verify_email,
+                urlencoding::encode(token)
             );
             crate::templates::render_email_verification(
                 &config.project_name,
@@ -93,7 +95,9 @@ fn render_template(template: &EmailTemplate) -> Result<String, anyhow::Error> {
         } => {
             let reset_link = format!(
                 "{}{}?token={}",
-                config.frontend_host, config.frontend_path_reset_password, token
+                config.frontend_host,
+                config.frontend_path_reset_password,
+                urlencoding::encode(token)
             );
             crate::templates::render_password_reset(
                 &config.project_name,
@@ -110,7 +114,9 @@ fn render_template(template: &EmailTemplate) -> Result<String, anyhow::Error> {
         } => {
             let confirmation_link = format!(
                 "{}{}?token={}",
-                config.frontend_host, config.frontend_path_confirm_email_change, token
+                config.frontend_host,
+                config.frontend_path_confirm_email_change,
+                urlencoding::encode(token)
             );
             crate::templates::render_email_change(
                 &config.project_name,

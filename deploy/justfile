@@ -1,0 +1,45 @@
+# AxumKit deployment commands. Run from THIS directory: `cd deploy && just <recipe> <env>`.
+# <env> = dev | production  (picks deploy/<env>.env + .envs/.<env>/).
+#
+#   cd deploy
+#   just up dev                  # infra + app
+#   just ps dev
+#   just logs dev server
+#   just pull production && just up production
+#   just down dev                # stop (keep volumes);  `just down dev -v` to wipe
+#
+# COMPOSE_PROJECT_NAME / ports / image tag come from deploy/<env>.env, so prod and dev
+# stay isolated even on the same host. (Migrations run automatically via the one-shot
+# `migration` service on `up`.)
+
+set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
+
+_core := "-f docker-compose.infra.yml -f docker-compose.app.yml"
+
+# List recipes.
+default:
+    @just --list
+
+# Start infra + app.
+up env:
+    docker compose --env-file {{env}}.env {{_core}} up -d
+
+# Stop a stack. `just down dev -v` to remove volumes.
+down env *args:
+    docker compose --env-file {{env}}.env {{_core}} down {{args}}
+
+# Container status.
+ps env:
+    docker compose --env-file {{env}}.env {{_core}} ps
+
+# Pull new images.
+pull env:
+    docker compose --env-file {{env}}.env {{_core}} pull
+
+# Follow logs, optionally for one service — `just logs dev server`.
+logs env *args:
+    docker compose --env-file {{env}}.env {{_core}} logs -f {{args}}
+
+# Raw compose passthrough — `just compose dev restart server`.
+compose env *args:
+    docker compose --env-file {{env}}.env {{_core}} {{args}}

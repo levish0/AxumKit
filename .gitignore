@@ -26,6 +26,7 @@ target
 !.envs/.test/*.env
 !e2e/e2e_env/*.env
 .envs/.local/
+.envs/.dev/
 .envs/.production/
 docker.env
 docker_env/

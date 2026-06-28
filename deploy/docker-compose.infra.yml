@@ -1,0 +1,180 @@
+# Infrastructure services (stateful). Parametrized per environment — see
+# docker-compose.app.yml header. COMPOSE_PROJECT_NAME (from deploy/<env>.env) prefixes
+# every container/volume/network, so prod and dev are isolated on the same host.
+# No host ports are published: the app reaches these over the compose network, and only
+# APISIX (in the app layer) is exposed. Use `docker compose ... exec` for debugging.
+# Usage (from deploy/):
+#   docker compose --env-file dev.env -f docker-compose.infra.yml -f docker-compose.app.yml up -d
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/postgres.env
+    # PostgreSQL tuning for a dedicated server with NVMe SSD. Defaults assume 1990s
+    # hardware. Adjust shared_buffers / effective_cache_size to the server RAM (and lower
+    # them if prod + dev share one host so two instances don't oversubscribe memory).
+    # Reference: https://pgtune.leopard.in.ua/
+    command:
+      - postgres
+      # Memory
+      - -c
+      - shared_buffers=2GB
+      - -c
+      - effective_cache_size=8GB
+      - -c
+      - work_mem=32MB
+      - -c
+      - maintenance_work_mem=512MB
+      # Connections
+      - -c
+      - max_connections=200
+      # WAL / write performance
+      - -c
+      - wal_buffers=64MB
+      - -c
+      - max_wal_size=2GB
+      - -c
+      - checkpoint_completion_target=0.9
+    # No PGDATA override: PG18 defaults to the version-specific
+    # /var/lib/postgresql/18/docker, which lives inside the volume mounted at the
+    # parent below. Keeping the default preserves the version dir layout that lets
+    # pg_upgrade --link do fast in-place major upgrades.
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-axumkit}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  redis-session:
+    image: redis:8-alpine
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy noeviction
+    volumes:
+      - redis-session-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  redis-cache:
+    image: redis:8-alpine
+    command: redis-server --port 6380 --maxmemory 1gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-cache-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  redis-lock:
+    image: redis:8-alpine
+    command: redis-server --port 6381 --maxmemory 16mb --maxmemory-policy noeviction
+    volumes:
+      - redis-lock-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  nats:
+    image: nats:2.12.4-alpine
+    command: ["--jetstream", "--store_dir=/data", "-m", "8222"]
+    volumes:
+      - nats-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.34.3
+    env_file:
+      - ../.envs/.${DEPLOY_ENV}/meilisearch.env
+    volumes:
+      - meili-data:/meili_data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  pgdog:
+    image: ghcr.io/pgdogdev/pgdog:v0.1.44
+    # No host port — the app reaches the pooler at pgdog:6432 over the compose network.
+    command:
+      [
+        "/usr/local/bin/pgdog",
+        "--config",
+        "/config/pgdog.toml",
+        "--users",
+        "/config/users.toml",
+      ]
+    volumes:
+      - ../compose/production/pgdog/pgdog.toml:/config/pgdog.toml:ro
+      - ../compose/production/pgdog/users.toml:/config/users.toml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+volumes:
+  postgres-data:
+  redis-session-data:
+  redis-cache-data:
+  redis-lock-data:
+  nats-data:
+  meili-data:
