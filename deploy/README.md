@@ -15,7 +15,7 @@ containers/volumes/networks — prod and dev can run on the **same host**), `APP
     .production/   # prod secrets — gitignored
     .dev/          # dev secrets  — gitignored
       postgres.env r2.env server.env worker.env
-      image-processor.env meilisearch.env
+      media-processor.env meilisearch.env
 
   compose/
     production/    # apisix/ pgdog/ configs — SHARED by both envs

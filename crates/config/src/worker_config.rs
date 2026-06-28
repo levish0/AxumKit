@@ -28,9 +28,9 @@ pub struct WorkerConfig {
     pub redis_lock_host: String,
     pub redis_lock_port: String,
 
-    // Image processor microservice
-    pub image_processor_url: String,
-    pub image_processor_timeout_secs: u64,
+    // Media processor microservice
+    pub media_processor_url: String,
+    pub media_processor_timeout_secs: u64,
 
     // Frontend & Project
     pub frontend_host: String,
@@ -137,10 +137,10 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         redis_lock_host: env::var("REDIS_LOCK_HOST").unwrap_or_else(|_| "127.0.0.1".into()),
         redis_lock_port: env::var("REDIS_LOCK_PORT").unwrap_or_else(|_| "6381".into()),
 
-        // Image processor microservice
-        image_processor_url: env::var("IMAGE_PROCESSOR_URL")
+        // Media processor microservice
+        media_processor_url: env::var("MEDIA_PROCESSOR_URL")
             .unwrap_or_else(|_| "http://127.0.0.1:6701".into()),
-        image_processor_timeout_secs: env::var("IMAGE_PROCESSOR_TIMEOUT_SECS")
+        media_processor_timeout_secs: env::var("MEDIA_PROCESSOR_TIMEOUT_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(30),

@@ -112,11 +112,11 @@ services:
       retries: 5
       start_period: 20s
 
-  image-processor:
-    image: ghcr.io/levish0/smol-image-processor:0.1.1
-    container_name: axumkit-image-processor
+  media-processor:
+    image: ghcr.io/levish0/smol-media-processor:0.2.0
+    container_name: axumkit-media-processor
     env_file:
-      - .envs/.local/image-processor.env
+      - .envs/.local/media-processor.env
     ports:
       - "6701:6701"
     restart: unless-stopped
@@ -161,7 +161,7 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
-      image-processor:
+      media-processor:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -191,7 +191,7 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
-      image-processor:
+      media-processor:
         condition: service_healthy
     restart: unless-stopped
 

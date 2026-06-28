@@ -41,7 +41,7 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
-      image-processor:
+      media-processor:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -87,10 +87,10 @@ services:
         max-size: "50m"
         max-file: "3"
 
-  image-processor:
-    image: ghcr.io/levish0/smol-image-processor:0.1.1
+  media-processor:
+    image: ghcr.io/levish0/smol-media-processor:0.2.0
     env_file:
-      - ../.envs/.${DEPLOY_ENV}/image-processor.env
+      - ../.envs/.${DEPLOY_ENV}/media-processor.env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6701/health"]
@@ -113,7 +113,7 @@ services:
     depends_on:
       migration:
         condition: service_completed_successfully
-      image-processor:
+      media-processor:
         condition: service_healthy
       redis-cache:
         condition: service_healthy

@@ -12,8 +12,8 @@ Concern-grouped dotenv files, one tree per environment.
 
 Compose services load only the concern files they need. For example, `server`
 loads `postgres.env`, `r2.env`, and `server.env`; `worker` loads
-`postgres.env`, `r2.env`, and `worker.env`; `image-processor` loads
-`image-processor.env`.
+`postgres.env`, `r2.env`, and `worker.env`; `media-processor` loads
+`media-processor.env`.
 
 ## Setup
 
@@ -28,7 +28,7 @@ disposable e2e stack and should not contain real secrets.
 
 - Docker service hostnames use compose names: `pgdog`, `postgres`,
   `redis-session`, `redis-cache`, `redis-lock`, `nats`, `meilisearch`, and
-  `image-processor`.
+  `media-processor`.
 - The app standardizes on `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_NAME`,
   `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
 - For production with PgDog, set `POSTGRES_HOST=pgdog` and

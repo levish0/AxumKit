@@ -60,8 +60,8 @@ example/local/test envs default to direct `postgres:5432`; production should use
 | `NATS_URL` | `nats://localhost:4222` | NATS URL |
 | `MEILISEARCH_HOST` | `http://localhost:7700` | MeiliSearch URL |
 | `MEILISEARCH_API_KEY` | empty | MeiliSearch API key |
-| `IMAGE_PROCESSOR_URL` | `http://127.0.0.1:6701` | smol-image-processor URL |
-| `IMAGE_PROCESSOR_TIMEOUT_SECS` | 30 | Image processing timeout seconds |
+| `MEDIA_PROCESSOR_URL` | `http://127.0.0.1:6701` | smol-media-processor URL |
+| `MEDIA_PROCESSOR_TIMEOUT_SECS` | 30 | Image processing timeout seconds |
 | `CORS_ALLOWED_ORIGINS` | empty | Comma-separated origins |
 | `CORS_ALLOWED_HEADERS` | empty | Comma-separated headers |
 | `CORS_MAX_AGE` | empty | CORS max-age seconds |
@@ -110,8 +110,8 @@ example/local/test envs default to direct `postgres:5432`; production should use
 | `REDIS_CACHE_PORT` | `6380` | Cache Redis port |
 | `REDIS_LOCK_HOST` | `127.0.0.1` | Worker lock Redis host |
 | `REDIS_LOCK_PORT` | `6381` | Worker lock Redis port |
-| `IMAGE_PROCESSOR_URL` | `http://127.0.0.1:6701` | smol-image-processor URL |
-| `IMAGE_PROCESSOR_TIMEOUT_SECS` | 30 | Image processing timeout seconds |
+| `MEDIA_PROCESSOR_URL` | `http://127.0.0.1:6701` | smol-media-processor URL |
+| `MEDIA_PROCESSOR_TIMEOUT_SECS` | 30 | Image processing timeout seconds |
 | `POSTGRES_MAX_CONNECTION` | 10 | DB max pool size |
 | `POSTGRES_MIN_CONNECTION` | 2 | DB min pool size |
 | `R2_REGION` | `auto` | R2 region |

@@ -60,9 +60,9 @@ pub struct ServerConfig {
     pub server_host: String,
     pub server_port: String,
 
-    // Image processor microservice
-    pub image_processor_url: String,
-    pub image_processor_timeout_secs: u64,
+    // Media processor microservice
+    pub media_processor_url: String,
+    pub media_processor_timeout_secs: u64,
 
     // NATS (for background job queue)
     pub nats_url: String,
@@ -302,10 +302,10 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
         server_host,
         server_port,
 
-        // Image processor microservice
-        image_processor_url: env::var("IMAGE_PROCESSOR_URL")
+        // Media processor microservice
+        media_processor_url: env::var("MEDIA_PROCESSOR_URL")
             .unwrap_or_else(|_| "http://127.0.0.1:6701".to_string()),
-        image_processor_timeout_secs: env::var("IMAGE_PROCESSOR_TIMEOUT_SECS")
+        media_processor_timeout_secs: env::var("MEDIA_PROCESSOR_TIMEOUT_SECS")
             .ok()
             .and_then(|v| v.parse().ok())
             .unwrap_or(30),

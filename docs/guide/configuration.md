@@ -112,11 +112,11 @@ should connect through PgDog. The example/local/test templates default to direct
 | `STABILITY_BUFFER_SIZE` | No | `1024` | Request queue size |
 | `STABILITY_TIMEOUT_SECS` | No | `30` | Per-request timeout (seconds) |
 
-### Image Processor
+### Media Processor
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `IMAGE_PROCESSOR_URL` | No | `http://127.0.0.1:6701` | smol-image-processor base URL |
-| `IMAGE_PROCESSOR_TIMEOUT_SECS` | No | `30` | Image processing request timeout |
+| `MEDIA_PROCESSOR_URL` | No | `http://127.0.0.1:6701` | smol-media-processor base URL |
+| `MEDIA_PROCESSOR_TIMEOUT_SECS` | No | `30` | Image processing request timeout |
 
 See [Environment Variables](/reference/environment) for the full list including OAuth, R2, CORS, SMTP, and more.

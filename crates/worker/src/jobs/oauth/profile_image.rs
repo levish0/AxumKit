@@ -1,5 +1,5 @@
 use crate::DbPool;
-use crate::clients::process_image;
+use crate::clients::process_media;
 use crate::connection::R2AssetsClient;
 use crate::jobs::WorkerContext;
 use crate::nats::consumer::NatsConsumer;
@@ -120,7 +120,7 @@ async fn prepare_oauth_profile_image(
         );
     }
 
-    let processed = process_image(http_client, file).await?;
+    let processed = process_media(http_client, file).await?;
     if processed.bytes.is_empty() {
         anyhow::bail!("processed image is empty");
     }

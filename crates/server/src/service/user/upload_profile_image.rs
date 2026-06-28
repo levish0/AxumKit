@@ -1,4 +1,4 @@
-use crate::bridge::image_processor_client::process_image;
+use crate::bridge::media_processor_client::process_media;
 use crate::connection::r2_conn::R2Client;
 use crate::repository::user::{UserUpdateParams, repository_update_user};
 use crate::service::auth::session_types::SessionContext;
@@ -78,7 +78,7 @@ pub(super) async fn prepare_user_image(
         )));
     }
 
-    let processed = process_image(http_client, file).await?;
+    let processed = process_media(http_client, file).await?;
     let bytes = processed.bytes;
 
     if bytes.is_empty() {

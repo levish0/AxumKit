@@ -6,9 +6,9 @@ use std::sync::LazyLock;
 use std::time::Duration;
 use tracing::error;
 
-static IMAGE_PROCESSOR_URL: LazyLock<String> = LazyLock::new(|| {
+static MEDIA_PROCESSOR_URL: LazyLock<String> = LazyLock::new(|| {
     let config = ServerConfig::get();
-    config.image_processor_url.trim_end_matches('/').to_string()
+    config.media_processor_url.trim_end_matches('/').to_string()
 });
 
 pub struct ProcessedImage {
@@ -18,12 +18,12 @@ pub struct ProcessedImage {
 }
 
 #[derive(Debug, Deserialize)]
-struct ImageProcessorErrorBody {
+struct MediaProcessorErrorBody {
     code: Option<String>,
     error: Option<String>,
 }
 
-pub async fn process_image(
+pub async fn process_media(
     http_client: &HttpClient,
     file: Vec<u8>,
 ) -> Result<ProcessedImage, Errors> {
@@ -32,17 +32,17 @@ pub async fn process_image(
     let form = reqwest::multipart::Form::new().part("file", part);
 
     let response = http_client
-        .post(format!("{}/process", &*IMAGE_PROCESSOR_URL))
-        .timeout(Duration::from_secs(config.image_processor_timeout_secs))
+        .post(format!("{}/process", &*MEDIA_PROCESSOR_URL))
+        .timeout(Duration::from_secs(config.media_processor_timeout_secs))
         .multipart(form)
         .send()
         .await
         .map_err(|e| {
-            error!("Image processor request failed: {e}");
+            error!("Media processor request failed: {e}");
             if e.is_timeout() {
                 Errors::FileProcessingTimeout("Image processing timed out".to_string())
             } else {
-                Errors::FileProcessingUnavailable("Image processor is unavailable".to_string())
+                Errors::FileProcessingUnavailable("Media processor is unavailable".to_string())
             }
         })?;
 
@@ -54,8 +54,8 @@ pub async fn process_image(
 
     let headers = response.headers().clone();
     let bytes = response.bytes().await.map_err(|e| {
-        error!("Failed to read image processor response: {e}");
-        Errors::SysInternalError("Invalid image processor response".to_string())
+        error!("Failed to read media processor response: {e}");
+        Errors::SysInternalError("Invalid media processor response".to_string())
     })?;
 
     Ok(ProcessedImage {
@@ -67,7 +67,7 @@ pub async fn process_image(
 
 async fn parse_error_body(response: reqwest::Response) -> String {
     let fallback = response.text().await.unwrap_or_default();
-    serde_json::from_str::<ImageProcessorErrorBody>(&fallback)
+    serde_json::from_str::<MediaProcessorErrorBody>(&fallback)
         .ok()
         .and_then(|body| body.error.or(body.code))
         .filter(|value| !value.trim().is_empty())
@@ -76,7 +76,7 @@ async fn parse_error_body(response: reqwest::Response) -> String {
 
 fn map_processor_error(status: reqwest::StatusCode, body: String) -> Errors {
     let details = if body.trim().is_empty() {
-        format!("Image processor returned HTTP {}", status.as_u16())
+        format!("Media processor returned HTTP {}", status.as_u16())
     } else {
         body
     };
@@ -87,9 +87,9 @@ fn map_processor_error(status: reqwest::StatusCode, body: String) -> Errors {
         415 => Errors::FileUnsupportedType(details),
         400..=499 => Errors::BadRequestError(details),
         _ => {
-            error!(status = %status, body = %details, "Image processor request failed");
+            error!(status = %status, body = %details, "Media processor request failed");
             Errors::FileProcessingUnavailable(
-                "Image processor failed to process the file".to_string(),
+                "Media processor failed to process the file".to_string(),
             )
         }
     }
@@ -98,8 +98,8 @@ fn map_processor_error(status: reqwest::StatusCode, body: String) -> Errors {
 fn header_string(headers: &reqwest::header::HeaderMap, name: &str) -> Result<String, Errors> {
     headers
         .get(name)
-        .ok_or_else(|| Errors::SysInternalError(format!("Missing image processor header: {name}")))?
+        .ok_or_else(|| Errors::SysInternalError(format!("Missing media processor header: {name}")))?
         .to_str()
         .map(|value| value.to_string())
-        .map_err(|_| Errors::SysInternalError(format!("Invalid image processor header: {name}")))
+        .map_err(|_| Errors::SysInternalError(format!("Invalid media processor header: {name}")))
 }

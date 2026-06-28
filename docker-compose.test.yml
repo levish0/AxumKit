@@ -65,10 +65,10 @@ services:
       timeout: 5s
       retries: 10
 
-  image-processor:
-    image: ghcr.io/levish0/smol-image-processor:0.1.1
+  media-processor:
+    image: ghcr.io/levish0/smol-media-processor:0.2.0
     env_file:
-      - .envs/.test/image-processor.env
+      - .envs/.test/media-processor.env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:6701/health"]
       interval: 5s
@@ -145,7 +145,7 @@ services:
         condition: service_healthy
       meilisearch:
         condition: service_healthy
-      image-processor:
+      media-processor:
         condition: service_healthy
       seaweedfs-init:
         condition: service_completed_successfully
@@ -177,7 +177,7 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_healthy
-      image-processor:
+      media-processor:
         condition: service_healthy
       seaweedfs-init:
         condition: service_completed_successfully
