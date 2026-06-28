@@ -53,6 +53,15 @@ compose env *args:
 pgbackrest-init env:
     docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-create
 
+# Wipe the repo stanza and recreate it. Use after rebuilding the DB (e.g. `down -v`), which
+# changes the cluster system id and triggers pgbackrest error [028]. DESTROYS all backups
+# in the repo for this stanza. Run `pgbackrest-check` after to verify.
+pgbackrest-stanza-reset env:
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stop
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-delete --force
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db start
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-create
+
 # Run a backup. type = full | diff | incr (default incr). Schedule these via host crontab —
 # e.g. weekly `full`, daily `diff`. See README.md.
 pgbackrest-backup env type="incr":
