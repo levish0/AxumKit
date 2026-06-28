@@ -51,21 +51,40 @@ compose env *args:
 # Initialize the pgBackRest stanza on R2. Run ONCE, right after the first `up` (until then
 # WAL archiving fails and WAL piles up in pg_wal).
 pgbackrest-init env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db stanza-create
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-create
 
 # Run a backup. type = full | diff | incr (default incr). Schedule these via host crontab —
 # e.g. weekly `full`, daily `diff`. See README.md.
 pgbackrest-backup env type="incr":
-    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db --type={{type}} backup
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db --type={{type}} backup
 
 # Verify the stanza + repo + archiving are healthy.
 pgbackrest-check env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db check
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db check
 
 # List backup sets (timestamps, sizes, retention) in the repo.
 pgbackrest-info env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db info
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db info
 
 # Raw pgbackrest passthrough — `just pgbackrest dev expire`, `just pgbackrest dev "--set=... restore"`.
 pgbackrest env *args:
-    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db {{args}}
+    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db {{args}}
+
+# Install/refresh this user's backup schedule in the host crontab (no sudo): weekly full
+# (Sun 03:00) + daily diff (Mon-Sat 03:00). Idempotent — re-run to update; only touches
+# this env's lines. Server-only (needs bash + crontab). Logs to ~/pgbackrest-cron.log.
+pgbackrest-cron-install env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    j="$(command -v just)"; d="{{justfile_directory()}}"
+    full="0 3 * * 0 cd $d && $j pgbackrest-backup {{env}} full >> \$HOME/pgbackrest-cron.log 2>&1"
+    diff="0 3 * * 1-6 cd $d && $j pgbackrest-backup {{env}} diff >> \$HOME/pgbackrest-cron.log 2>&1"
+    ( crontab -l 2>/dev/null | grep -vF "pgbackrest-backup {{env}} " || true; echo "$full"; echo "$diff" ) | crontab -
+    echo "Installed pgbackrest cron for {{env}}:"; crontab -l | grep -F "pgbackrest-backup {{env}} "
+
+# Remove this user's pgBackRest backup cron lines for the given env.
+pgbackrest-cron-uninstall env:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ( crontab -l 2>/dev/null | grep -vF "pgbackrest-backup {{env}} " || true ) | crontab -
+    echo "Removed pgbackrest cron for {{env}}."
