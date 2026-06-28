@@ -61,6 +61,12 @@ services:
       - postgres-data:/var/lib/postgresql
       - ../compose/production/pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
       - pgbackrest-log:/var/log/pgbackrest
+    # Host-published on LOOPBACK ONLY (127.0.0.1) for a local DB client (DataGrip/psql) over
+    # an SSH tunnel. Never bind 0.0.0.0 / "5432:5432" — that exposes the DB to the internet
+    # (and Docker bypasses ufw). Per-env host port (POSTGRES_HOST_PORT in deploy/<env>.env)
+    # so prod and dev don't clash on the same host. Container side is always 5432.
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT}:5432"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-axumkit}"]

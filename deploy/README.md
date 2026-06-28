@@ -179,13 +179,16 @@ you must promote it manually.
 
 The tunnel/ingress (host-side) points at APISIX. One route per env:
 
-| Env | APISIX (tunnel → ) |
-|-----|--------------------|
-| production | `127.0.0.1:9090` |
-| dev        | `127.0.0.1:9080` |
+| Env | APISIX (tunnel → ) | Postgres (loopback, SSH tunnel) |
+|-----|--------------------|----------------------------------|
+| production | `127.0.0.1:9090` | `127.0.0.1:15435` |
+| dev        | `127.0.0.1:9080` | `127.0.0.1:15434` |
 
-`server:8000` and `pgdog:6432` are not host-published — they're reached over the
-compose network; use `docker compose ... exec` for debugging.
+`server:8000` and `pgdog:6432` are not host-published — they're reached over the compose
+network; use `docker compose ... exec` for debugging. Postgres IS published, but on
+**127.0.0.1 only** (`POSTGRES_HOST_PORT` in `deploy/<env>.env`), so a DB client can reach it
+through an SSH tunnel; never rebind it to `0.0.0.0` (that exposes the DB publicly, and Docker
+bypasses ufw).
 
 > **Security:** the tunnel/ingress must target APISIX, never `server:8000` directly, or
 > the gateway's rate limiting is bypassed. Set a strong `INTERNAL_PROXY_SECRET` in
