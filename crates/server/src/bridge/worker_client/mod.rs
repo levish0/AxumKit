@@ -13,6 +13,7 @@ pub use reindex::*;
 use crate::state::WorkerClient;
 use errors::errors::Errors;
 use serde::Serialize;
+use tracing::error;
 
 /// Publish a job to NATS JetStream
 pub async fn publish_job<T: Serialize>(
@@ -20,12 +21,23 @@ pub async fn publish_job<T: Serialize>(
     subject: &str,
     job: &T,
 ) -> Result<(), Errors> {
-    let payload = serde_json::to_vec(job).map_err(|_| Errors::WorkerServiceConnectionFailed)?;
+    let payload = serde_json::to_vec(job).map_err(|e| {
+        error!(error = %e, subject, "Worker job serialization failed");
+        Errors::WorkerServiceConnectionFailed
+    })?;
 
     worker
         .publish(subject.to_string(), payload.into())
         .await
-        .map_err(|_| Errors::WorkerServiceConnectionFailed)?;
+        .map_err(|e| {
+            error!(error = %e, subject, "Worker job publish failed");
+            Errors::WorkerServiceConnectionFailed
+        })?
+        .await
+        .map_err(|e| {
+            error!(error = %e, subject, "Worker job ack failed");
+            Errors::WorkerServiceConnectionFailed
+        })?;
 
     Ok(())
 }

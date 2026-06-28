@@ -135,7 +135,9 @@ pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
         EMAIL_STREAM,
         EMAIL_CONSUMER,
         2, // concurrency
-    );
+    )
+    // Sending email is not idempotent: skip redelivered messages already sent.
+    .with_dedup(ctx.cache_client.clone());
 
     consumer
         .run::<SendEmailJob, _, _>(move |job| {

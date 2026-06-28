@@ -168,7 +168,10 @@ pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
         OAUTH_PROFILE_IMAGE_STREAM,
         OAUTH_PROFILE_IMAGE_CONSUMER,
         2,
-    );
+    )
+    // Downloading + uploading a profile image is not idempotent: skip redelivered
+    // messages already processed.
+    .with_dedup(ctx.cache_client.clone());
 
     consumer
         .run::<OAuthProfileImageJob, _, _>(move |job| {

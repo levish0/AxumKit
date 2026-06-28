@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-06-28
+
+### Fixed
+
+Worker job delivery reliability — the server now confirms jobs are persisted, and the
+worker no longer silently drops or duplicates failed/redelivered jobs.
+
+- **Publish acknowledgement** — `bridge::worker_client::publish_job` now awaits the
+  JetStream server ack instead of dropping the `PublishAckFuture`. A missing stream or
+  a failed store is surfaced as `WorkerServiceConnectionFailed` rather than being
+  mistaken for success (jobs are no longer silently lost). Serialize/publish/ack
+  failures are now logged with the subject.
+
+### Added
+
+- **Dead-letter queue** — permanently failed messages (unparseable payloads or
+  max-deliveries exhausted) are republished to a new `axumkit_jobs_dlq` stream
+  (subject `axumkit.dlq.{origin_stream}`, `Limits` retention, 14-day max age) with
+  `X-DLQ-Origin-Stream`/`X-DLQ-Consumer`/`X-DLQ-Reason` headers before being terminated,
+  so they can be inspected and replayed instead of dropped.
+- **Per-message dedup** — `NatsConsumer::with_dedup` skips redeliveries of an
+  already-processed message (keyed by stream sequence in Redis, 24h TTL, fail-open).
+  Applied to the non-idempotent `email` and `oauth/profile_image` consumers so a lost
+  ack no longer resends a verification email or reprocesses a profile image.
+
 ## [0.10.0] - 2026-06-26
 
 ### Added
