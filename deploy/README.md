@@ -147,16 +147,20 @@ just pgbackrest-info dev
 
 # Restore the latest backup + all WAL:
 just pgbackrest-restore dev
-# A specific backup set (use a label from `pgbackrest-info`):
-just pgbackrest-restore dev --set=20260628-120000F
-# Point in time (PITR; 'T' avoids spaces, promote to resume writes after the target):
+# A specific backup, stopped at its own end (no later WAL) — --set + --type=immediate:
+just pgbackrest-restore dev --set=20260628-120000F --type=immediate
+# Point in time (PITR; 'T' avoids spaces, promote to resume writes after the target).
+# The reachable range is within info's 'wal archive min/max':
 just pgbackrest-restore dev --type=time --target=2026-06-28T12:00:00+00 --target-action=promote
 
 just pgbackrest-check dev   # verify after restore
 ```
 
-On start postgres replays archived WAL to reach a consistent state. Without
-`--target-action=promote`, a PITR pauses recovery at the target and you must promote manually.
+Reading `pgbackrest-info`: `full backup: <label>` is the `--set` value (suffix `F`=full /
+`D`=diff / `I`=incr), `timestamp start/stop` is when it was taken, and `wal archive min/max`
+is the full range you can PITR into. On start postgres replays archived WAL to reach a
+consistent state; without `--target-action=promote` a PITR pauses recovery at the target and
+you must promote it manually.
 
 **Common errors**
 
