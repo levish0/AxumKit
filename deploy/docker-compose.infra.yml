@@ -8,9 +8,15 @@
 
 services:
   postgres:
-    image: postgres:18-alpine
+    # Custom image = postgres:18-alpine + pgbackrest (built from deploy/postgres/).
+    # The image name is fixed so the build is cached and reused across prod/dev.
+    build:
+      context: ./postgres
+    image: axumkit/postgres-pgbackrest:18
     env_file:
       - ../.envs/.${DEPLOY_ENV}/postgres.env
+      # pgBackRest repo (R2) creds + per-env repo path, as PGBACKREST_* vars.
+      - ../.envs/.${DEPLOY_ENV}/pgbackrest.env
     # PostgreSQL tuning for a dedicated server with NVMe SSD. Defaults assume 1990s
     # hardware. Adjust shared_buffers / effective_cache_size to the server RAM (and lower
     # them if prod + dev share one host so two instances don't oversubscribe memory).
@@ -36,12 +42,25 @@ services:
       - max_wal_size=2GB
       - -c
       - checkpoint_completion_target=0.9
+      # WAL archiving -> pgBackRest -> R2 (continuous, enables point-in-time recovery).
+      # archive-push fails until `pgbackrest stanza-create` has run once (WAL just
+      # accumulates in pg_wal until then); run `just pgbackrest-init <env>` after first up.
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=db archive-push %p
+      # Force a WAL segment switch at least this often so an idle DB still bounds how much
+      # recent data a restore could lose (RPO).
+      - -c
+      - archive_timeout=60
     # No PGDATA override: PG18 defaults to the version-specific
     # /var/lib/postgresql/18/docker, which lives inside the volume mounted at the
     # parent below. Keeping the default preserves the version dir layout that lets
     # pg_upgrade --link do fast in-place major upgrades.
     volumes:
       - postgres-data:/var/lib/postgresql
+      - ../compose/production/pgbackrest/pgbackrest.conf:/etc/pgbackrest/pgbackrest.conf:ro
+      - pgbackrest-log:/var/log/pgbackrest
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-axumkit}"]
@@ -173,6 +192,7 @@ services:
 
 volumes:
   postgres-data:
+  pgbackrest-log:
   redis-session-data:
   redis-cache-data:
   redis-lock-data:

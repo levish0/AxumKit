@@ -20,9 +20,10 @@ _core := "-f docker-compose.infra.yml -f docker-compose.app.yml"
 default:
     @just --list
 
-# Start infra + app.
+# Start infra + app. --build (re)builds the local postgres+pgbackrest image; GHCR images
+# have no build section so they're untouched.
 up env:
-    docker compose --env-file {{env}}.env {{_core}} up -d
+    docker compose --env-file {{env}}.env {{_core}} up -d --build
 
 # Stop a stack. `just down dev -v` to remove volumes.
 down env *args:
@@ -32,9 +33,10 @@ down env *args:
 ps env:
     docker compose --env-file {{env}}.env {{_core}} ps
 
-# Pull new images.
+# Pull new images. --ignore-buildable skips the locally-built postgres+pgbackrest image
+# (it's not in any registry, so pulling it would fail with "denied / does not exist").
 pull env:
-    docker compose --env-file {{env}}.env {{_core}} pull
+    docker compose --env-file {{env}}.env {{_core}} pull --ignore-buildable
 
 # Follow logs, optionally for one service — `just logs dev server`.
 logs env *args:
@@ -43,3 +45,27 @@ logs env *args:
 # Raw compose passthrough — `just compose dev restart server`.
 compose env *args:
     docker compose --env-file {{env}}.env {{_core}} {{args}}
+
+# --- pgBackRest (Postgres backups -> R2). Run from deploy/.  <env> = dev | production ---
+
+# Initialize the pgBackRest stanza on R2. Run ONCE, right after the first `up` (until then
+# WAL archiving fails and WAL piles up in pg_wal).
+pgbackrest-init env:
+    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db stanza-create
+
+# Run a backup. type = full | diff | incr (default incr). Schedule these via host crontab —
+# e.g. weekly `full`, daily `diff`. See README.md.
+pgbackrest-backup env type="incr":
+    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db --type={{type}} backup
+
+# Verify the stanza + repo + archiving are healthy.
+pgbackrest-check env:
+    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db check
+
+# List backup sets (timestamps, sizes, retention) in the repo.
+pgbackrest-info env:
+    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db info
+
+# Raw pgbackrest passthrough — `just pgbackrest dev expire`, `just pgbackrest dev "--set=... restore"`.
+pgbackrest env *args:
+    docker compose --env-file {{env}}.env {{_core}} exec -T postgres pgbackrest --stanza=db {{args}}
