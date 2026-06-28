@@ -25,6 +25,8 @@ target
 !.envs/.example/*.env
 !.envs/.test/*.env
 !e2e/e2e_env/*.env
+# Per-env compose variables (DEPLOY_ENV / COMPOSE_PROJECT_NAME / ports) — no secrets.
+!deploy/*.env
 .envs/.local/
 .envs/.dev/
 .envs/.production/
