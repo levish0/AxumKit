@@ -77,45 +77,96 @@ compression, stanza) is in `compose/production/pgbackrest/pgbackrest.conf`. Rete
 The postgres service is a custom image (`postgres:18-alpine` + pgbackrest, built from
 `deploy/postgres/Dockerfile`); `just up <env>` builds it automatically (`--build`).
 
+**First-time setup (once per `<env>`).** Fill in `pgbackrest.env`, then:
+
 ```bash
 cd deploy   # <env> = dev | production
 
-# 0) (once) fill R2 bucket/endpoint/keys in pgbackrest.env, then create the stanza.
-#    Until this runs, WAL archiving fails and WAL accumulates in pg_wal.
-just pgbackrest-init dev
-just pgbackrest-check dev        # verify stanza/repo/archiving are healthy
+# 0) Fill R2 bucket/endpoint/keys in pgbackrest.env. Note:
+#    - key var names are PGBACKREST_REPO1_S3_KEY / _KEY_SECRET (NOT R2_*)
+#    - endpoint is host-only (no https://, no bucket path)
+#    After editing the file, recreate the container so it reloads the env:
+just up dev
 
-# 1) Run a backup (manual)
-just pgbackrest-backup dev full  # full backup
-just pgbackrest-backup dev diff  # differential (since last full)
-just pgbackrest-backup dev incr  # incremental (default)
+# 1) Create the stanza + verify. Until init runs, WAL archiving fails and WAL
+#    piles up in pg_wal.
+just pgbackrest-init dev
+just pgbackrest-check dev        # verify stanza/repo/archiving (WAL round-trip test)
+
+# 2) First full backup (the PITR baseline — at least one is required)
+just pgbackrest-backup dev full
 just pgbackrest-info dev         # list backup sets / sizes / retention in the repo
 ```
 
-**Scheduling (host crontab).** With the containers up, host crontab calls `just` (it must
-`cd` into `deploy/`). Example: weekly full on Sunday 03:00, daily diff otherwise.
+**Manual backup.** type = `full` | `diff` (since last full) | `incr` (since last backup, default).
 
-```cron
-# /etc/crontab or `crontab -e` (adjust the deploy root path)
-0 3 * * 0   cd /opt/axumkit/deploy && just pgbackrest-backup production full >> /var/log/pgbackrest-cron.log 2>&1
-0 3 * * 1-6 cd /opt/axumkit/deploy && just pgbackrest-backup production diff >> /var/log/pgbackrest-cron.log 2>&1
+```bash
+just pgbackrest-backup dev full
+just pgbackrest-backup dev diff
+just pgbackrest-info dev
+just compose dev exec redis-session redis-cli BGSAVE   # Redis Session (AOF) — separate
 ```
 
-**Restore (PITR).** Restore overwrites the data directory, so stop postgres first. The repo
-lives on R2, so recovery works even if the data volume is wiped/recreated.
+**Scheduled backups (automatic).** Register the schedule in the host crontab. The just
+recipe is the easy way (weekly full on Sunday 03:00 + daily diff Mon–Sat; idempotent —
+per-env and safe to re-run, no duplicate lines):
+
+```bash
+just pgbackrest-cron-install dev    # install/refresh (no sudo, user crontab)
+crontab -l                         # check
+just pgbackrest-cron-uninstall dev # remove
+```
+
+cron runs with a minimal PATH — if logs show `docker: not found`, add a line
+`PATH=/usr/local/bin:/usr/bin:/bin` at the top of the crontab (`crontab -e`). To add the
+lines by hand instead:
+
+```cron
+0 3 * * 0   cd /opt/axumkit/deploy && just pgbackrest-backup production full >> ~/pgbackrest-cron.log 2>&1
+0 3 * * 1-6 cd /opt/axumkit/deploy && just pgbackrest-backup production diff >> ~/pgbackrest-cron.log 2>&1
+```
+
+**DB rebuilt (`down -v`, etc.).** Wiping the data volume changes the cluster system id, so it
+no longer matches the old stanza metadata in the repo and you get `ERROR: [028]`. Reset the
+stanza (this **deletes all repo backups** for that stanza — fine on dev, careful on prod):
+
+```bash
+just pgbackrest-stanza-reset dev   # stop -> stanza-delete --force -> start -> stanza-create
+just pgbackrest-check dev
+```
+
+**Restore (PITR).** The `pgbackrest-restore` recipe does it all: stop postgres → `--delta`
+restore (as the postgres user, into postgres-owned PGDATA) → start. DESTRUCTIVE — overwrites
+the current cluster. The repo lives on R2, so recovery works even if the data volume is wiped.
 
 ```bash
 cd deploy   # <env> = dev | production
-just compose dev stop postgres
-# After emptying the data dir (or recreating the volume), restore via a one-off container.
-# Restore the latest backup:
-just compose dev run --rm --no-deps postgres pgbackrest --stanza=db restore
-# Or to a specific point in time (PITR):
-just compose dev run --rm --no-deps postgres \
-  pgbackrest --stanza=db --type=time "--target=2026-06-28 12:00:00+00" restore
-just compose dev start postgres
-just pgbackrest-check dev
+
+# First decide WHICH backup — list what's in the repo (labels, timestamps, WAL ranges):
+just pgbackrest-info dev
+
+# Restore the latest backup + all WAL:
+just pgbackrest-restore dev
+# A specific backup set (use a label from `pgbackrest-info`):
+just pgbackrest-restore dev --set=20260628-120000F
+# Point in time (PITR; 'T' avoids spaces, promote to resume writes after the target):
+just pgbackrest-restore dev --type=time --target=2026-06-28T12:00:00+00 --target-action=promote
+
+just pgbackrest-check dev   # verify after restore
 ```
+
+On start postgres replays archived WAL to reach a consistent state. Without
+`--target-action=promote`, a PITR pauses recovery at the target and you must promote manually.
+
+**Common errors**
+
+| Symptom | Cause / fix |
+|---|---|
+| `[037] requires option: repo1-s3-key` | Key var named `R2_*` → use `PGBACKREST_REPO1_S3_KEY` / `_KEY_SECRET`, then `just up <env>` to recreate |
+| `[041] ... /tmp/pgbackrest/...: Permission denied` | exec ran as root and the lock dir ownership is stale. The just recipes run as `-u postgres` (already set); clean leftovers with `just compose <env> exec -T postgres rm -rf /tmp/pgbackrest` |
+| `[028] info files ... do not match the database` | DB was rebuilt and the system id changed → `just pgbackrest-stanza-reset <env>` |
+| `[055] stop file does not exist` | `stanza-delete` requires a prior `stop` → the `stanza-reset` recipe handles the order |
+| S3 connection / endpoint error | Endpoint has `https://` or a bucket path → leave the host only |
 
 > Container names derive from `COMPOSE_PROJECT_NAME` (e.g. `axumkit_dev-postgres-1`). To
 > reach a service by name, use `just compose <env> exec <service> ...`.

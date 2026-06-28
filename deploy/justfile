@@ -75,6 +75,16 @@ pgbackrest-check env:
 pgbackrest-info env:
     docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db info
 
+# Restore the DB from the repo (disaster recovery). STOPS postgres, restores into the data
+# volume with --delta, then starts it (postgres replays archived WAL on start). DESTRUCTIVE
+# — overwrites the current cluster. Default = latest backup + all WAL. For PITR pass a target
+# (use 'T' to avoid spaces) and --target-action=promote so it resumes writes after the target:
+#   just pgbackrest-restore dev --type=time --target=2026-06-28T12:00:00+00 --target-action=promote
+pgbackrest-restore env *args:
+    docker compose --env-file {{env}}.env {{_core}} stop postgres
+    docker compose --env-file {{env}}.env {{_core}} run --rm --no-deps -u postgres postgres pgbackrest --stanza=db --delta {{args}} restore
+    docker compose --env-file {{env}}.env {{_core}} start postgres
+
 # Raw pgbackrest passthrough — `just pgbackrest dev expire`, `just pgbackrest dev "--set=... restore"`.
 pgbackrest env *args:
     docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db {{args}}
