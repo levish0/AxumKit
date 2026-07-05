@@ -16,6 +16,7 @@ pub fn log_error(error: &Errors) {
         Errors::InvalidCredentials
         | Errors::UserInvalidPassword
         | Errors::UserPasswordNotSet
+        | Errors::ReauthenticationRequired
         | Errors::UserInvalidSession
         | Errors::UserNotVerified
         | Errors::UserUnauthorized
@@ -54,6 +55,9 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             Some((StatusCode::UNAUTHORIZED, USER_INVALID_PASSWORD, None))
         }
         Errors::UserPasswordNotSet => Some((StatusCode::UNAUTHORIZED, USER_PASSWORD_NOT_SET, None)),
+        Errors::ReauthenticationRequired => {
+            Some((StatusCode::UNAUTHORIZED, REAUTHENTICATION_REQUIRED, None))
+        }
         Errors::UserInvalidSession => Some((StatusCode::UNAUTHORIZED, USER_INVALID_SESSION, None)),
         Errors::UserNotVerified => Some((StatusCode::UNAUTHORIZED, USER_NOT_VERIFIED, None)),
         Errors::UserNotFound => Some((StatusCode::NOT_FOUND, USER_NOT_FOUND, None)),

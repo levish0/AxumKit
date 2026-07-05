@@ -64,6 +64,9 @@ pub enum Errors {
     // User errors
     UserInvalidPassword,
     UserPasswordNotSet,
+    /// A sensitive action (e.g. account deletion) requires a re-authentication factor
+    /// that the request did not supply.
+    ReauthenticationRequired,
     UserInvalidSession,
     UserNotVerified,
     UserNotFound,
@@ -143,6 +146,8 @@ pub enum Errors {
     TokenInvalidReset,
     TokenExpiredReset,
     TokenInvalidEmailChange,
+    TokenInvalidAccountDeletion,
+    TokenInvalidDeviceVerify,
 
     // Email errors
     EmailAlreadyVerified,

@@ -12,7 +12,9 @@ pub fn log_error(error: &Errors) {
         | Errors::TokenEmailMismatch
         | Errors::TokenInvalidReset
         | Errors::TokenExpiredReset
-        | Errors::TokenInvalidEmailChange => {
+        | Errors::TokenInvalidEmailChange
+        | Errors::TokenInvalidAccountDeletion
+        | Errors::TokenInvalidDeviceVerify => {
             debug!("Client error: {:?}", error);
         }
 
@@ -34,6 +36,14 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::TokenExpiredReset => Some((StatusCode::BAD_REQUEST, TOKEN_EXPIRED_RESET, None)),
         Errors::TokenInvalidEmailChange => {
             Some((StatusCode::BAD_REQUEST, TOKEN_INVALID_EMAIL_CHANGE, None))
+        }
+        Errors::TokenInvalidAccountDeletion => Some((
+            StatusCode::BAD_REQUEST,
+            TOKEN_INVALID_ACCOUNT_DELETION,
+            None,
+        )),
+        Errors::TokenInvalidDeviceVerify => {
+            Some((StatusCode::BAD_REQUEST, TOKEN_INVALID_DEVICE_VERIFY, None))
         }
 
         _ => None, // Return None for errors from other domains
