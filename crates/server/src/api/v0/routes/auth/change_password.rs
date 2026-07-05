@@ -31,6 +31,7 @@ pub async fn auth_change_password(
     service_change_password(
         &state.db,
         &state.redis_session,
+        &state.worker,
         session.user_id,
         &session.session_id,
         payload,
