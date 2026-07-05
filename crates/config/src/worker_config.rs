@@ -38,6 +38,8 @@ pub struct WorkerConfig {
     pub frontend_path_verify_email: String,
     pub frontend_path_reset_password: String,
     pub frontend_path_confirm_email_change: String,
+    pub frontend_path_confirm_account_deletion: String,
+    pub frontend_path_verify_device: String,
 
     // Database endpoint used by worker jobs.
     pub db_host: String,
@@ -85,6 +87,8 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     let frontend_path_verify_email = require!("FRONTEND_PATH_VERIFY_EMAIL");
     let frontend_path_reset_password = require!("FRONTEND_PATH_RESET_PASSWORD");
     let frontend_path_confirm_email_change = require!("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE");
+    let frontend_path_confirm_account_deletion = require!("FRONTEND_PATH_CONFIRM_ACCOUNT_DELETION");
+    let frontend_path_verify_device = require!("FRONTEND_PATH_VERIFY_DEVICE");
     let db_host = require!("POSTGRES_HOST");
     let db_port = require!("POSTGRES_PORT");
     let db_name = require!("POSTGRES_NAME");
@@ -151,6 +155,8 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         frontend_path_verify_email,
         frontend_path_reset_password,
         frontend_path_confirm_email_change,
+        frontend_path_confirm_account_deletion,
+        frontend_path_verify_device,
 
         // Database
         db_host,

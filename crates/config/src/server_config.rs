@@ -16,6 +16,8 @@ pub struct ServerConfig {
     pub auth_email_verification_token_expire_time: i64, // minutes
     pub auth_password_reset_token_expire_time: i64, // minutes
     pub auth_email_change_token_expire_time: i64, // minutes
+    pub auth_account_deletion_token_expire_time: i64, // minutes
+    pub auth_device_verify_token_expire_time: i64, // minutes (new-device login verification)
     pub oauth_pending_signup_ttl_minutes: i64, // OAuth pending signup TTL (minutes)
 
     // Google
@@ -248,6 +250,18 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
             .and_then(|v| v.parse::<i64>().ok())
             .unwrap_or(15)
             .max(0), // Default 15 minutes
+        auth_account_deletion_token_expire_time: env::var(
+            "AUTH_ACCOUNT_DELETION_TOKEN_EXPIRE_TIME",
+        )
+        .ok()
+        .and_then(|v| v.parse::<i64>().ok())
+        .unwrap_or(30)
+        .max(0), // Default 30 minutes
+        auth_device_verify_token_expire_time: env::var("AUTH_DEVICE_VERIFY_TOKEN_EXPIRE_TIME")
+            .ok()
+            .and_then(|v| v.parse::<i64>().ok())
+            .unwrap_or(30)
+            .max(0), // Default 30 minutes
         oauth_pending_signup_ttl_minutes: env::var("OAUTH_PENDING_SIGNUP_TTL_MINUTES")
             .ok()
             .and_then(|v| v.parse::<i64>().ok())
