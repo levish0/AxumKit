@@ -1,5 +1,6 @@
 pub mod backup_codes;
 mod common;
+pub use common::verify_totp_code;
 pub mod disable;
 pub mod enable;
 pub mod setup;

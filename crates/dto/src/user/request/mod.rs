@@ -1,6 +1,8 @@
 pub mod ban_user;
 pub mod check_handle_available;
+pub mod confirm_account_deletion;
 pub mod create_user;
+pub mod delete_my_account;
 pub mod get_user_profile;
 pub mod get_user_profile_by_id;
 pub mod grant_role;
@@ -11,7 +13,9 @@ pub mod upload_user_image;
 
 pub use ban_user::BanUserRequest;
 pub use check_handle_available::CheckHandleAvailablePath;
+pub use confirm_account_deletion::ConfirmAccountDeletionRequest;
 pub use create_user::CreateUserRequest;
+pub use delete_my_account::DeleteMyAccountRequest;
 pub use get_user_profile::GetUserProfileRequest;
 pub use get_user_profile_by_id::GetUserProfileByIdRequest;
 pub use grant_role::GrantRoleRequest;
