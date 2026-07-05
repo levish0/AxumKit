@@ -1,8 +1,9 @@
-use crate::service::auth::totp::service_totp_verify;
+use crate::service::auth::totp::{TotpVerifyResult, service_totp_verify};
 use crate::state::AppState;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
 use dto::auth::request::TotpVerifyRequest;
+use dto::auth::response::DeviceVerificationRequiredResponse;
 use dto::auth::response::SessionTokenResponse;
 use dto::auth::response::create_login_response;
 use dto::validator::json_validator::ValidatedJson;
@@ -14,6 +15,7 @@ use errors::errors::{ErrorResponse, Errors};
     request_body = TotpVerifyRequest,
     responses(
         (status = 204, description = "TOTP verified, login successful"),
+        (status = 202, description = "New-device email verification required", body = DeviceVerificationRequiredResponse),
         (status = 400, description = "Invalid TOTP code or temp token"),
         (status = 500, description = "Internal Server Error")
     ),
@@ -26,12 +28,21 @@ pub async fn totp_verify(
     let result = service_totp_verify(
         &state.db,
         &state.redis_session,
+        &state.worker,
         &payload.temp_token,
         &payload.code,
     )
     .await?;
 
-    create_login_response(result.session_id, result.remember_me)
+    match result {
+        TotpVerifyResult::SessionCreated {
+            session_id,
+            remember_me,
+        } => create_login_response(session_id, remember_me),
+        TotpVerifyResult::DeviceVerificationRequired => {
+            Ok(DeviceVerificationRequiredResponse::new().into_response())
+        }
+    }
 }
 
 #[utoipa::path(
@@ -55,11 +66,21 @@ pub async fn totp_verify_app(
     let result = service_totp_verify(
         &state.db,
         &state.redis_session,
+        &state.worker,
         &payload.temp_token,
         &payload.code,
     )
     .await?;
 
-    // App client holds the token itself → return it in the body (no cookie).
-    Ok(SessionTokenResponse::new(result.session_id).into_response())
+    match result {
+        // App client holds the token itself → return it in the body (no cookie).
+        TotpVerifyResult::SessionCreated { session_id, .. } => {
+            Ok(SessionTokenResponse::new(session_id).into_response())
+        }
+        // Unreachable for the app flow (temp token carries apply_device_check=false), but handle
+        // exhaustively.
+        TotpVerifyResult::DeviceVerificationRequired => {
+            Ok(DeviceVerificationRequiredResponse::new().into_response())
+        }
+    }
 }

@@ -13,4 +13,5 @@ pub mod routes;
 pub mod session;
 pub mod signup;
 pub mod totp;
+pub mod verify_device;
 pub mod verify_email;

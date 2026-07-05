@@ -17,6 +17,7 @@ use super::totp::regenerate_backup_codes::totp_regenerate_backup_codes;
 use super::totp::setup::totp_setup;
 use super::totp::status::totp_status;
 use super::totp::verify::{totp_verify, totp_verify_app};
+use super::verify_device::auth_verify_device;
 use super::verify_email::{auth_verify_email, auth_verify_email_app};
 use crate::api::v0::routes::auth::oauth::github::github_authorize::auth_github_authorize;
 use crate::api::v0::routes::auth::oauth::github::github_link::auth_github_link;
@@ -80,6 +81,8 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         .route("/auth/totp/enable", post(totp_enable))
         // TOTP verify route (public, for 2FA login)
         .route("/auth/totp/verify", post(totp_verify))
+        // New-device sign-in confirmation (public, emailed-token proof; OWASP ASVS 6.3.5)
+        .route("/auth/device/verify", post(auth_verify_device))
         // TOTP backup codes regeneration (require session)
         .route(
             "/auth/totp/backup-codes/regenerate",

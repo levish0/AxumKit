@@ -10,6 +10,7 @@ pub mod totp_disable;
 pub mod totp_enable;
 pub mod totp_regenerate_backup_codes;
 pub mod totp_verify;
+pub mod verify_device;
 pub mod verify_email;
 
 pub use change_email::ChangeEmailRequest;
@@ -24,4 +25,5 @@ pub use totp_disable::TotpDisableRequest;
 pub use totp_enable::TotpEnableRequest;
 pub use totp_regenerate_backup_codes::TotpRegenerateBackupCodesRequest;
 pub use totp_verify::TotpVerifyRequest;
+pub use verify_device::VerifyDeviceRequest;
 pub use verify_email::VerifyEmailRequest;

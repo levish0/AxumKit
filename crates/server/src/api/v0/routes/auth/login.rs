@@ -1,4 +1,5 @@
 use crate::service::auth::LoginResult;
+use crate::service::auth::device::DeviceCheck;
 use crate::service::auth::login::service_login;
 use crate::state::AppState;
 use crate::utils::extract::extract_ip_address::extract_ip_address;
@@ -12,10 +13,14 @@ use axum::{
 use axum_extra::{TypedHeader, headers::UserAgent};
 use dto::auth::request::LoginRequest;
 use dto::auth::response::create_login_response;
-use dto::auth::response::{SessionTokenResponse, TotpRequiredResponse};
+use dto::auth::response::{
+    DeviceVerificationRequiredResponse, SessionTokenResponse, TotpRequiredResponse,
+    device_cookie_name,
+};
 use dto::validator::json_validator::ValidatedJson;
 use errors::errors::{ErrorResponse, Errors};
 use std::net::SocketAddr;
+use tower_cookies::Cookies;
 
 #[utoipa::path(
     post,
@@ -34,19 +39,26 @@ use std::net::SocketAddr;
 pub async fn auth_login(
     user_agent: Option<TypedHeader<UserAgent>>,
     headers: HeaderMap,
+    cookies: Cookies,
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
     ValidatedJson(payload): ValidatedJson<LoginRequest>,
 ) -> Result<Response, Errors> {
     let user_agent = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
+    // Browser flow: present the device cookie (if any) for new-device verification.
+    let device_token = cookies
+        .get(&device_cookie_name())
+        .map(|c| c.value().to_string());
 
     let result = service_login(
         &state.db,
         &state.redis_session,
+        &state.worker,
         payload,
         Some(user_agent),
         Some(ip_address),
+        DeviceCheck::Browser(device_token),
     )
     .await?;
 
@@ -57,6 +69,9 @@ pub async fn auth_login(
         } => create_login_response(session_id, remember_me),
         LoginResult::TotpRequired(temp_token) => {
             Ok(TotpRequiredResponse { temp_token }.into_response())
+        }
+        LoginResult::DeviceVerificationRequired => {
+            Ok(DeviceVerificationRequiredResponse::new().into_response())
         }
     }
 }
@@ -86,12 +101,15 @@ pub async fn auth_login_app(
     let user_agent = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
+    // App flow: no browser cookie jar, so new-device cookie verification does not apply.
     let result = service_login(
         &state.db,
         &state.redis_session,
+        &state.worker,
         payload,
         Some(user_agent),
         Some(ip_address),
+        DeviceCheck::Skip,
     )
     .await?;
 
@@ -102,6 +120,10 @@ pub async fn auth_login_app(
         }
         LoginResult::TotpRequired(temp_token) => {
             Ok(TotpRequiredResponse { temp_token }.into_response())
+        }
+        LoginResult::DeviceVerificationRequired => {
+            // Unreachable for the app flow (DeviceCheck::Skip), but handle exhaustively.
+            Ok(DeviceVerificationRequiredResponse::new().into_response())
         }
     }
 }

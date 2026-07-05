@@ -1,6 +1,8 @@
 pub mod auth_check;
 pub mod cookie;
 pub mod login;
+pub mod device_cookie;
+pub mod device_verification_required;
 pub mod logout;
 pub mod session_token;
 pub mod sessions;
@@ -12,6 +14,8 @@ pub mod totp_status;
 
 pub use auth_check::{AuthCheckIdentity, create_auth_check_response};
 pub use cookie::session_cookie_name;
+pub use device_cookie::{build_device_cookie, device_cookie_name};
+pub use device_verification_required::DeviceVerificationRequiredResponse;
 pub use login::create_login_response;
 pub use logout::create_logout_response;
 pub use session_token::SessionTokenResponse;

@@ -2,11 +2,12 @@ use dto::auth::request::{
     ChangeEmailRequest, ChangePasswordRequest, CompleteSignupRequest, ConfirmEmailChangeRequest,
     ForgotPasswordRequest, LoginRequest, ResendVerificationEmailRequest, ResetPasswordRequest,
     TotpDisableRequest, TotpEnableRequest, TotpRegenerateBackupCodesRequest, TotpVerifyRequest,
-    VerifyEmailRequest,
+    VerifyDeviceRequest, VerifyEmailRequest,
 };
 use dto::auth::response::{
-    ListSessionsResponse, SessionInfo, SessionTokenResponse, TotpBackupCodesResponse,
-    TotpEnableResponse, TotpRequiredResponse, TotpSetupResponse, TotpStatusResponse,
+    DeviceVerificationRequiredResponse, ListSessionsResponse, SessionInfo, SessionTokenResponse,
+    TotpBackupCodesResponse, TotpEnableResponse, TotpRequiredResponse, TotpSetupResponse,
+    TotpStatusResponse,
 };
 use dto::oauth::request::{
     GithubLinkRequest, GithubLoginRequest, GithubTokenRequest, GoogleLinkRequest,
@@ -53,6 +54,7 @@ use utoipa::OpenApi;
         super::oauth::list_oauth_connections::list_oauth_connections,
         super::oauth::unlink_oauth_connection::unlink_oauth_connection,
         super::verify_email::auth_verify_email,
+        super::verify_device::auth_verify_device,
         super::resend_verification_email::auth_resend_verification_email,
         super::change_password::auth_change_password,
         super::change_email::auth_change_email,
@@ -91,6 +93,8 @@ use utoipa::OpenApi;
             TotpEnableResponse,
             TotpBackupCodesResponse,
             TotpRequiredResponse,
+            VerifyDeviceRequest,
+            DeviceVerificationRequiredResponse,
             SessionInfo,
             ListSessionsResponse,
             SessionTokenResponse,
