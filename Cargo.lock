@@ -572,7 +572,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auth-core"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "aes-gcm",
  "base64",
@@ -1528,7 +1528,7 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "axum",
  "dotenvy",
@@ -2007,7 +2007,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dto"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "axum",
  "axum-extra",
@@ -2136,7 +2136,7 @@ dependencies = [
 
 [[package]]
 name = "entity"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "sea-orm",
  "serde",
@@ -2186,7 +2186,7 @@ dependencies = [
 
 [[package]]
 name = "errors"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "axum",
  "config",
@@ -5185,7 +5185,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -5643,7 +5643,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "storage"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
@@ -7076,7 +7076,7 @@ dependencies = [
 
 [[package]]
 name = "worker"
-version = "0.10.3"
+version = "0.11.0"
 dependencies = [
  "anyhow",
  "async-nats",

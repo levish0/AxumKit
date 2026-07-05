@@ -14,6 +14,6 @@ pub fn v0_routes(state: AppState) -> Router<AppState> {
         .merge(AuthRoutes(state.clone()))
         .merge(SearchRoutes())
         .merge(ActionLogsRoutes())
-        .merge(ModerationRoutes())
+        .merge(ModerationRoutes(state.clone()))
         .merge(StreamRoutes())
 }
