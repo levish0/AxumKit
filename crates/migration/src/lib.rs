@@ -11,6 +11,8 @@ mod m20251215_034351_action_resource_type_enum;
 mod m20251215_034352_moderation_resource_type_enum;
 mod m20251215_034415_create_action_logs;
 mod m20260405_073559_create_moderation_logs;
+mod m20260705_000000_create_auth_events;
+mod m20260705_000100_create_known_devices;
 
 pub struct Migrator;
 
@@ -28,6 +30,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20251215_034352_moderation_resource_type_enum::Migration),
             Box::new(m20251215_034415_create_action_logs::Migration),
             Box::new(m20260405_073559_create_moderation_logs::Migration),
+            Box::new(m20260705_000000_create_auth_events::Migration),
+            Box::new(m20260705_000100_create_known_devices::Migration),
         ]
     }
 }

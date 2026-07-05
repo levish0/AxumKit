@@ -1,5 +1,7 @@
 pub mod action_logs;
+pub mod auth_events;
 pub mod common;
+pub mod known_devices;
 pub mod moderation_logs;
 pub mod user_bans;
 pub mod user_oauth_connections;
