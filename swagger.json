@@ -10,7 +10,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "paths": {
     "/health-check": {
@@ -609,6 +609,61 @@
           },
           "500": {
             "description": "Internal Server Error"
+          }
+        }
+      }
+    },
+    "/v0/auth/device/verify": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Confirm a new-device sign-in",
+        "description": "Completes a login that was held for new-device verification (OWASP ASVS 6.3.5). Consumes the single-use token delivered to the account email, trusts the device (sets the long-lived device cookie), and issues the session cookie. The emailed token is the proof, so no session is required.",
+        "operationId": "auth_verify_device",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyDeviceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Device verified; session and device cookies were issued"
+          },
+          "400": {
+            "description": "Invalid or expired verification token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or session store error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -1576,6 +1631,16 @@
           "required": true
         },
         "responses": {
+          "202": {
+            "description": "New-device email verification required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceVerificationRequiredResponse"
+                }
+              }
+            }
+          },
           "204": {
             "description": "TOTP verified, login successful"
           },
@@ -1881,6 +1946,67 @@
           }
         ]
       },
+      "delete": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Delete my account",
+        "description": "Deletes the current account after re-authentication (OWASP ASVS 7.5.1). Password accounts must supply `password`; OAuth-only accounts with TOTP must supply `totp_code`. OAuth-only accounts with no inline factor receive a confirmation email instead and the response is 202 (deletion completes at the confirm endpoint).",
+        "operationId": "delete_my_account",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteMyAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Confirmation email sent; deletion pending confirmation"
+          },
+          "204": {
+            "description": "Account deleted successfully"
+          },
+          "401": {
+            "description": "Unauthorized - Invalid session or missing/failed re-authentication",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or session error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
       "patch": {
         "tags": [
           "User"
@@ -1994,6 +2120,61 @@
             "session_id_cookie": []
           }
         ]
+      }
+    },
+    "/v0/user/me/deletion/confirm": {
+      "post": {
+        "tags": [
+          "User"
+        ],
+        "summary": "Confirm account deletion",
+        "description": "Completes a deferred account deletion for OAuth-only accounts using the single-use token delivered to the account's email address. The emailed token is the re-authentication proof, so no session is required.",
+        "operationId": "confirm_account_deletion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmAccountDeletionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Account deleted successfully"
+          },
+          "400": {
+            "description": "Bad Request - Invalid or expired token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or session error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v0/user/me/profile-image": {
@@ -2782,6 +2963,19 @@
           }
         }
       },
+      "ConfirmAccountDeletionRequest": {
+        "type": "object",
+        "description": "Request body for confirming account deletion via email token.",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The single-use token delivered to the account's email address."
+          }
+        }
+      },
       "ConfirmEmailChangeRequest": {
         "type": "object",
         "required": [
@@ -2846,6 +3040,39 @@
           "Older",
           "Newer"
         ]
+      },
+      "DeleteMyAccountRequest": {
+        "type": "object",
+        "description": "Request body for deleting the current account (re-authentication).",
+        "properties": {
+          "password": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Current password. Required for accounts that have a password set."
+          },
+          "totp_code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "TOTP code (6 digits) or backup code (8 chars). Required for OAuth-only accounts\nthat have TOTP enabled."
+          }
+        }
+      },
+      "DeviceVerificationRequiredResponse": {
+        "type": "object",
+        "description": "Response body when a new-device email verification is required to finish login.",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Machine-readable status marker."
+          }
+        }
       },
       "ErrorResponse": {
         "type": "object",
@@ -3996,6 +4223,19 @@
               "string",
               "null"
             ]
+          }
+        }
+      },
+      "VerifyDeviceRequest": {
+        "type": "object",
+        "description": "Request body for confirming a new-device sign-in.",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "The single-use token delivered to the account's email address."
           }
         }
       },
