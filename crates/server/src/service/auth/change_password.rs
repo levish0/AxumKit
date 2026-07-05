@@ -1,7 +1,11 @@
+use crate::bridge::worker_client;
+use crate::repository::auth_events::AUTH_EVENT_PASSWORD_CHANGED;
 use crate::repository::user::UserUpdateParams;
 use crate::repository::user::repository_get_user_by_id;
 use crate::repository::user::repository_update_user;
+use crate::service::auth::audit::record_auth_event;
 use crate::service::auth::session::SessionService;
+use crate::state::WorkerClient;
 use crate::utils::crypto::password::{hash_password, verify_password};
 use dto::auth::request::ChangePasswordRequest;
 use errors::errors::{Errors, ServiceResult};
@@ -15,6 +19,7 @@ use uuid::Uuid;
 pub async fn service_change_password(
     conn: &DatabaseConnection,
     redis_conn: &ConnectionManager,
+    worker: &WorkerClient,
     user_id: Uuid,
     session_id: &str,
     payload: ChangePasswordRequest,
@@ -22,6 +27,8 @@ pub async fn service_change_password(
     let txn = conn.begin().await?;
 
     let user = repository_get_user_by_id(&txn, user_id).await?;
+    let email = user.email.clone();
+    let handle = user.handle.clone();
 
     let password_hash = user.password.ok_or(Errors::UserPasswordNotSet)?;
 
@@ -51,6 +58,15 @@ pub async fn service_change_password(
         SessionService::delete_other_sessions(redis_conn, &user_id.to_string(), session_id).await?;
 
     info!(user_id = %user_id, invalidated_sessions = deleted_count, "Password changed");
+
+    // Durable audit + owner notification of the credential change (OWASP ASVS 6.3.7).
+    record_auth_event(conn, Some(user_id), AUTH_EVENT_PASSWORD_CHANGED, None, None, None).await;
+    if let Err(e) =
+        worker_client::send_security_alert(worker, &email, &handle, "Your password was changed")
+            .await
+    {
+        tracing::warn!(user_id = %user_id, error = ?e, "Failed to queue password-change alert email");
+    }
 
     Ok(())
 }
