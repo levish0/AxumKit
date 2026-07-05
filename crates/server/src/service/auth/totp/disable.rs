@@ -61,7 +61,15 @@ pub async fn service_totp_disable(
     info!(user_id = %user_id, "TOTP disabled");
 
     // Durable audit + owner notification of the 2FA change (OWASP ASVS 6.3.7).
-    record_auth_event(conn, Some(user_id), AUTH_EVENT_TOTP_DISABLED, None, None, None).await;
+    record_auth_event(
+        conn,
+        Some(user_id),
+        AUTH_EVENT_TOTP_DISABLED,
+        None,
+        None,
+        None,
+    )
+    .await;
     if let Err(e) = worker_client::send_security_alert(
         worker,
         &email,

@@ -60,7 +60,15 @@ pub async fn service_change_password(
     info!(user_id = %user_id, invalidated_sessions = deleted_count, "Password changed");
 
     // Durable audit + owner notification of the credential change (OWASP ASVS 6.3.7).
-    record_auth_event(conn, Some(user_id), AUTH_EVENT_PASSWORD_CHANGED, None, None, None).await;
+    record_auth_event(
+        conn,
+        Some(user_id),
+        AUTH_EVENT_PASSWORD_CHANGED,
+        None,
+        None,
+        None,
+    )
+    .await;
     if let Err(e) =
         worker_client::send_security_alert(worker, &email, &handle, "Your password was changed")
             .await

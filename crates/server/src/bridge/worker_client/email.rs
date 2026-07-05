@@ -91,7 +91,10 @@ pub async fn send_account_deletion(
     token: &str,
     valid_minutes: u64,
 ) -> Result<(), Errors> {
-    info!("Queuing account deletion confirmation email job for {}", email_to);
+    info!(
+        "Queuing account deletion confirmation email job for {}",
+        email_to
+    );
 
     let job = SendEmailJob {
         to: email_to.to_string(),
@@ -105,7 +108,10 @@ pub async fn send_account_deletion(
 
     publish_job(worker, EMAIL_SUBJECT, &job).await?;
 
-    info!("Account deletion confirmation email job queued for {}", email_to);
+    info!(
+        "Account deletion confirmation email job queued for {}",
+        email_to
+    );
     Ok(())
 }
 

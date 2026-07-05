@@ -113,10 +113,14 @@ pub async fn service_totp_verify(
     .await?;
 
     match outcome {
-        DeviceLoginOutcome::SessionCreated { session_token } => Ok(TotpVerifyResult::SessionCreated {
-            session_id: session_token,
-            remember_me: token_data.remember_me,
-        }),
-        DeviceLoginOutcome::VerificationRequired => Ok(TotpVerifyResult::DeviceVerificationRequired),
+        DeviceLoginOutcome::SessionCreated { session_token } => {
+            Ok(TotpVerifyResult::SessionCreated {
+                session_id: session_token,
+                remember_me: token_data.remember_me,
+            })
+        }
+        DeviceLoginOutcome::VerificationRequired => {
+            Ok(TotpVerifyResult::DeviceVerificationRequired)
+        }
     }
 }

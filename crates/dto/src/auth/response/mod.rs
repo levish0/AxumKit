@@ -1,8 +1,8 @@
 pub mod auth_check;
 pub mod cookie;
-pub mod login;
 pub mod device_cookie;
 pub mod device_verification_required;
+pub mod login;
 pub mod logout;
 pub mod session_token;
 pub mod sessions;
