@@ -2,22 +2,30 @@ use super::common::verify_totp_code;
 use crate::repository::user::{
     UserUpdateParams, repository_get_user_by_id, repository_update_user,
 };
-use crate::service::auth::session::SessionService;
+use crate::service::auth::device::{DeviceCheck, DeviceLoginOutcome, resolve_device_login};
 use crate::service::auth::totp::TotpTempToken;
+use crate::state::WorkerClient;
 use crate::utils::crypto::backup_code::verify_backup_code;
 use errors::errors::{Errors, ServiceResult};
 use redis::aio::ConnectionManager as RedisClient;
 use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 
-pub struct TotpVerifyResult {
-    pub session_id: String,
-    pub remember_me: bool,
+/// TOTP verification result: session created, or new-device verification required.
+pub enum TotpVerifyResult {
+    /// Trusted device (or app): the session token is returned.
+    SessionCreated {
+        session_id: String,
+        remember_me: bool,
+    },
+    /// New device: the session is withheld and a verification email was sent (OWASP ASVS 6.3.5).
+    DeviceVerificationRequired,
 }
 
 pub async fn service_totp_verify(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     redis: &RedisClient,
+    worker: &WorkerClient,
     temp_token: &str,
     code: &str,
 ) -> ServiceResult<TotpVerifyResult> {
@@ -25,7 +33,7 @@ pub async fn service_totp_verify(
         .await?
         .ok_or(Errors::TotpTempTokenInvalid)?;
 
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
     let user = repository_get_user_by_id(&txn, token_data.user_id).await?;
 
@@ -82,19 +90,33 @@ pub async fn service_totp_verify(
 
     txn.commit().await?;
 
-    // raw_token goes out only in the cookie; the server stores its hash.
-    let (raw_token, _session) = SessionService::create_session(
+    info!(user_id = %token_data.user_id, "TOTP verified");
+
+    // New-device verification: use the device context carried from the initial login.
+    // Trusted device (or app) → session created; new device → email challenge.
+    let device_check = if token_data.apply_device_check {
+        DeviceCheck::Browser(token_data.device_token.clone())
+    } else {
+        DeviceCheck::Skip
+    };
+
+    let outcome = resolve_device_login(
+        db,
         redis,
-        token_data.user_id.to_string(),
-        token_data.user_agent,
-        token_data.ip_address,
+        worker,
+        &user,
+        device_check,
+        token_data.user_agent.clone(),
+        token_data.ip_address.clone(),
+        token_data.remember_me,
     )
     .await?;
 
-    info!(user_id = %token_data.user_id, "TOTP verified");
-
-    Ok(TotpVerifyResult {
-        session_id: raw_token,
-        remember_me: token_data.remember_me,
-    })
+    match outcome {
+        DeviceLoginOutcome::SessionCreated { session_token } => Ok(TotpVerifyResult::SessionCreated {
+            session_id: session_token,
+            remember_me: token_data.remember_me,
+        }),
+        DeviceLoginOutcome::VerificationRequired => Ok(TotpVerifyResult::DeviceVerificationRequired),
+    }
 }
