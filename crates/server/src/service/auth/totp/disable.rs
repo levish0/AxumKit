@@ -21,7 +21,8 @@ pub async fn service_totp_disable(
         return Err(Errors::TotpNotEnabled);
     }
 
-    let secret_base32 = user.totp_secret.clone().ok_or(Errors::TotpNotEnabled)?;
+    let encrypted_secret = user.totp_secret.clone().ok_or(Errors::TotpNotEnabled)?;
+    let secret_base32 = crate::utils::crypto::totp_secret::decrypt_totp_secret(&encrypted_secret)?;
     let backup_codes = user.totp_backup_codes.clone().unwrap_or_default();
 
     if code.len() == 6 {

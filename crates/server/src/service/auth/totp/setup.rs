@@ -45,11 +45,16 @@ pub async fn service_totp_setup(
         .get_qr_base64()
         .map_err(|_| Errors::TotpQrGenerationFailed)?;
 
+    // Encrypt the TOTP secret before it touches the database: a DB-only leak must not expose 2FA
+    // seeds. The AES-GCM key is derived from TOTP_ENCRYPTION_KEY, which lives in config, not the DB.
+    let encrypted_secret =
+        crate::utils::crypto::totp_secret::encrypt_totp_secret(&secret_base32)?;
+
     repository_update_user(
         &txn,
         user_id,
         UserUpdateParams {
-            totp_secret: Some(Some(secret_base32)),
+            totp_secret: Some(Some(encrypted_secret)),
             ..Default::default()
         },
     )

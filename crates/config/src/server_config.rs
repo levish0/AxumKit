@@ -186,6 +186,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
 
     // Required string vars
     let totp_secret = require!("TOTP_SECRET");
+    let totp_encryption_key = require!("TOTP_ENCRYPTION_KEY");
     let google_client_id = require!("GOOGLE_CLIENT_ID");
     let google_client_secret = require!("GOOGLE_CLIENT_SECRET");
     let google_redirect_uri = require!("GOOGLE_REDIRECT_URI");
@@ -224,6 +225,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     ServerConfig {
         is_dev,
         totp_secret,
+        totp_encryption_key,
 
         auth_session_max_lifetime_hours: auth_session_max_lifetime_hours.max(0),
         auth_session_sliding_ttl_hours: auth_session_sliding_ttl_hours.max(0),

@@ -21,7 +21,8 @@ pub async fn service_regenerate_backup_codes(
         return Err(Errors::TotpNotEnabled);
     }
 
-    let secret_base32 = user.totp_secret.clone().ok_or(Errors::TotpNotEnabled)?;
+    let encrypted_secret = user.totp_secret.clone().ok_or(Errors::TotpNotEnabled)?;
+    let secret_base32 = crate::utils::crypto::totp_secret::decrypt_totp_secret(&encrypted_secret)?;
 
     if !verify_totp_code(&secret_base32, &user.email, code)? {
         return Err(Errors::TotpInvalidCode);
