@@ -1,23 +1,34 @@
+//! TOTP backup-code hashing and verification.
+//!
+//! Backup codes are hashed with a keyed blake3 (the generic primitive lives in `auth-core`); this
+//! app-layer adapter owns the domain-separation context and supplies the key from `TOTP_SECRET`.
+
+use auth_core::constant_time::constant_time_str_eq;
+use auth_core::keyed_hash;
 use config::ServerConfig;
 
-/// Hash backup codes using Blake3 keyed hash
-/// Uses TOTP_SECRET as the key to generate a cryptographically secure hash
+/// Domain-separation context for backup-code hashing. Owned by the app layer (kept out of the
+/// generic `auth-core` primitive) and must stay stable — changing it invalidates stored hashes.
+const BACKUP_CODE_CONTEXT: &str = "axumkit totp backup code v1";
+
+/// Hash a backup code with a keyed blake3 hash, using `TOTP_SECRET` as the key.
 pub fn hash_backup_code(code: &str) -> String {
-    let config = ServerConfig::get();
-    let key = blake3::derive_key("axumkit totp backup code v1", config.totp_secret.as_bytes());
-    let mut hasher = blake3::Hasher::new_keyed(&key);
-    hasher.update(code.as_bytes());
-    hasher.finalize().to_hex().to_string()
+    let key = ServerConfig::get().totp_secret.as_bytes();
+    keyed_hash::hash_hex(key, BACKUP_CODE_CONTEXT, code.as_bytes())
 }
 
-/// Hash and return a list of backup codes
+/// Hash a list of backup codes.
 pub fn hash_backup_codes(codes: &[String]) -> Vec<String> {
     codes.iter().map(|c| hash_backup_code(c)).collect()
 }
 
-/// Check if the input code matches any of the stored hashes
-/// Returns the matching index if found, None otherwise
+/// Returns the index of the stored hash matching `code`, or `None`.
 pub fn verify_backup_code(code: &str, stored_hashes: &[String]) -> Option<usize> {
     let input_hash = hash_backup_code(code);
-    stored_hashes.iter().position(|h| h == &input_hash)
+    // Compare each stored digest in constant time. The digests are keyed-blake3 of the secret
+    // code, so a plain `==` would be a timing oracle on the code's hash; `position` still
+    // short-circuits, but only on which slot matched, not on the secret itself.
+    stored_hashes
+        .iter()
+        .position(|h| constant_time_str_eq(h, &input_hash))
 }

@@ -16,6 +16,7 @@ module_inception = "allow"
 
 [workspace.dependencies]
 # Internal crates
+auth-core = { path = "crates/auth-core" }
 config = { path = "crates/config" }
 constants = { path = "crates/constants" }
 dto = { path = "crates/dto" }
@@ -38,6 +39,8 @@ sea-orm = { version = "2.0.0-rc.41", features = ["postgres-array", "sqlx-postgre
 redis = { version = "1.2.4", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
 argon2 = "0.5.3"
+aes-gcm = "0.11.0"
+subtle = "2.6.1"
 oauth2 = { version = "5.0.0"}
 oauth2-reqwest = "0.1.0-alpha.3"
 totp-rs = { version = "5.7.1", features = ["qr"] }

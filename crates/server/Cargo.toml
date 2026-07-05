@@ -19,6 +19,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Internal crates
+auth-core.workspace = true
 config.workspace = true
 constants.workspace = true
 dto.workspace = true
