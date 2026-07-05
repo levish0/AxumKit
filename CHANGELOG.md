@@ -5,6 +5,57 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-07-05
+
+Security-hardening release. A batch of auth/security features ported from the downstream
+`V7` app, aligned with OWASP Top 10:2025 and ASVS 5.0.
+
+### Added
+
+- **`auth-core` crate** — project-agnostic cryptographic primitives (`aead`, `constant_time`,
+  `keyed_hash`, `token`). Callers supply the key material and domain-separation `context`
+  strings, so the primitives can be audited independently of the app. The app-layer adapters in
+  `server/utils/crypto` own the `"axumkit …"` context strings.
+- **New-device login verification (OWASP ASVS 6.3.5)** — a login from an unrecognized browser
+  device is held and challenged by email; only a confirmed device is trusted and remembered via a
+  long-lived, name-prefixed (`__Host-`/`__Secure-`) device cookie. New `known_devices` and
+  `auth_events` tables, a device service (`resolve`/`confirm`), `POST /v0/auth/device/verify`, and
+  `device_verification` / `security_alert` email templates. Integrated into both the password and
+  the TOTP-verify login flows (native-app clients skip the browser-cookie check).
+- **Authentication audit log (OWASP ASVS V16 / A09)** — private-tier `auth_events` table recording
+  login success/failure, password change, and TOTP-disable, with actor IP + user-agent. Recording
+  is best-effort so an audit-write failure never breaks the auth flow. No FK to `users`, so rows
+  survive account deletion for forensics.
+- **Security-alert emails** — the account owner is notified on sensitive changes (password changed,
+  two-factor disabled).
+- **Router-boundary RBAC gates** — `require_admin` / `require_mod` middleware make "which routes
+  need which privilege" a single greppable property of the route table, so a handler can no longer
+  expose a privileged endpoint by forgetting an in-service check.
+- **Self-service account deletion (OWASP ASVS 7.5.1)** — `DELETE /v0/user/me` requires
+  re-authentication (password, or a TOTP/backup code for OAuth-only 2FA accounts). OAuth-only
+  accounts with no inline factor confirm via a single-use emailed token
+  (`POST /v0/user/me/deletion/confirm`), backed by an `account_deletion` email template.
+
+### Changed
+
+- **TOTP secrets are encrypted at rest (OWASP A04).** The TOTP seed is now stored AES-256-GCM
+  encrypted (keyed from the new `TOTP_ENCRYPTION_KEY`, which lives outside the database) instead of
+  plaintext base32, so a DB-only leak no longer exposes 2FA seeds.
+- **Backup-code verification is constant-time.** Stored keyed-hash digests are compared with a
+  constant-time equality to remove a timing oracle on the code's hash.
+- **Redis auth tokens are hashed at rest.** The TOTP temp-token Redis key now stores
+  `blake3(token)` (matching the reset / email-change discipline), so a Redis snapshot yields only
+  non-replayable hashes. `constants::cache_keys` was restructured into a `cache_keys/` module.
+- **`/v0/moderation/logs` now requires the `Mod` role.** It was previously served with no
+  authorization check.
+
+### Security
+
+- New required env vars: `TOTP_ENCRYPTION_KEY`, `AUTH_ACCOUNT_DELETION_TOKEN_EXPIRE_TIME`,
+  `AUTH_DEVICE_VERIFY_TOKEN_EXPIRE_TIME`, `FRONTEND_PATH_CONFIRM_ACCOUNT_DELETION`,
+  `FRONTEND_PATH_VERIFY_DEVICE` (see `.env.example`). Run the two new migrations
+  (`create_auth_events`, `create_known_devices`) before deploying.
+
 ## [0.10.3] - 2026-06-28
 
 ### Changed
