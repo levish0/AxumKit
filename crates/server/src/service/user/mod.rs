@@ -1,3 +1,4 @@
+pub mod account;
 pub mod check_handle_available;
 pub mod delete_banner_image;
 pub mod delete_profile_image;

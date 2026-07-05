@@ -1,5 +1,7 @@
 use super::check_handle_available::check_handle_available;
+use super::confirm_account_deletion::confirm_account_deletion;
 use super::delete_banner_image::delete_banner_image;
+use super::delete_my_account::delete_my_account;
 use super::delete_profile_image::delete_profile_image;
 use super::get_my_profile::get_my_profile;
 use super::get_user_profile::get_user_profile;
@@ -38,7 +40,12 @@ pub fn user_routes() -> Router<AppState> {
 
     // Protected routes (authentication via extractors)
     let protected_routes = Router::new()
-        .route("/user/me", get(get_my_profile).patch(update_my_profile))
+        .route(
+            "/user/me",
+            get(get_my_profile)
+                .patch(update_my_profile)
+                .delete(delete_my_account),
+        )
         // User Management (admin actions)
         .route("/users/ban", post(ban_user))
         .route("/users/unban", post(unban_user))
@@ -47,6 +54,8 @@ pub fn user_routes() -> Router<AppState> {
 
     // Public routes (no authentication required)
     let public_routes = Router::new()
+        // Account deletion confirmation (emailed-token proof, no session required)
+        .route("/user/me/deletion/confirm", post(confirm_account_deletion))
         .route("/users/profile", get(get_user_profile))
         .route("/users/profile/id", get(get_user_profile_by_id))
         .route(

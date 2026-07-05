@@ -1,7 +1,8 @@
 use dto::user::{
     BanUserRequest, BanUserResponse, CheckHandleAvailablePath, CheckHandleAvailableResponse,
-    GetUserProfileByIdRequest, GetUserProfileRequest, GrantRoleRequest, GrantRoleResponse,
-    PublicUserProfile, RevokeRoleRequest, RevokeRoleResponse, UnbanUserRequest, UnbanUserResponse,
+    ConfirmAccountDeletionRequest, DeleteMyAccountRequest, GetUserProfileByIdRequest,
+    GetUserProfileRequest, GrantRoleRequest, GrantRoleResponse, PublicUserProfile,
+    RevokeRoleRequest, RevokeRoleResponse, UnbanUserRequest, UnbanUserResponse,
     UpdateMyProfileRequest, UploadUserImageRequest, UploadUserImageResponse, UserResponse,
 };
 use utoipa::OpenApi;
@@ -11,6 +12,8 @@ use utoipa::OpenApi;
     paths(
         super::get_my_profile::get_my_profile,
         super::update_my_profile::update_my_profile,
+        super::delete_my_account::delete_my_account,
+        super::confirm_account_deletion::confirm_account_deletion,
         super::upload_profile_image::upload_profile_image,
         super::upload_banner_image::upload_banner_image,
         super::delete_profile_image::delete_profile_image,
@@ -26,6 +29,8 @@ use utoipa::OpenApi;
     components(
         schemas(
             UserResponse,
+            DeleteMyAccountRequest,
+            ConfirmAccountDeletionRequest,
             UpdateMyProfileRequest,
             UploadUserImageRequest,
             UploadUserImageResponse,
