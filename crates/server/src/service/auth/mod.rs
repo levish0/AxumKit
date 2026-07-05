@@ -1,6 +1,8 @@
+pub mod audit;
 pub mod change_email;
 pub mod change_password;
 pub mod confirm_email_change;
+pub mod device;
 pub mod forgot_password;
 pub mod list_sessions;
 pub mod login;
