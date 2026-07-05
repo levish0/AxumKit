@@ -8,6 +8,9 @@ use std::sync::LazyLock;
 const EMAIL_VERIFICATION_MJML: &str = include_str!("email_verification.mjml");
 const RESET_PASSWORD_MJML: &str = include_str!("reset_password.mjml");
 const EMAIL_CHANGE_MJML: &str = include_str!("email_change.mjml");
+const ACCOUNT_DELETION_MJML: &str = include_str!("account_deletion.mjml");
+const DEVICE_VERIFICATION_MJML: &str = include_str!("device_verification.mjml");
+const SECURITY_ALERT_MJML: &str = include_str!("security_alert.mjml");
 
 /// Pre-rendered HTML templates (MJML → HTML conversion cached)
 static EMAIL_VERIFICATION_HTML: LazyLock<String> = LazyLock::new(|| {
@@ -20,6 +23,18 @@ static RESET_PASSWORD_HTML: LazyLock<String> = LazyLock::new(|| {
 
 static EMAIL_CHANGE_HTML: LazyLock<String> = LazyLock::new(|| {
     mjml_to_html(EMAIL_CHANGE_MJML).expect("Failed to parse email change template")
+});
+
+static ACCOUNT_DELETION_HTML: LazyLock<String> = LazyLock::new(|| {
+    mjml_to_html(ACCOUNT_DELETION_MJML).expect("Failed to parse account deletion template")
+});
+
+static DEVICE_VERIFICATION_HTML: LazyLock<String> = LazyLock::new(|| {
+    mjml_to_html(DEVICE_VERIFICATION_MJML).expect("Failed to parse device verification template")
+});
+
+static SECURITY_ALERT_HTML: LazyLock<String> = LazyLock::new(|| {
+    mjml_to_html(SECURITY_ALERT_MJML).expect("Failed to parse security alert template")
 });
 
 /// Render email verification template
@@ -72,6 +87,60 @@ pub fn render_email_change(
             username => username,
             confirmation_link => confirmation_link,
             valid_minutes => valid_minutes,
+        },
+    )
+}
+
+/// Render account deletion confirmation template
+pub fn render_account_deletion(
+    project_name: &str,
+    username: &str,
+    confirmation_link: &str,
+    valid_minutes: u64,
+) -> Result<String, TemplateError> {
+    render_with_context(
+        &ACCOUNT_DELETION_HTML,
+        context! {
+            project_name => project_name,
+            username => username,
+            confirmation_link => confirmation_link,
+            valid_minutes => valid_minutes,
+        },
+    )
+}
+
+/// Render new-device sign-in verification template
+pub fn render_device_verification(
+    project_name: &str,
+    username: &str,
+    device: &str,
+    confirmation_link: &str,
+    valid_minutes: u64,
+) -> Result<String, TemplateError> {
+    render_with_context(
+        &DEVICE_VERIFICATION_HTML,
+        context! {
+            project_name => project_name,
+            username => username,
+            device => device,
+            confirmation_link => confirmation_link,
+            valid_minutes => valid_minutes,
+        },
+    )
+}
+
+/// Render a security-alert notification (no link; pure "this happened on your account").
+pub fn render_security_alert(
+    project_name: &str,
+    username: &str,
+    event: &str,
+) -> Result<String, TemplateError> {
+    render_with_context(
+        &SECURITY_ALERT_HTML,
+        context! {
+            project_name => project_name,
+            username => username,
+            event => event,
         },
     )
 }

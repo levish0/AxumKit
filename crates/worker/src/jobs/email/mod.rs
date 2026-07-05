@@ -31,6 +31,22 @@ pub enum EmailTemplate {
         token: String,
         valid_minutes: u64,
     },
+    AccountDeletion {
+        username: String,
+        token: String,
+        valid_minutes: u64,
+    },
+    DeviceVerification {
+        username: String,
+        device: String,
+        token: String,
+        valid_minutes: u64,
+    },
+    SecurityAlert {
+        username: String,
+        /// Human-readable description of what changed (e.g. "Your password was changed").
+        event: String,
+    },
     Custom {
         html_content: String,
     },
@@ -125,6 +141,50 @@ fn render_template(template: &EmailTemplate) -> Result<String, anyhow::Error> {
                 *valid_minutes,
             )
             .map_err(|e| anyhow::anyhow!("Template error: {}", e))?
+        }
+        EmailTemplate::AccountDeletion {
+            username,
+            token,
+            valid_minutes,
+        } => {
+            let confirmation_link = format!(
+                "{}{}?token={}",
+                config.frontend_host,
+                config.frontend_path_confirm_account_deletion,
+                urlencoding::encode(token)
+            );
+            crate::templates::render_account_deletion(
+                &config.project_name,
+                username,
+                &confirmation_link,
+                *valid_minutes,
+            )
+            .map_err(|e| anyhow::anyhow!("Template error: {}", e))?
+        }
+        EmailTemplate::DeviceVerification {
+            username,
+            device,
+            token,
+            valid_minutes,
+        } => {
+            let confirmation_link = format!(
+                "{}{}?token={}",
+                config.frontend_host,
+                config.frontend_path_verify_device,
+                urlencoding::encode(token)
+            );
+            crate::templates::render_device_verification(
+                &config.project_name,
+                username,
+                device,
+                &confirmation_link,
+                *valid_minutes,
+            )
+            .map_err(|e| anyhow::anyhow!("Template error: {}", e))?
+        }
+        EmailTemplate::SecurityAlert { username, event } => {
+            crate::templates::render_security_alert(&config.project_name, username, event)
+                .map_err(|e| anyhow::anyhow!("Template error: {}", e))?
         }
         EmailTemplate::Custom { html_content } => html_content.clone(),
     };

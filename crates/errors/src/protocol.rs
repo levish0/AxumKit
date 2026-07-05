@@ -7,6 +7,7 @@ pub mod auth {
 pub mod user {
     pub const USER_INVALID_PASSWORD: &str = "user:invalid_password";
     pub const USER_PASSWORD_NOT_SET: &str = "user:password_not_set";
+    pub const REAUTHENTICATION_REQUIRED: &str = "user:reauthentication_required";
     pub const USER_INVALID_SESSION: &str = "user:invalid_session";
     pub const USER_NOT_VERIFIED: &str = "user:not_verified";
     pub const USER_NOT_FOUND: &str = "user:not_found";
@@ -83,6 +84,8 @@ pub mod token {
     pub const TOKEN_INVALID_RESET: &str = "token:invalid_reset";
     pub const TOKEN_EXPIRED_RESET: &str = "token:expired_reset";
     pub const TOKEN_INVALID_EMAIL_CHANGE: &str = "token:invalid_email_change";
+    pub const TOKEN_INVALID_ACCOUNT_DELETION: &str = "token:invalid_account_deletion";
+    pub const TOKEN_INVALID_DEVICE_VERIFY: &str = "token:invalid_device_verify";
 }
 
 pub mod email {

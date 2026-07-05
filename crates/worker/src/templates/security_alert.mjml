@@ -1,0 +1,14 @@
+<mjml>
+  <mj-body background-color="#fafbfc">
+    <mj-section background-color="#fff" padding="40px 20px">
+      <mj-column vertical-align="middle" width="100%">
+        <mj-text align="center" padding="35px" font-size="20px" font-family="Arial, Helvetica, sans-serif" color="#333">{{ project_name }} - Security Alert</mj-text>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555"><span>Hello {{ username }}</span></mj-text>
+        <mj-text align="center" font-size="18px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#333"><strong>{{ event }}</strong></mj-text>
+        <mj-text align="center" font-size="16px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#555">If you made this change, no action is needed.</mj-text>
+        <mj-divider border-color="#ccc" border-width="2px"></mj-divider>
+        <mj-text align="center" font-size="14px" padding-left="25px" padding-right="25px" font-family="Arial, Helvetica, sans-serif" color="#d32f2f">If this wasn't you, your account may be compromised — reset your password immediately and review your active sessions.</mj-text>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>
