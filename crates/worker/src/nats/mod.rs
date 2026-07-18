@@ -1,5 +1,6 @@
 pub mod consumer;
 pub mod publisher;
+pub mod shutdown;
 pub mod streams;
 
 use std::sync::Arc;
