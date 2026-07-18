@@ -2,7 +2,7 @@
 # PgDog is omitted to keep the stack smaller and faster.
 # Usage:
 #   docker compose -f docker-compose.test.yml up -d --build --wait
-#   E2E_BASE_URL=http://localhost:18000 MAILPIT_URL=http://localhost:18025 cargo test -p e2e
+#   E2E_BASE_URL=http://127.0.0.1:18000 MAILPIT_URL=http://127.0.0.1:18025 cargo test -p e2e
 #   docker compose -f docker-compose.test.yml down -v
 
 services:
@@ -12,6 +12,11 @@ services:
       - .envs/.test/postgres.env
     tmpfs:
       - /var/lib/postgresql
+    ports:
+      # Host port 55432: a natively installed Postgres (or the dev stack) listening on
+      # 5432 would otherwise shadow the disposable test database that e2e helpers
+      # (grant_role, backdate_user) connect to directly.
+      - "55432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U axumkit"]
       interval: 5s

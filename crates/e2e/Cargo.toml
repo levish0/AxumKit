@@ -4,15 +4,31 @@ version = "0.1.0"
 edition = "2024"
 publish = false
 
+# Black-box end-to-end tests. These talk to a running stack over HTTP, so they are
+# excluded from the default `cargo test --workspace` (see justfile `check`/`test`)
+# and run via `just e2e`, which brings up docker-compose.test.yml first.
+
 [lints]
 workspace = true
 
 [dependencies]
 tokio = { workspace = true }
-reqwest = { workspace = true, features = ["cookies"] }
-png = { workspace = true }
+reqwest = { workspace = true, features = ["json", "cookies", "query", "multipart"] }
+# Deterministic in-memory test images for the file-document/multipart flows.
+png = {workspace = true}
+serde = { workspace = true }
 serde_json = { workspace = true }
 uuid = { workspace = true }
+# Privileged-policy tests need a moderator/admin actor. The app has no first-admin
+# bootstrap, so the harness grants roles out-of-band by inserting into the (disposable)
+# test database directly. Reuses the entity schema + Role enum for type safety.
+sea-orm = { workspace = true }
+entity = { workspace = true }
+# ACL `user_age_days` tests shift a fresh account's created_at into the past.
+chrono = { workspace = true }
+# SEC-002 regression: generates valid authenticator codes from the otpauth:// URI
+# returned by /v0/auth/totp/setup (same crate+version the server uses).
+totp-rs = { workspace = true, features = ["otpauth"] }
 
 [dev-dependencies]
 tokio = { workspace = true }
