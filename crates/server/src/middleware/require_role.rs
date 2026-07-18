@@ -10,7 +10,7 @@
 //! be gated.
 
 use crate::extractors::session::resolve_session_from_request;
-use crate::permission::{PermissionService, UserContext};
+use crate::permission::PermissionService;
 use crate::state::AppState;
 use axum::body::Body;
 use axum::extract::State;
@@ -21,16 +21,19 @@ use entity::common::Role;
 use errors::errors::Errors;
 use tower_cookies::Cookies;
 
-/// Resolve the caller's authenticated permission context, or reject with `UserUnauthorized`.
-async fn authorized_context(
+/// Resolve the caller's session and demand `role`, or reject with
+/// `UserUnauthorized`. Uses the role-only context path — group permissions are
+/// irrelevant to a role gate and are not loaded.
+async fn gate(
     state: &AppState,
     cookies: &Cookies,
     headers: &HeaderMap,
-) -> Result<UserContext, Errors> {
+    role: Role,
+) -> Result<(), Errors> {
     let session = resolve_session_from_request(cookies, headers, state)
         .await?
         .ok_or(Errors::UserUnauthorized)?;
-    PermissionService::get_context(&state.db, Some(&session)).await
+    PermissionService::require_role(&state.db, Some(&session), role).await
 }
 
 /// Router-boundary gate: require the `Admin` role.
@@ -41,9 +44,7 @@ pub async fn require_admin(
     req: Request<Body>,
     next: Next,
 ) -> Result<Response, Errors> {
-    authorized_context(&state, &cookies, &headers)
-        .await?
-        .require_role(Role::Admin)?;
+    gate(&state, &cookies, &headers, Role::Admin).await?;
     Ok(next.run(req).await)
 }
 
@@ -56,8 +57,6 @@ pub async fn require_mod(
     req: Request<Body>,
     next: Next,
 ) -> Result<Response, Errors> {
-    authorized_context(&state, &cookies, &headers)
-        .await?
-        .require_role(Role::Mod)?;
+    gate(&state, &cookies, &headers, Role::Mod).await?;
     Ok(next.run(req).await)
 }

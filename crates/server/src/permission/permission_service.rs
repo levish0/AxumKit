@@ -108,17 +108,20 @@ impl PermissionService {
         })
     }
 
+    /// Role-tier gate. Loads only what [`UserContext::require_role`] reads
+    /// (roles + ban) — group permissions are skipped, so the context never
+    /// escapes with an empty permission set a caller could mistake for "holds
+    /// no permissions".
     pub async fn require_role<C>(
         conn: &C,
         session: Option<&SessionContext>,
         role: Role,
-    ) -> Result<UserContext, Errors>
+    ) -> Result<(), Errors>
     where
         C: ConnectionTrait,
     {
-        let ctx = Self::get_context(conn, session).await?;
-        ctx.require_role(role)?;
-        Ok(ctx)
+        let ctx = Self::get_role_context(conn, session).await?;
+        ctx.require_role(role)
     }
 
     /// Convenience wrapper: load the context and demand one permission.
@@ -139,12 +142,11 @@ impl PermissionService {
         conn: &C,
         session: Option<&SessionContext>,
         target_user_id: Uuid,
-    ) -> Result<UserContext, Errors>
+    ) -> Result<(), Errors>
     where
         C: ConnectionTrait,
     {
-        let ctx = Self::get_context(conn, session).await?;
-        ctx.require_role(Role::Admin)?;
+        Self::require_role(conn, session, Role::Admin).await?;
 
         if let Some(session) = session
             && session.user_id == target_user_id
@@ -161,7 +163,34 @@ impl PermissionService {
             return Err(Errors::CannotManageHigherOrEqualRole);
         }
 
-        Ok(ctx)
+        Ok(())
+    }
+
+    /// Loads a context for role-tier checks only: roles + ban, no group
+    /// permissions. Kept private so a context with an unloaded (empty)
+    /// permission set can never leak to code that would call
+    /// [`UserContext::has_perm`] on it.
+    async fn get_role_context<C>(
+        conn: &C,
+        session: Option<&SessionContext>,
+    ) -> Result<UserContext, Errors>
+    where
+        C: ConnectionTrait,
+    {
+        let (roles, is_banned) = match session {
+            Some(session) => (
+                Self::fetch_roles(conn, session.user_id).await?,
+                Self::fetch_ban(conn, session.user_id).await?,
+            ),
+            None => (vec![], false),
+        };
+
+        Ok(UserContext {
+            roles,
+            permissions: HashSet::new(),
+            is_banned,
+            is_authenticated: session.is_some(),
+        })
     }
 
     async fn fetch_roles<C>(conn: &C, user_id: Uuid) -> Result<Vec<Role>, Errors>
@@ -181,8 +210,7 @@ impl PermissionService {
     where
         C: ConnectionTrait,
     {
-        let memberships =
-            repository_find_active_group_memberships(conn, Some(user_id), None).await?;
+        let memberships = repository_find_active_group_memberships(conn, user_id).await?;
         if memberships.is_empty() {
             return Ok(HashSet::new());
         }
