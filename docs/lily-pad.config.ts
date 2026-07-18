@@ -9,6 +9,12 @@ export const site = defineSiteConfig({
 		{ label: { en: 'Docs', ko: '문서' }, href: '/docs' }
 	],
 	rootSection: { en: 'Guide', ko: '가이드' },
+	footer: {
+		message: {
+			en: 'Built by <a href="https://github.com/levish0" class="link">levish</a>. The source code is available on <a href="https://github.com/levish0/AxumKit" class="link">GitHub</a>.',
+			ko: '<a href="https://github.com/levish0" class="link">levish</a>가 만들었습니다. 소스 코드는 <a href="https://github.com/levish0/AxumKit" class="link">GitHub</a>에 있습니다.'
+		}
+	},
 	home: {
 		features: [
 			{
