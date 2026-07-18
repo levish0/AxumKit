@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2026-07-18
+
+Breaking: group members are users only (fresh migration set — reset the database;
+the member API contract changes).
+
+### Removed
+
+- **IP/CIDR group membership** — the write path stored IP members, but permission
+  resolution never consulted them, so an IP member silently granted nothing.
+  `group_members.ip_address` (with its CHECK constraint, SP-GiST containment
+  index, and repository/service/DTO surface) is gone; `user_id` is now
+  `NOT NULL` and `AddGroupMemberRequest.user_id` is required.
+
+### Changed
+
+- Role-tier checks (`PermissionService::require_role`, the router gates, and
+  `require_admin_for_target`) no longer load group permissions they never read,
+  saving a query per gated request. They now return `()` — a context with an
+  unloaded permission set can no longer leak to `has_perm` callers.
+- `Permission` is declared through a single `define_permissions!` macro, keeping
+  the enum, serde renames, `as_str`, the `ALL` catalog, and `FromStr` in
+  lockstep — a new permission can no longer compile into checks while silently
+  missing from `GET /v0/permissions`.
+
 ## [0.19.0] - 2026-07-18
 
 Breaking: the RBAC surface drops its legacy `acl` naming (fresh migration set — reset
