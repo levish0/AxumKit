@@ -4,6 +4,9 @@
 
 # AxumKit
 
+[![CI](https://github.com/levish0/AxumKit/actions/workflows/check.yml/badge.svg)](https://github.com/levish0/AxumKit/actions/workflows/check.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 Production-ready Rust web backend template — Axum, SeaORM, PostgreSQL, Redis,
 NATS JetStream, Meilisearch.
 
