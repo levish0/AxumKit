@@ -1,29 +1,20 @@
 use anyhow::Result;
-use config::ServerConfig;
+use config::{ServerConfig, redact_database_url};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};
 
-/// Establishes a database connection via PgDog connection pooler.
+/// Establishes the application's database connection pool.
 pub async fn establish_connection() -> Result<DatabaseConnection> {
     let config = ServerConfig::get();
 
-    let database_url = format!(
-        "postgres://{}:{}@{}:{}/{}",
-        config.db_user, config.db_password, config.db_host, config.db_port, config.db_name
+    info!(
+        "Attempting to connect to database: {}",
+        redact_database_url(&config.database_url)
     );
 
-    let masked_url = format!(
-        "postgres://{}:{}@{}:{}/{}",
-        config.db_user,
-        "*".repeat(config.db_password.len()),
-        config.db_host,
-        config.db_port,
-        config.db_name
-    );
-    info!("Attempting to connect to database: {}", masked_url);
-
-    let mut options = ConnectOptions::new(database_url);
+    // Configure connection options
+    let mut options = ConnectOptions::new(config.database_url.clone());
     options
         .max_connections(config.db_max_connection)
         .min_connections(config.db_min_connection)

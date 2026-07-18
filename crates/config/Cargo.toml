@@ -11,3 +11,4 @@ workspace = true
 axum = { workspace = true }
 dotenvy = { workspace = true }
 tracing = { workspace = true }
+url = { workspace = true }

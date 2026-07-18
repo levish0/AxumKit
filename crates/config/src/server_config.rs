@@ -45,12 +45,11 @@ pub struct ServerConfig {
     // point at a local stub instead of calling Cloudflare on every protected request.
     pub turnstile_verify_url: String,
 
-    // Database (direct PostgreSQL or PgDog connection pooler)
-    pub db_host: String,
-    pub db_port: String,
-    pub db_name: String,
-    pub db_user: String,
-    pub db_password: String,
+    // Database. Full connection URL so the deployment controls everything the
+    // driver needs — notably the query string (`?sslmode=require`, `channel_binding`),
+    // which an assembled host/port/name/user/password cannot express. Managed
+    // providers (Neon) are TLS-only and need it; a local Postgres just omits it.
+    pub database_url: String,
     pub db_max_connection: u32,
     pub db_min_connection: u32,
 
@@ -202,11 +201,7 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
     let r2_assets_public_domain = require!("R2_ASSETS_PUBLIC_DOMAIN");
     let r2_assets_bucket_name = require!("R2_ASSETS_BUCKET_NAME");
     let turnstile_secret_key = require!("TURNSTILE_SECRET_KEY");
-    let db_host = require!("POSTGRES_HOST");
-    let db_port = require!("POSTGRES_PORT");
-    let db_name = require!("POSTGRES_NAME");
-    let db_user = require!("POSTGRES_USER");
-    let db_password = require!("POSTGRES_PASSWORD");
+    let database_url = require!("DATABASE_URL");
     let server_host = require!("HOST");
     let server_port = require!("PORT");
 
@@ -293,12 +288,8 @@ static CONFIG: LazyLock<ServerConfig> = LazyLock::new(|| {
             "https://challenges.cloudflare.com/turnstile/v0/siteverify".to_string()
         }),
 
-        // Database (via PgDog connection pooler)
-        db_host,
-        db_port,
-        db_name,
-        db_user,
-        db_password,
+        // Database
+        database_url,
         db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())

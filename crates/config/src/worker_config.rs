@@ -41,12 +41,9 @@ pub struct WorkerConfig {
     pub frontend_path_confirm_account_deletion: String,
     pub frontend_path_verify_device: String,
 
-    // Database endpoint used by worker jobs.
-    pub db_host: String,
-    pub db_port: String,
-    pub db_name: String,
-    pub db_user: String,
-    pub db_password: String,
+    // Database endpoint used by worker jobs. Full connection URL — see the note on
+    // `ServerConfig::database_url` for why this is a URL and not assembled parts.
+    pub database_url: String,
     pub db_max_connection: u32,
     pub db_min_connection: u32,
 
@@ -89,11 +86,7 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
     let frontend_path_confirm_email_change = require!("FRONTEND_PATH_CONFIRM_EMAIL_CHANGE");
     let frontend_path_confirm_account_deletion = require!("FRONTEND_PATH_CONFIRM_ACCOUNT_DELETION");
     let frontend_path_verify_device = require!("FRONTEND_PATH_VERIFY_DEVICE");
-    let db_host = require!("POSTGRES_HOST");
-    let db_port = require!("POSTGRES_PORT");
-    let db_name = require!("POSTGRES_NAME");
-    let db_user = require!("POSTGRES_USER");
-    let db_password = require!("POSTGRES_PASSWORD");
+    let database_url = require!("DATABASE_URL");
     let r2_endpoint = require!("R2_ENDPOINT");
     let r2_access_key_id = require!("R2_ACCESS_KEY_ID");
     let r2_secret_access_key = require!("R2_SECRET_ACCESS_KEY");
@@ -159,11 +152,7 @@ static CONFIG: LazyLock<WorkerConfig> = LazyLock::new(|| {
         frontend_path_verify_device,
 
         // Database
-        db_host,
-        db_port,
-        db_name,
-        db_user,
-        db_password,
+        database_url,
         db_max_connection: env::var("POSTGRES_MAX_CONNECTION")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -204,13 +193,5 @@ impl WorkerConfig {
     /// Helper function for redis lock url.
     pub fn redis_lock_url(&self) -> String {
         format!("redis://{}:{}", self.redis_lock_host, self.redis_lock_port)
-    }
-
-    /// Helper function for database url.
-    pub fn database_url(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.db_user, self.db_password, self.db_host, self.db_port, self.db_name
-        )
     }
 }

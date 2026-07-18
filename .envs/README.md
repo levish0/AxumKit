@@ -29,7 +29,9 @@ disposable e2e stack and should not contain real secrets.
 - Docker service hostnames use compose names: `pgdog`, `postgres`,
   `redis-session`, `redis-cache`, `redis-lock`, `nats`, `meilisearch`, and
   `media-processor`.
-- The app standardizes on `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_NAME`,
-  `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
-- For production with PgDog, set `POSTGRES_HOST=pgdog` and
-  `POSTGRES_PORT=6432`, and keep `compose/production/pgdog/users.toml` aligned.
+- The app standardizes on a single `DATABASE_URL` (full connection URL — the
+  deployment controls the query string, e.g. `?sslmode=require`). The
+  `POSTGRES_DB`/`POSTGRES_USER`/`POSTGRES_PASSWORD` entries are consumed by the
+  postgres container's initdb and the infra healthcheck, not by the app.
+- For production with PgDog, point `DATABASE_URL` at `pgdog:6432` and keep
+  `compose/production/pgdog/users.toml` aligned.

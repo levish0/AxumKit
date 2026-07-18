@@ -21,6 +21,9 @@ constants = { path = "crates/constants" }
 dto = { path = "crates/dto" }
 entity = { path = "crates/entity" }
 errors = { path = "crates/errors" }
+job_queue = { path = "crates/job_queue" }
+notification_repository = { path = "crates/notification_repository" }
+search_index = { path = "crates/search_index" }
 worker = { path = "crates/worker" }
 server = { path = "crates/server" }
 storage = { path = "crates/storage" }
@@ -34,6 +37,8 @@ tower-http = { version = "0.7.0", features = ["cors", "auth", "trace", "request-
 tower-cookies = "0.11.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.150"
+serde_with = "3.21.0"
+ipnetwork = "0.21.1"
 sea-orm = { version = "2.0.0-rc.43", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
 redis = { version = "1.4.1", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
 tokio-cron-scheduler = "0.15.1"
@@ -72,6 +77,7 @@ futures = "0.3.32"
 async-nats = "0.49.1"
 tokio-stream = { version = "0.1.18", features = ["sync"] }
 sitemap-rs = "0.4.0"
+url = "2.5.8"
 urlencoding = "2.1.3"
 unicode-general-category = "1.1.0"
 jsonwebtoken = "10.4.0"

@@ -1,5 +1,5 @@
 use anyhow::Result;
-use config::WorkerConfig;
+use config::{WorkerConfig, redact_database_url};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use std::time::Duration;
 use tracing::{error, info};
@@ -7,15 +7,17 @@ use tracing::{error, info};
 /// Establishes and returns a database connection for the worker.
 pub async fn establish_connection() -> Result<DatabaseConnection> {
     let config = WorkerConfig::get();
-    let database_url = config.database_url();
 
-    info!("Attempting to connect to database...");
+    info!(
+        "Attempting to connect to database: {}",
+        redact_database_url(&config.database_url)
+    );
 
     // Configure connection options
-    let mut options = ConnectOptions::new(database_url);
+    let mut options = ConnectOptions::new(config.database_url.clone());
     options
-        .max_connections(config.db_max_connection)
-        .min_connections(config.db_min_connection)
+        .max_connections(WorkerConfig::get().db_max_connection)
+        .min_connections(WorkerConfig::get().db_min_connection)
         .connect_timeout(Duration::from_secs(8))
         .acquire_timeout(Duration::from_secs(30))
         .idle_timeout(Duration::from_secs(300))
@@ -23,7 +25,7 @@ pub async fn establish_connection() -> Result<DatabaseConnection> {
 
     Database::connect(options)
         .await
-        .inspect(|_connection| {
+        .inspect(|_| {
             info!("Successfully connected to the database.");
         })
         .map_err(|err| {
