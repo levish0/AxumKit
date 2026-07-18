@@ -30,7 +30,6 @@ use utoipa::OpenApi;
         super::session::verify_device::auth_verify_device_app,
         super::totp::verify::totp_verify_app,
         super::email::verify_email::auth_verify_email_app,
-        super::session::check::auth_check,
         super::session::logout::auth_logout,
         super::session::list_sessions::auth_list_sessions,
         super::session::revoke_session::auth_revoke_session,

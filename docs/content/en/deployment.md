@@ -45,6 +45,4 @@ target R2 via its S3 API.
 
 The template expects to sit behind an edge that terminates TLS and forwards
 `CF-Connecting-IP` (Cloudflare) — or a trusted proxy sending `X-Real-Client-IP` with
-the shared `X-Internal-Secret`. Rate limiting can ride the built-in middleware or be
-delegated to a gateway (an APISIX compose file and a `/v0/auth/check` forward-auth
-endpoint are included for rate-limit keying by identity).
+the shared `X-Internal-Secret`.

@@ -6,7 +6,6 @@ use super::password::change_password::auth_change_password;
 use super::password::forgot_password::auth_forgot_password;
 use super::password::reset_password::auth_reset_password;
 use super::password::set_initial_password::auth_set_initial_password;
-use super::session::check::auth_check;
 use super::session::complete_signup::{auth_complete_signup, auth_complete_signup_app};
 use super::session::list_sessions::auth_list_sessions;
 use super::session::login::{auth_login, auth_login_app};
@@ -39,8 +38,6 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
     Router::new()
         // Protected routes (authentication via extractors)
         .route("/auth/logout", post(auth_logout))
-        // Gateway forward-auth endpoint (rate-limit identity for APISIX; always 200)
-        .route("/auth/check", get(auth_check))
         // Active sessions management (require session)
         .route("/auth/sessions", get(auth_list_sessions))
         .route(

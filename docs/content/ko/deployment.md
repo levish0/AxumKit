@@ -45,6 +45,4 @@ pgBackRest는 Postgres 이미지에 통합되어 있으며 `deploy/justfile`로 
 
 이 템플릿은 TLS를 종단하고 `CF-Connecting-IP`(Cloudflare)를 전달하는 엣지 —
 또는 공유된 `X-Internal-Secret`과 함께 `X-Real-Client-IP`를 보내는 신뢰할 수 있는
-프록시 — 뒤에 배치되는 것을 전제로 합니다. 레이트 리밋은 내장 미들웨어를
-사용하거나 게이트웨이에 위임할 수 있습니다(신원 기반 레이트 리밋 키잉을 위한
-APISIX compose 파일과 `/v0/auth/check` forward-auth 엔드포인트가 포함되어 있습니다).
+프록시 — 뒤에 배치되는 것을 전제로 합니다.

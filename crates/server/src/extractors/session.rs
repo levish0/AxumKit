@@ -42,9 +42,7 @@ fn session_token_from_request(cookies: &Cookies, headers: &HeaderMap) -> Option<
 ///
 /// Authentication is whichever credential the request carries — the session cookie (browser) or a
 /// `Authorization: Bearer` token (native app); both are the same opaque session token, so
-/// validation is identical. Every request validates against Redis + the DB here. The API gateway
-/// (APISIX) calls `/auth/check` — which shares this same resolver — only to learn the identity for
-/// *rate limiting*; the backend never trusts the gateway's `X-Auth-*` headers for authorization.
+/// validation is identical. Every request validates against Redis + the DB here.
 /// `Ok(None)` means no usable session; errors mirror the service.
 pub async fn resolve_session_from_request(
     cookies: &Cookies,

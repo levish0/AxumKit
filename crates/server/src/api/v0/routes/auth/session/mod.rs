@@ -1,4 +1,3 @@
-pub mod check;
 pub mod complete_signup;
 pub mod list_sessions;
 pub mod login;

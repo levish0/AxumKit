@@ -35,7 +35,7 @@ api/            route handlers (+ utoipa annotations, per-domain openapi.rs)
 service/        business logic; owns transactions
 repository/     queries; find_* → Option, get_* → Result, one function per file
 permission/     UserContext, has_perm/require_perm, per-domain Rule objects
-middleware/     anonymous user, CORS, require_role gates, stability layer, rate limit
+middleware/     anonymous user, CORS, require_role gates, stability layer
 extractors/     session resolution (cookie or Bearer), Turnstile verification
 bridge/         outbound clients: job publisher, media processor, Turnstile
 eventstream/    SSE fan-out over core NATS (multi-replica safe)

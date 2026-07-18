@@ -10,7 +10,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.18.2"
+    "version": "0.19.0"
   },
   "paths": {
     "/health-check": {
@@ -730,21 +730,6 @@
             "session_id_cookie": []
           }
         ]
-      }
-    },
-    "/v0/auth/check": {
-      "get": {
-        "tags": [
-          "Auth"
-        ],
-        "summary": "Resolve the session identity for the gateway (forward-auth)",
-        "description": "Internal endpoint called by the API gateway (APISIX) on every request via forward-auth. It validates the session credential against the session store and the database, then always responds 200 with `X-Auth-Status: authenticated|anonymous` plus the user/session/management identifiers on success. The gateway uses these only to bucket rate limits (per-user vs. per-IP); it never blocks here. The backend does not consume these headers for authorization — each route re-validates the session credential itself.",
-        "operationId": "auth_check",
-        "responses": {
-          "200": {
-            "description": "Identity resolved; see X-Auth-* response headers"
-          }
-        }
       }
     },
     "/v0/auth/complete-signup": {
