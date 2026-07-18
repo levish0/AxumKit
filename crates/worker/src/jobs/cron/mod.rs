@@ -1,6 +1,11 @@
 mod cleanup;
+mod cleanup_expired_roles;
+mod cleanup_old_notifications;
+mod expiry;
+mod flush_board_view_counts;
 pub mod sitemap;
 
+use crate::CacheClient;
 use crate::DbPool;
 use crate::LockClient;
 use chrono_tz::Tz;
@@ -21,6 +26,13 @@ const CLEANUP_SCHEDULE: &str = "0 0 4 * * 6";
 /// Sitemap cron schedule: 3:00 AM every Sunday
 const SITEMAP_SCHEDULE: &str = "0 0 3 * * 0";
 
+/// Board view-count flush schedule: every minute (at second 0).
+///
+/// Frequent enough that displayed counts lag by at most ~a minute; each run is
+/// a single HGETALL+DEL drain plus one UPDATE per touched post, so an idle
+/// minute costs one empty Redis roundtrip.
+const FLUSH_BOARD_VIEW_COUNTS_SCHEDULE: &str = "0 * * * * *";
+
 /// Distributed lock TTL for cron jobs (seconds).
 const CRON_LOCK_TTL_SECONDS: u64 = 60 * 30; // 30 minutes
 /// Heartbeat interval for lock extension (seconds).
@@ -38,6 +50,7 @@ static EXTEND_LOCK_SCRIPT: LazyLock<Script> =
 pub async fn start_scheduler(
     db_pool: DbPool,
     lock_client: LockClient,
+    cache_client: CacheClient,
     r2_assets: R2AssetsClient,
     config: &'static WorkerConfig,
 ) -> Result<JobScheduler, JobSchedulerError> {
@@ -64,8 +77,17 @@ pub async fn start_scheduler(
         timezone = %timezone,
         "Registering sitemap cron job"
     );
-    let sitemap_job = create_sitemap_job(db_pool, lock_client, r2_assets, config, timezone)?;
+    let sitemap_job =
+        create_sitemap_job(db_pool.clone(), lock_client, r2_assets, config, timezone)?;
     sched.add(sitemap_job).await?;
+
+    tracing::info!(
+        schedule = FLUSH_BOARD_VIEW_COUNTS_SCHEDULE,
+        timezone = %timezone,
+        "Registering board view-count flush cron job"
+    );
+    let flush_views_job = create_flush_board_view_counts_job(db_pool, cache_client, timezone)?;
+    sched.add(flush_views_job).await?;
 
     sched.start().await?;
 
@@ -256,4 +278,28 @@ async fn extend_cron_lock(
         .await?;
 
     Ok(result == 1)
+}
+
+fn create_flush_board_view_counts_job(
+    db_pool: DbPool,
+    cache_client: CacheClient,
+    timezone: Tz,
+) -> Result<Job, JobSchedulerError> {
+    let db = Arc::clone(&db_pool);
+    let cache = cache_client.clone();
+
+    JobBuilder::new()
+        .with_timezone(timezone)
+        .with_cron_job_type()
+        .with_schedule(FLUSH_BOARD_VIEW_COUNTS_SCHEDULE)?
+        .with_run_async(Box::new(move |_uuid, _lock| {
+            let db = Arc::clone(&db);
+            let cache = cache.clone();
+            Box::pin(async move {
+                // No cron lock: the atomic drain (HGETALL + DEL) ensures only one
+                // worker applies a given batch even with multiple instances.
+                flush_board_view_counts::run_flush_board_view_counts(&db, &cache).await;
+            })
+        }))
+        .build()
 }

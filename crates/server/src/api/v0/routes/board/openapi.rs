@@ -1,0 +1,88 @@
+use dto::board::{
+    BoardCommentListResponse, BoardCommentResponse, BoardListResponse, BoardPermissionsResponse,
+    BoardPostListResponse, BoardPostModerationRequest, BoardPostModerationResponse,
+    BoardPostReorderPinsRequest, BoardPostReorderPinsResponse, BoardPostResponse, BoardResponse,
+    CreateBoardCommentRequest, CreateBoardCommentResponse, CreateBoardPostRequest,
+    CreateBoardPostResponse, CreateBoardRequest, CreateBoardResponse, DeleteBoardCommentRequest,
+    DeleteBoardCommentResponse, DeleteBoardPostRequest, DeleteBoardPostResponse,
+    DeleteBoardRequest, DeleteBoardResponse, GetBoardBySlugRequest, GetBoardCommentsRequest,
+    GetBoardPermissionsRequest, GetBoardPostRequest, GetBoardPostsRequest, GetBoardRequest,
+    GetBoardsRequest, UpdateBoardCommentRequest, UpdateBoardCommentResponse,
+    UpdateBoardPostRequest, UpdateBoardPostResponse, UpdateBoardRequest, UpdateBoardResponse,
+};
+use dto::pagination::CursorDirection;
+use utoipa::OpenApi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        super::boards::create_board::create_board,
+        super::boards::get_board::get_board,
+        super::boards::get_board_by_slug::get_board_by_slug,
+        super::boards::get_boards::get_boards,
+        super::boards::update_board::update_board,
+        super::boards::delete_board::delete_board,
+        super::permissions::get_permissions,
+        super::posts::create_post::create_post,
+        super::posts::get_post::get_post,
+        super::posts::get_posts::get_posts,
+        super::posts::update_post::update_post,
+        super::posts::delete_post::delete_post,
+        super::posts::pin_post::pin_post,
+        super::posts::unpin_post::unpin_post,
+        super::posts::reorder_pins::reorder_pins,
+        super::posts::lock_post::lock_post,
+        super::posts::unlock_post::unlock_post,
+        super::comments::create_comment::create_comment,
+        super::comments::get_comments::get_comments,
+        super::comments::update_comment::update_comment,
+        super::comments::delete_comment::delete_comment,
+    ),
+    components(
+        schemas(
+            CreateBoardRequest,
+            CreateBoardResponse,
+            GetBoardRequest,
+            GetBoardBySlugRequest,
+            GetBoardsRequest,
+            UpdateBoardRequest,
+            UpdateBoardResponse,
+            DeleteBoardRequest,
+            DeleteBoardResponse,
+            BoardResponse,
+            BoardListResponse,
+            GetBoardPermissionsRequest,
+            BoardPermissionsResponse,
+            CreateBoardPostRequest,
+            CreateBoardPostResponse,
+            GetBoardPostRequest,
+            GetBoardPostsRequest,
+            UpdateBoardPostRequest,
+            UpdateBoardPostResponse,
+            DeleteBoardPostRequest,
+            DeleteBoardPostResponse,
+            BoardPostModerationRequest,
+            BoardPostModerationResponse,
+            BoardPostReorderPinsRequest,
+            BoardPostReorderPinsResponse,
+            BoardPostResponse,
+            BoardPostListResponse,
+            CreateBoardCommentRequest,
+            CreateBoardCommentResponse,
+            GetBoardCommentsRequest,
+            UpdateBoardCommentRequest,
+            UpdateBoardCommentResponse,
+            DeleteBoardCommentRequest,
+            DeleteBoardCommentResponse,
+            BoardCommentResponse,
+            BoardCommentListResponse,
+            CursorDirection,
+        )
+    ),
+    tags(
+        (name = "Boards", description = "Board endpoints"),
+        (name = "Board Posts", description = "Board post endpoints"),
+        (name = "Board Comments", description = "Board comment endpoints")
+    )
+)]
+pub struct BoardApiDoc;

@@ -3,6 +3,7 @@ pub mod email;
 pub mod extract;
 pub mod ip;
 pub mod logger;
+pub mod mentions;
 pub mod r2_url;
 pub mod redis_cache;
 pub mod redis_keys;

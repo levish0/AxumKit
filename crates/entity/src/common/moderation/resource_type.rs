@@ -15,4 +15,13 @@ pub enum ModerationResourceType {
     User,
     #[sea_orm(string_value = "system")]
     System,
+    /// ACL group (group/member/permission management)
+    #[sea_orm(string_value = "acl_group")]
+    AclGroup,
+    /// Board (board management actions)
+    #[sea_orm(string_value = "board")]
+    Board,
+    /// Board post (pin/lock moderation)
+    #[sea_orm(string_value = "board_post")]
+    BoardPost,
 }
