@@ -100,8 +100,8 @@ pub async fn run_server() -> anyhow::Result<()> {
 
     let server_url = format!(
         "{}:{}",
-        &ServerConfig::get().server_host,
-        &ServerConfig::get().server_port
+        ServerConfig::get().server_host,
+        ServerConfig::get().server_port
     );
 
     let state = AppState {
