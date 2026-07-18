@@ -36,7 +36,7 @@ pub async fn process_media(
     let form = reqwest::multipart::Form::new().part("file", part);
 
     let response = http_client
-        .post(format!("{}/process", &*MEDIA_PROCESSOR_URL))
+        .post(format!("{}/process", *MEDIA_PROCESSOR_URL))
         .timeout(Duration::from_secs(config.media_processor_timeout_secs))
         .multipart(form)
         .send()
