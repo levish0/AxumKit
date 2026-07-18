@@ -82,6 +82,9 @@ mod tests {
                 ("DATABASE_URL", "postgres://test:test@127.0.0.1:5432/test"),
                 ("HOST", "127.0.0.1"),
                 ("PORT", "8000"),
+                ("AUTH_SESSION_MAX_LIFETIME_HOURS", "720"),
+                ("AUTH_SESSION_SLIDING_TTL_HOURS", "168"),
+                ("AUTH_SESSION_REFRESH_THRESHOLD", "50"),
             ] {
                 if std::env::var_os(key).is_none() {
                     // SAFETY: runs once, before the first ServerConfig access in
