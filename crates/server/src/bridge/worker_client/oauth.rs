@@ -1,9 +1,9 @@
 use super::publish_job;
 use crate::state::WorkerClient;
 use errors::errors::Errors;
+use job_queue::jobs::oauth::OAuthProfileImageJob;
+use job_queue::subjects::OAUTH_PROFILE_IMAGE_SUBJECT;
 use uuid::Uuid;
-use worker::jobs::oauth::OAuthProfileImageJob;
-use worker::nats::streams::OAUTH_PROFILE_IMAGE_SUBJECT;
 
 /// Queue OAuth profile image processing for a newly created user.
 pub async fn process_oauth_profile_image(

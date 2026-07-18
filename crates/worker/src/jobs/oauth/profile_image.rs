@@ -2,6 +2,7 @@ use crate::DbPool;
 use crate::clients::process_media;
 use crate::connection::R2AssetsClient;
 use crate::jobs::WorkerContext;
+use crate::jobs::index::user::{IndexUserJob, UserIndexAction};
 use crate::nats::consumer::NatsConsumer;
 use crate::nats::publisher::publish_job;
 use crate::nats::streams::{OAUTH_PROFILE_IMAGE_CONSUMER, OAUTH_PROFILE_IMAGE_STREAM};
@@ -11,16 +12,8 @@ use entity::users::{Column as UserColumn, Entity as UserEntity};
 use reqwest::Client as HttpClient;
 use sea_orm::prelude::Expr;
 use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 
-use crate::jobs::index::user::{IndexUserJob, UserIndexAction};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct OAuthProfileImageJob {
-    pub user_id: Uuid,
-    pub image_url: String,
-}
+pub use job_queue::jobs::oauth::OAuthProfileImageJob;
 
 async fn handle_oauth_profile_image(
     job: OAuthProfileImageJob,
@@ -169,9 +162,8 @@ pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
         OAUTH_PROFILE_IMAGE_CONSUMER,
         2,
     )
-    // Downloading + uploading a profile image is not idempotent: skip redelivered
-    // messages already processed.
-    .with_dedup(ctx.cache_client.clone());
+    // Re-running uploads a duplicate avatar blob: skip redelivered messages already done.
+    .with_dedup(ctx.lock_client.clone());
 
     consumer
         .run::<OAuthProfileImageJob, _, _>(move |job| {

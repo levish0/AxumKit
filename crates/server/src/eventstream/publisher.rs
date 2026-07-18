@@ -1,7 +1,7 @@
-use constants::REALTIME_EVENTS_SUBJECT;
 use dto::action_logs::ActionLogResponse;
 use entity::action_logs::Model as ActionLogModel;
 use errors::errors::Errors;
+use job_queue::subjects::REALTIME_EVENTS_SUBJECT;
 
 /// Publish an action log event to NATS for SSE distribution.
 /// This is fire-and-forget - failures are logged but don't affect the main operation.

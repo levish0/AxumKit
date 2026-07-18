@@ -1,0 +1,17 @@
+[package]
+name = "job_queue"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Shared job payload and NATS subject contract between the API server and the worker"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+uuid = { workspace = true }
+async-nats = { workspace = true }
+tracing = { workspace = true }

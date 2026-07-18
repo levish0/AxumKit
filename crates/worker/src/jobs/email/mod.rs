@@ -3,61 +3,12 @@ use crate::jobs::WorkerContext;
 use crate::nats::consumer::NatsConsumer;
 use crate::nats::streams::{EMAIL_CONSUMER, EMAIL_STREAM};
 use config::WorkerConfig;
+pub use job_queue::jobs::email::{EmailTemplate, SendEmailJob};
 use lettre::message::{Mailbox, header::ContentType};
 use lettre::{AsyncTransport, Message};
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SendEmailJob {
-    pub to: String,
-    pub subject: String,
-    pub template: EmailTemplate,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum EmailTemplate {
-    Verification {
-        username: String,
-        token: String,
-        valid_minutes: u64,
-    },
-    PasswordReset {
-        handle: String,
-        token: String,
-        valid_minutes: u64,
-    },
-    EmailChange {
-        username: String,
-        token: String,
-        valid_minutes: u64,
-    },
-    AccountDeletion {
-        username: String,
-        token: String,
-        valid_minutes: u64,
-    },
-    DeviceVerification {
-        username: String,
-        device: String,
-        token: String,
-        valid_minutes: u64,
-    },
-    SecurityAlert {
-        username: String,
-        /// Human-readable description of what changed (e.g. "Your password was changed").
-        event: String,
-    },
-    Custom {
-        html_content: String,
-    },
-}
 
 async fn handle_send_email(job: SendEmailJob, mailer: &Mailer) -> Result<(), anyhow::Error> {
-    tracing::info!(
-        "Processing email job: to={}, subject={}",
-        job.to,
-        job.subject
-    );
+    tracing::info!(subject = %job.subject, "Processing email job");
 
     let config = WorkerConfig::get();
 
@@ -203,7 +154,7 @@ pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
         2, // concurrency
     )
     // Sending email is not idempotent: skip redelivered messages already sent.
-    .with_dedup(ctx.cache_client.clone());
+    .with_dedup(ctx.lock_client.clone());
 
     consumer
         .run::<SendEmailJob, _, _>(move |job| {

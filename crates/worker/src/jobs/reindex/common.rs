@@ -4,11 +4,6 @@ use crate::SearchClient;
 use meilisearch_sdk::client::SwapIndexes;
 use std::time::Duration;
 
-/// Default batch size for reindex operations.
-/// Kept modest because a whole batch is held in memory and sent to MeiliSearch
-/// as a single payload (default limit ~100MB).
-pub const DEFAULT_BATCH_SIZE: u32 = 1_000;
-
 /// Polling interval while waiting for the swap task
 const SWAP_WAIT_INTERVAL: Duration = Duration::from_secs(1);
 /// Max time to wait for the swap task (it queues behind all add_documents tasks)

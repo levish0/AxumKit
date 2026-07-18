@@ -1,4 +1,4 @@
-use super::common::{DEFAULT_BATCH_SIZE, promote_reindexed_index, reindex_temp_uid};
+use super::common::{promote_reindexed_index, reindex_temp_uid};
 use super::{ReindexJobBase, ReindexUsersJob};
 use crate::jobs::WorkerContext;
 use crate::jobs::index::user::{USERS_INDEX, build_user_search_json, ensure_index_settings_for};
@@ -110,18 +110,6 @@ async fn fetch_users_batch(
     Ok(users)
 }
 
-/// Create a new ReindexUsersJob to start reindexing from the beginning
-pub fn create_reindex_users_job(reindex_id: Uuid, batch_size: Option<u32>) -> ReindexUsersJob {
-    ReindexUsersJob {
-        base: ReindexJobBase {
-            after_id: None,
-            batch_size: batch_size.unwrap_or(DEFAULT_BATCH_SIZE),
-            reindex_id,
-            batch_number: 1,
-        },
-    }
-}
-
 /// Run the reindex users consumer
 pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
     let meili_client = ctx.meili_client.clone();
@@ -133,7 +121,13 @@ pub async fn run_consumer(ctx: WorkerContext) -> anyhow::Result<()> {
         REINDEX_USERS_STREAM,
         REINDEX_USERS_CONSUMER,
         1, // concurrency
-    );
+    )
+    // A reindex batch re-indexes many records and can legitimately outlast the
+    // default handler timeout.
+    .with_handler_timeout(std::time::Duration::from_secs(900))
+    // Dedup on stream sequence so a redelivered (lost-ack) batch does not
+    // re-enqueue its successor and fork the reindex chain.
+    .with_dedup(ctx.lock_client.clone());
 
     consumer
         .run::<ReindexUsersJob, _, _>(move |job| {

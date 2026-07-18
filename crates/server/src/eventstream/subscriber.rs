@@ -1,6 +1,6 @@
-use constants::REALTIME_EVENTS_SUBJECT;
 use dto::action_logs::ActionLogResponse;
 use futures::StreamExt;
+use job_queue::subjects::REALTIME_EVENTS_SUBJECT;
 use tokio::sync::broadcast;
 
 /// Start NATS subscription and forward events to broadcast channel.
