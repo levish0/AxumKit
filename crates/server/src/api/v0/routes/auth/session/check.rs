@@ -34,7 +34,7 @@ pub async fn auth_check(
         .ok()
         .flatten()
         .map(|context| AuthCheckIdentity {
-            user_id: context.user_id.to_string(),
+            user_id: context.user_id,
             session_id: context.session_id,
             management_id: context.management_id,
         });

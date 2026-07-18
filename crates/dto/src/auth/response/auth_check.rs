@@ -1,5 +1,6 @@
 use axum::http::{HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
+use uuid::Uuid;
 
 /// Headers the API gateway (APISIX) reads from the `/auth/check` forward-auth response to learn
 /// the request's identity for **rate limiting** (e.g. per-user vs. per-IP buckets). The backend
@@ -16,7 +17,8 @@ pub const AUTH_STATUS_ANONYMOUS: &str = "anonymous";
 
 /// Identity advertised to the gateway when a session is valid.
 pub struct AuthCheckIdentity {
-    pub user_id: String,
+    pub user_id: Uuid,
+    /// Opaque session hash (hex), not a UUID.
     pub session_id: String,
     pub management_id: String,
 }
@@ -40,8 +42,8 @@ pub fn create_auth_check_response(identity: Option<AuthCheckIdentity>) -> Respon
         AUTH_STATUS_HEADER,
         HeaderValue::from_static(AUTH_STATUS_AUTHENTICATED),
     );
-    // user/session/management ids are UUIDs / hex hashes, so they are always valid header values.
-    if let Ok(value) = HeaderValue::from_str(&identity.user_id) {
+    // A UUID's canonical form is always a valid header value.
+    if let Ok(value) = HeaderValue::from_str(&identity.user_id.to_string()) {
         headers.insert(AUTH_USER_ID_HEADER, value);
     }
     if let Ok(value) = HeaderValue::from_str(&identity.session_id) {
