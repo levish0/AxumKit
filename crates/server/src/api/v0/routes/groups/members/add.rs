@@ -10,7 +10,7 @@ use errors::errors::{ErrorResponse, Errors};
     post,
     path = "/v0/groups/members",
     summary = "Add an ACL group member",
-    description = "Adds a user or an IP/CIDR range to an ACL group. Admin only.",
+    description = "Adds a user to an ACL group. Admin only.",
     request_body = AddGroupMemberRequest,
     responses(
         (status = 200, description = "ACL group member added successfully", body = GroupMemberResponse),

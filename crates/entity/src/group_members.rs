@@ -3,9 +3,8 @@ use uuid::Uuid;
 
 use super::users::Entity as UsersEntity;
 
-/// ACL group member — exactly one user OR one IP (single/CIDR).
+/// ACL group member.
 ///
-/// Exactly one of `user_id` and `ip_address` is set (DB CHECK).
 /// Expiry is read-time filtering (`expires_at > now`), not deletion.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
 #[sea_orm(table_name = "group_members")]
@@ -15,12 +14,9 @@ pub struct Model {
     /// Owning group
     #[sea_orm(not_null)]
     pub group_id: Uuid,
-    /// User member (NULL for IP members)
-    #[sea_orm(nullable)]
-    pub user_id: Option<Uuid>,
-    /// IP member — single IP or CIDR range (NULL for user members)
-    #[sea_orm(nullable)]
-    pub ip_address: Option<IpNetwork>,
+    /// User member
+    #[sea_orm(not_null)]
+    pub user_id: Uuid,
     /// Membership reason
     #[sea_orm(column_type = "Text", nullable)]
     pub reason: Option<String>,

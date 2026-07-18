@@ -369,9 +369,9 @@ async fn group_permission_grant_gates_post_pinning() {
     );
 }
 
-/// Scenario 4: membership mechanics — a member must be exactly one subject,
-/// active duplicates conflict, the member list shows the row, and removing the
-/// membership revokes the grant immediately.
+/// Scenario 4: membership mechanics — active duplicates conflict, the member
+/// list shows the row, and removing the membership revokes the grant
+/// immediately.
 #[tokio::test]
 async fn membership_removal_revokes_the_grant() {
     let admin = new_admin().await;
@@ -385,37 +385,6 @@ async fn membership_removal_revokes_the_grant() {
 
     let (group_id, _) = create_group(&admin, "e2e-member").await;
     replace_permissions(&admin, &group_id, &["board:moderate"]).await;
-
-    // A member is a user XOR an IP — both (or neither) is an invalid subject.
-    let resp = admin
-        .post_json(
-            "/v0/groups/members",
-            &json!({
-                "group_id": group_id,
-                "user_id": bob_id,
-                "ip_address": "203.0.113.7",
-                "reason": "must fail",
-            }),
-        )
-        .await;
-    let body = TestClient::json_ok(resp, StatusCode::BAD_REQUEST).await;
-    assert_eq!(
-        body["code"].as_str(),
-        Some("permission:invalid"),
-        "both subjects: {body}"
-    );
-    let resp = admin
-        .post_json(
-            "/v0/groups/members",
-            &json!({ "group_id": group_id, "reason": "must fail" }),
-        )
-        .await;
-    let body = TestClient::json_ok(resp, StatusCode::BAD_REQUEST).await;
-    assert_eq!(
-        body["code"].as_str(),
-        Some("permission:invalid"),
-        "no subject: {body}"
-    );
 
     let member_id = add_member(&admin, &group_id, &bob_id).await;
 

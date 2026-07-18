@@ -53,7 +53,6 @@ pub async fn service_remove_group_member(
         Some(json!({
             "member_id": member.id,
             "user_id": member.user_id,
-            "ip_address": member.ip_address.map(|ip| ip.to_string()),
         })),
     )
     .await?;

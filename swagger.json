@@ -11,7 +11,7 @@
       "name": "MIT",
       "identifier": "MIT"
     },
-    "version": "0.19.0"
+    "version": "0.20.0"
   },
   "paths": {
     "/health-check": {
@@ -4231,7 +4231,7 @@
           "ACL"
         ],
         "summary": "Add an ACL group member",
-        "description": "Adds a user or an IP/CIDR range to an ACL group. Admin only.",
+        "description": "Adds a user to an ACL group. Admin only.",
         "operationId": "add_group_member",
         "requestBody": {
           "content": {
@@ -6548,9 +6548,10 @@
       },
       "AddGroupMemberRequest": {
         "type": "object",
-        "description": "Request payload for adding a member (a user XOR an IP/CIDR) to an ACL group.",
+        "description": "Request payload for adding a user member to an ACL group.",
         "required": [
-          "group_id"
+          "group_id",
+          "user_id"
         ],
         "properties": {
           "expires_at": {
@@ -6566,14 +6567,6 @@
             "format": "uuid",
             "description": "Target group"
           },
-          "ip_address": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "IP address or CIDR range member (mutually exclusive with `user_id`)",
-            "example": "192.168.1.0/24"
-          },
           "reason": {
             "type": [
               "string",
@@ -6582,12 +6575,9 @@
             "description": "Reason for the membership"
           },
           "user_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "uuid",
-            "description": "User member (mutually exclusive with `ip_address`)"
+            "description": "User to add"
           }
         }
       },
@@ -8073,6 +8063,7 @@
         "required": [
           "id",
           "group_id",
+          "user_id",
           "created_at"
         ],
         "properties": {
@@ -8103,14 +8094,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "ip_address": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "IP/CIDR member (None for user members)",
-            "example": "192.168.1.0/24"
-          },
           "reason": {
             "type": [
               "string",
@@ -8118,12 +8101,9 @@
             ]
           },
           "user_id": {
-            "type": [
-              "string",
-              "null"
-            ],
+            "type": "string",
             "format": "uuid",
-            "description": "User member (None for IP members)"
+            "description": "User member"
           }
         }
       },

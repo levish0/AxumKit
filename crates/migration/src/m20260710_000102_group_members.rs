@@ -21,8 +21,7 @@ impl MigrationTrait for Migration {
                             .default(Expr::cust("uuidv7()")),
                     )
                     .col(ColumnDef::new(GroupMembers::GroupId).uuid().not_null())
-                    .col(ColumnDef::new(GroupMembers::UserId).uuid().null())
-                    .col(ColumnDef::new(GroupMembers::IpAddress).inet().null())
+                    .col(ColumnDef::new(GroupMembers::UserId).uuid().not_null())
                     .col(ColumnDef::new(GroupMembers::Reason).text().null())
                     .col(
                         ColumnDef::new(GroupMembers::ExpiresAt)
@@ -61,18 +60,7 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        // A member row is exactly one subject: a user or an IP, never both/neither.
-        manager
-            .get_connection()
-            .execute_unprepared(
-                "ALTER TABLE group_members \
-                 ADD CONSTRAINT chk_group_members_subject \
-                 CHECK (num_nonnulls(user_id, ip_address) = 1)",
-            )
-            .await?;
-
-        // One membership per subject per group (NULLs never collide, so the
-        // two partial-shaped unique indexes coexist).
+        // One membership per user per group.
         manager
             .create_index(
                 Index::create()
@@ -85,18 +73,6 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_group_members_group_ip")
-                    .table(GroupMembers::Table)
-                    .col(GroupMembers::GroupId)
-                    .col(GroupMembers::IpAddress)
-                    .unique()
-                    .to_owned(),
-            )
-            .await?;
-
         // Membership lookup for an authenticated subject.
         manager
             .create_index(
@@ -104,18 +80,6 @@ impl MigrationTrait for Migration {
                     .name("idx_group_members_user")
                     .table(GroupMembers::Table)
                     .col(GroupMembers::UserId)
-                    .to_owned(),
-            )
-            .await?;
-
-        // Support INET containment lookups for IP membership checks.
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_group_members_ip_spgist")
-                    .table(GroupMembers::Table)
-                    .col(GroupMembers::IpAddress)
-                    .index_type(IndexType::Custom(Alias::new("spgist").into()))
                     .to_owned(),
             )
             .await?;
@@ -145,7 +109,6 @@ pub enum GroupMembers {
     Id,
     GroupId,
     UserId,
-    IpAddress,
     Reason,
     ExpiresAt,
     CreatedBy,

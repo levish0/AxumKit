@@ -7,18 +7,15 @@ use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema, Validate)]
-/// Request payload for adding a member (a user XOR an IP/CIDR) to an ACL group.
+/// Request payload for adding a user member to an ACL group.
 pub struct AddGroupMemberRequest {
     /// Target group
     pub group_id: Uuid,
-    /// User member (mutually exclusive with `ip_address`)
-    pub user_id: Option<Uuid>,
-    /// IP address or CIDR range member (mutually exclusive with `user_id`)
-    #[schema(value_type = Option<String>, example = "192.168.1.0/24")]
-    pub ip_address: Option<String>,
+    /// User to add
+    pub user_id: Uuid,
     /// Reason for the membership
-    // 1000 matches the ban DTOs (BanUserRequest/BanIpRequest), which write the
-    // same group_members.reason column — one cap for every writer.
+    // 1000 matches the moderation DTOs (BanUserRequest, GrantRoleRequest, ...) —
+    // one reason cap across the admin surface.
     #[validate(length(max = 1000, message = "Reason must be at most 1000 characters."))]
     pub reason: Option<String>,
     /// Membership expiration time (None = permanent)

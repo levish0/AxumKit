@@ -43,7 +43,7 @@ Groups are Django's group model: named permission bundles with membership metada
 | Table | Meaning |
 | --- | --- |
 | `groups` | Name, description, `is_system` (system groups are immutable via the API) |
-| `group_members` | One user (or IP/CIDR) per row, with `reason`, `expires_at`, `created_by` |
+| `group_members` | One user per row, with `reason`, `expires_at`, `created_by` |
 | `group_permissions` | One codename per row, unique per group |
 
 Membership expiry is read-time filtered, so a temporary grant (e.g. "trusted-uploaders

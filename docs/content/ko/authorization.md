@@ -44,7 +44,7 @@ order: 6
 | 테이블 | 의미 |
 | --- | --- |
 | `groups` | 이름, 설명, `is_system` (시스템 그룹은 API를 통해 변경 불가) |
-| `group_members` | 행마다 사용자 한 명(또는 IP/CIDR), `reason`, `expires_at`, `created_by` 포함 |
+| `group_members` | 행마다 사용자 한 명, `reason`, `expires_at`, `created_by` 포함 |
 | `group_permissions` | 행마다 codename 하나, 그룹별로 유니크 |
 
 멤버십 만료는 읽기 시점에 필터링되므로, 일시적인 권한 부여(예: "30일간

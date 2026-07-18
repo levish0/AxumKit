@@ -4,42 +4,21 @@ use entity::group_members::{
 };
 use entity::groups::{Entity as GroupEntity, Model as GroupModel};
 use errors::errors::Errors;
-use sea_orm::sea_query::{BinOper, Expr};
-use sea_orm::{
-    ColumnTrait, Condition, ConnectionTrait, EntityTrait, ExprTrait, QueryFilter, QueryOrder,
-};
-use std::net::IpAddr;
+use sea_orm::{ColumnTrait, Condition, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder};
 use uuid::Uuid;
 
-/// Finds the subject's active memberships (matched by user id and/or by IP
-/// containment for CIDR members), joined with their groups.
+/// Finds a user's active memberships, joined with their groups.
 pub async fn repository_find_active_group_memberships<C>(
     conn: &C,
-    user_id: Option<Uuid>,
-    ip: Option<&IpAddr>,
+    user_id: Uuid,
 ) -> Result<Vec<(GroupMemberModel, Option<GroupModel>)>, Errors>
 where
     C: ConnectionTrait,
 {
-    if user_id.is_none() && ip.is_none() {
-        return Ok(vec![]);
-    }
-
-    let mut subject = Condition::any();
-    if let Some(user_id) = user_id {
-        subject = subject.add(GroupMemberColumn::UserId.eq(user_id));
-    }
-    if let Some(ip) = ip {
-        subject = subject.add(Expr::col(GroupMemberColumn::IpAddress).binary(
-            BinOper::Custom(">>="),
-            Expr::val(ip.to_string()).cast_as("inet"),
-        ));
-    }
-
     Ok(GroupMemberEntity::find()
         .find_also_related(GroupEntity)
         .filter(active_condition())
-        .filter(subject)
+        .filter(GroupMemberColumn::UserId.eq(user_id))
         .all(conn)
         .await?)
 }
@@ -67,23 +46,6 @@ where
     Ok(GroupMemberEntity::find()
         .filter(GroupMemberColumn::GroupId.eq(group_id))
         .filter(GroupMemberColumn::UserId.eq(user_id))
-        .filter(active_condition())
-        .one(conn)
-        .await?)
-}
-
-/// Finds an active membership row for an exact IP/CIDR in a specific group.
-pub async fn repository_find_active_group_member_for_ip<C>(
-    conn: &C,
-    group_id: Uuid,
-    ip: &ipnetwork::IpNetwork,
-) -> Result<Option<GroupMemberModel>, Errors>
-where
-    C: ConnectionTrait,
-{
-    Ok(GroupMemberEntity::find()
-        .filter(GroupMemberColumn::GroupId.eq(group_id))
-        .filter(GroupMemberColumn::IpAddress.eq(*ip))
         .filter(active_condition())
         .one(conn)
         .await?)

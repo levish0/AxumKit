@@ -13,11 +13,8 @@ use uuid::Uuid;
 pub struct GroupMemberResponse {
     pub id: Uuid,
     pub group_id: Uuid,
-    /// User member (None for IP members)
-    pub user_id: Option<Uuid>,
-    /// IP/CIDR member (None for user members)
-    #[schema(example = "192.168.1.0/24")]
-    pub ip_address: Option<String>,
+    /// User member
+    pub user_id: Uuid,
     pub reason: Option<String>,
     /// Membership expiration time (None = permanent)
     pub expires_at: Option<DateTime<Utc>>,
