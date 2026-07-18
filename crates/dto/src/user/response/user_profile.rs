@@ -6,8 +6,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use entity::common::Role;
 use serde::Serialize;
-use uuid::Uuid;
 use utoipa::ToSchema;
+use uuid::Uuid;
 
 #[derive(Debug, Serialize, ToSchema)]
 /// Response payload for user response.

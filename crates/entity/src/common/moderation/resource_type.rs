@@ -17,7 +17,7 @@ pub enum ModerationResourceType {
     System,
     /// ACL group (group/member/permission management)
     #[sea_orm(string_value = "acl_group")]
-    AclGroup,
+    Group,
     /// Board (board management actions)
     #[sea_orm(string_value = "board")]
     Board,

@@ -124,8 +124,8 @@ fn test_group_grant_confers_permission() {
 fn test_denial_carries_permission_codename() {
     let ctx = make_context(vec![], false, true);
     match ctx.require_perm(Permission::BoardPinPost) {
-        Err(Errors::AclDenied(codename)) => assert_eq!(codename, "board:pin_post"),
-        other => panic!("expected AclDenied, got {:?}", other),
+        Err(Errors::PermissionDenied(codename)) => assert_eq!(codename, "board:pin_post"),
+        other => panic!("expected PermissionDenied, got {:?}", other),
     }
 }
 

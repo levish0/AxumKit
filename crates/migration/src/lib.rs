@@ -24,9 +24,9 @@ mod m20260328_141058_notification_action_preferences;
 mod m20260405_073559_create_moderation_logs;
 mod m20260705_000000_create_auth_events;
 mod m20260705_000100_create_known_devices;
-pub(crate) mod m20260710_000101_acl_groups;
-mod m20260710_000102_acl_group_members;
-mod m20260710_000103_acl_group_permissions;
+pub(crate) mod m20260710_000101_groups;
+mod m20260710_000102_group_members;
+mod m20260710_000103_group_permissions;
 
 pub struct Migrator;
 
@@ -57,9 +57,9 @@ impl MigratorTrait for Migrator {
             Box::new(m20260405_073559_create_moderation_logs::Migration),
             Box::new(m20260705_000000_create_auth_events::Migration),
             Box::new(m20260705_000100_create_known_devices::Migration),
-            Box::new(m20260710_000101_acl_groups::Migration),
-            Box::new(m20260710_000102_acl_group_members::Migration),
-            Box::new(m20260710_000103_acl_group_permissions::Migration),
+            Box::new(m20260710_000101_groups::Migration),
+            Box::new(m20260710_000102_group_members::Migration),
+            Box::new(m20260710_000103_group_permissions::Migration),
         ]
     }
 }

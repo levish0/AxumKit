@@ -1,5 +1,5 @@
-use crate::repository::acl_group_members::repository_find_active_acl_group_memberships;
-use crate::repository::acl_group_permissions::repository_find_permissions_for_groups;
+use crate::repository::group_members::repository_find_active_group_memberships;
+use crate::repository::group_permissions::repository_find_permissions_for_groups;
 use crate::repository::user::repository_find_user_by_id;
 use crate::repository::user::user_bans::repository_find_user_ban;
 use crate::repository::user::user_roles::repository_find_user_roles;
@@ -56,13 +56,13 @@ impl UserContext {
 
     /// Check-or-deny form of [`UserContext::has_perm`]. The denial carries the
     /// permission codename so the client learns exactly which capability was
-    /// missing (`acl:denied` + `board:pin_post`).
+    /// missing (`permission:denied` + `board:pin_post`).
     pub fn require_perm(&self, permission: Permission) -> Result<(), Errors> {
         self.require_not_banned()?;
         if self.has_perm(permission) {
             Ok(())
         } else {
-            Err(Errors::AclDenied(permission.as_str().to_string()))
+            Err(Errors::PermissionDenied(permission.as_str().to_string()))
         }
     }
 
@@ -182,7 +182,7 @@ impl PermissionService {
         C: ConnectionTrait,
     {
         let memberships =
-            repository_find_active_acl_group_memberships(conn, Some(user_id), None).await?;
+            repository_find_active_group_memberships(conn, Some(user_id), None).await?;
         if memberships.is_empty() {
             return Ok(HashSet::new());
         }

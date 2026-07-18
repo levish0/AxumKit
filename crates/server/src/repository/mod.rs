@@ -1,11 +1,11 @@
-pub mod acl_group_members;
-pub mod acl_group_permissions;
-pub mod acl_groups;
 pub mod action_logs;
 pub mod actors;
 pub mod auth_events;
 pub mod board;
 pub mod common;
+pub mod group_members;
+pub mod group_permissions;
+pub mod groups;
 pub mod known_devices;
 pub mod moderation;
 pub mod notification;

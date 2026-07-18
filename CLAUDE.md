@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AxumKit is a production-ready Rust web API template built on Axum, SeaORM, PostgreSQL, Redis, NATS
 JetStream, and Meilisearch. It ships session-based auth (Redis sessions, TOTP 2FA, new-device
-verification, OAuth2 Google/GitHub incl. One Tap), Django-style RBAC (roles + ACL groups +
+verification, OAuth2 Google/GitHub incl. One Tap), Django-style RBAC (roles + groups +
 permission grants), a board domain (posts/comments/pins/locks) as the demo feature, an in-app
 notification inbox, a background worker (email, search indexing, cron), and Cloudflare R2 storage.
 
@@ -71,10 +71,10 @@ Three layers, evaluated in `server/src/permission/`:
    Router-level gates via `middleware/require_role.rs` (`require_admin`/`require_mod`).
 2. **Permissions** (`constants::Permission`, codenames like `board:pin_post` stored as TEXT):
    fine-grained grants. `UserContext::has_perm` resolves ban gate → Admin bypass → Mod default
-   set (`Permission::MOD_DEFAULTS`) → group-granted union. Denials return `acl:denied` with the
+   set (`Permission::MOD_DEFAULTS`) → group-granted union. Denials return `permission:denied` with the
    missing codename.
-3. **ACL groups** (`acl_groups` + `acl_group_members` + `acl_group_permissions`): admin-managed
-   permission bundles with member expiry/reason metadata. Admin API under `/v0/acl/*`.
+3. **Groups** (`groups` + `group_members` + `group_permissions`): admin-managed
+   permission bundles with member expiry/reason metadata. Admin API under `/v0/groups*` and `/v0/permissions`.
 
 Domain policy objects (e.g. `permission/board.rs` `BoardPermission`) implement the `Rule` trait
 and are the single source of truth per domain (owner-only edits, ban-exempt reads, etc.).

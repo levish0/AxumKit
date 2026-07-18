@@ -30,21 +30,21 @@ Fine-grained capabilities are **permission codenames**, defined once as the
 `UserContext::has_perm` resolves, in order: the **ban hard gate** (a banned user holds
 no permissions), the **Admin bypass** (admins pass everything — anti-lockout), the
 **Mod default set** (`pin`, `lock`, `moderate`), and finally the union of permissions
-granted through group membership. Denials return `403` with code `acl:denied` and the
+granted through group membership. Denials return `403` with code `permission:denied` and the
 missing codename, so clients know exactly which capability was absent.
 
 Adding a permission is a code change only — a new enum variant, no migration. A stored
 codename that no longer parses never matches any check (fail closed, logged).
 
-## ACL groups
+## Groups
 
 Groups are Django's group model: named permission bundles with membership metadata.
 
 | Table | Meaning |
 | --- | --- |
-| `acl_groups` | Name, description, `is_system` (system groups are immutable via the API) |
-| `acl_group_members` | One user (or IP/CIDR) per row, with `reason`, `expires_at`, `created_by` |
-| `acl_group_permissions` | One codename per row, unique per group |
+| `groups` | Name, description, `is_system` (system groups are immutable via the API) |
+| `group_members` | One user (or IP/CIDR) per row, with `reason`, `expires_at`, `created_by` |
+| `group_permissions` | One codename per row, unique per group |
 
 Membership expiry is read-time filtered, so a temporary grant (e.g. "trusted-uploaders
 for 30 days") needs no revocation job — a weekly cron just reclaims dead rows.
@@ -55,19 +55,19 @@ All mutations are admin-only, moderation-logged with a required reason, and read
 require at least `Mod`:
 
 ```
-GET  /v0/acl/groups                       list groups
-POST /v0/acl/groups                       create (name, description, reason)
-POST /v0/acl/groups/delete                delete (system groups refused)
-GET  /v0/acl/groups/members?group_id=…    list members (active only, paginated)
-POST /v0/acl/groups/members               add member (user or ip, reason, expires_at)
-POST /v0/acl/groups/members/remove        remove member
-GET  /v0/acl/permissions                  every codename the app defines
-GET  /v0/acl/groups/permissions?group_id=…
-POST /v0/acl/groups/permissions/replace   whole-list replacement; unknown codenames rejected
+GET  /v0/groups                       list groups
+POST /v0/groups                       create (name, description, reason)
+POST /v0/groups/delete                delete (system groups refused)
+GET  /v0/groups/members?group_id=…    list members (active only, paginated)
+POST /v0/groups/members               add member (user or ip, reason, expires_at)
+POST /v0/groups/members/remove        remove member
+GET  /v0/permissions                  every codename the app defines
+GET  /v0/groups/permissions?group_id=…
+POST /v0/groups/permissions/replace   whole-list replacement; unknown codenames rejected
 ```
 
 Permission replacement is whole-list ("submit the desired end state") so admin UIs can
-render checkboxes from `GET /v0/acl/permissions` and PUT the result back without
+render checkboxes from `GET /v0/permissions` and PUT the result back without
 diffing.
 
 ## Domain policy objects

@@ -10,7 +10,7 @@ pub enum ModerationResourceType {
     #[sea_orm(iden = "system")]
     System,
     #[sea_orm(iden = "acl_group")]
-    AclGroup,
+    Group,
     #[sea_orm(iden = "board")]
     Board,
     #[sea_orm(iden = "board_post")]

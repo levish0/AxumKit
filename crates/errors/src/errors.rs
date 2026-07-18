@@ -95,13 +95,13 @@ pub enum Errors {
 
     // ACL
     /// Denied by an ACL rule; the payload names the matched rule/condition.
-    AclDenied(String),
-    AclGroupNotFound,
-    AclGroupAlreadyExists,
-    AclGroupIsSystem,
-    AclGroupMemberNotFound,
-    AclGroupMemberAlreadyExists,
-    AclInvalidRule(String),
+    PermissionDenied(String),
+    GroupNotFound,
+    GroupAlreadyExists,
+    GroupIsSystem,
+    GroupMemberNotFound,
+    GroupMemberAlreadyExists,
+    InvalidPermission(String),
 
     // Board
     BoardNotFound,
@@ -212,7 +212,7 @@ pub enum Errors {
 
 domain_error_handlers!(
     user_handler,
-    acl_handler,
+    group_handler,
     board_handler,
     oauth_handler,
     session_handler,

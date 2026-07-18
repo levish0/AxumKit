@@ -10,7 +10,7 @@
     "license": {
       "name": ""
     },
-    "version": "0.11.0"
+    "version": "0.18.2"
   },
   "paths": {
     "/health-check": {
@@ -27,730 +27,6 @@
             "description": "Internal server error"
           }
         }
-      }
-    },
-    "/v0/acl/groups": {
-      "get": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "List ACL groups",
-        "description": "Returns every ACL group. Requires the document moderator role.",
-        "operationId": "list_acl_groups",
-        "responses": {
-          "200": {
-            "description": "ACL groups retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Create an ACL group",
-        "description": "Creates a new (non-system) ACL group. Admin only.",
-        "operationId": "create_acl_group",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateAclGroupRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "ACL group created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict - Group name already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database or transaction error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/groups/delete": {
-      "post": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Delete an ACL group",
-        "description": "Deletes a non-system ACL group that no rules reference. Admin only.",
-        "operationId": "delete_acl_group",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteAclGroupRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "ACL group deleted successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - System group or still referenced by rules",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Group not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database or transaction error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/groups/members": {
-      "get": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "List ACL group members",
-        "description": "Returns a group's active members with cursor pagination (newest first). Requires the document moderator role.",
-        "operationId": "list_acl_group_members",
-        "parameters": [
-          {
-            "name": "group_id",
-            "in": "query",
-            "description": "Group whose members to list",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "cursor_id",
-            "in": "query",
-            "description": "Cursor: return members older than this member id (newest-first list).",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "Page size — required, matching every other list endpoint's contract.",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64",
-              "minimum": 0
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "ACL group members retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupMemberListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Group not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      },
-      "post": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Add an ACL group member",
-        "description": "Adds a user or an IP/CIDR range to an ACL group. Admin only.",
-        "operationId": "add_acl_group_member",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AddAclGroupMemberRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "ACL group member added successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupMemberResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - Invalid subject, IP format, or expiry",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Group or user not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict - Member already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database or transaction error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/groups/members/remove": {
-      "post": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Remove an ACL group member",
-        "description": "Removes a membership row from an ACL group. Admin only.",
-        "operationId": "remove_acl_group_member",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RemoveAclGroupMemberRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "ACL group member removed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupMemberResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Member not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Database or transaction error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/groups/permissions": {
-      "get": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Get a group's permissions",
-        "description": "Lists the permission codenames granted to a group. Mod or above.",
-        "operationId": "get_acl_group_permissions",
-        "parameters": [
-          {
-            "name": "group_id",
-            "in": "query",
-            "description": "Target group id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Group permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupPermissionsResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Group not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/groups/permissions/replace": {
-      "post": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "Replace a group's permissions",
-        "description": "Replaces a group's permission grants with the submitted list (whole-list replacement). Admin only.",
-        "operationId": "replace_acl_group_permissions",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ReplaceAclGroupPermissionsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Group permissions replaced",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclGroupPermissionsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - Unknown permission codename",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found - Group not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
-      }
-    },
-    "/v0/acl/permissions": {
-      "get": {
-        "tags": [
-          "ACL"
-        ],
-        "summary": "List all defined permissions",
-        "description": "Lists every permission codename the application defines. Mod or above.",
-        "operationId": "list_permissions",
-        "responses": {
-          "200": {
-            "description": "Permission list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AclPermissionListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Login required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden - Insufficient permissions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "session_id_cookie": []
-          }
-        ]
       }
     },
     "/v0/action-logs": {
@@ -4636,6 +3912,673 @@
         }
       }
     },
+    "/v0/groups": {
+      "get": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "List ACL groups",
+        "description": "Returns every ACL group. Requires the document moderator role.",
+        "operationId": "list_groups",
+        "responses": {
+          "200": {
+            "description": "ACL groups retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Create an ACL group",
+        "description": "Creates a new (non-system) ACL group. Admin only.",
+        "operationId": "create_group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "ACL group created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - Group name already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/groups/delete": {
+      "post": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Delete an ACL group",
+        "description": "Deletes a non-system ACL group that no rules reference. Admin only.",
+        "operationId": "delete_group",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteGroupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "ACL group deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - System group or still referenced by rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/groups/members": {
+      "get": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "List ACL group members",
+        "description": "Returns a group's active members with cursor pagination (newest first). Requires the document moderator role.",
+        "operationId": "list_group_members",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "query",
+            "description": "Group whose members to list",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor_id",
+            "in": "query",
+            "description": "Cursor: return members older than this member id (newest-first list).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Page size — required, matching every other list endpoint's contract.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ACL group members retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMemberListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Add an ACL group member",
+        "description": "Adds a user or an IP/CIDR range to an ACL group. Admin only.",
+        "operationId": "add_group_member",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddGroupMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "ACL group member added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Invalid subject, IP format, or expiry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Group or user not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - Member already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/groups/members/remove": {
+      "post": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Remove an ACL group member",
+        "description": "Removes a membership row from an ACL group. Admin only.",
+        "operationId": "remove_group_member",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveGroupMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "ACL group member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupMemberResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Member not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Database or transaction error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/groups/permissions": {
+      "get": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Get a group's permissions",
+        "description": "Lists the permission codenames granted to a group. Mod or above.",
+        "operationId": "get_group_permissions",
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "query",
+            "description": "Target group id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Group permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/groups/permissions/replace": {
+      "post": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "Replace a group's permissions",
+        "description": "Replaces a group's permission grants with the submitted list (whole-list replacement). Admin only.",
+        "operationId": "replace_group_permissions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceGroupPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Group permissions replaced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupPermissionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Unknown permission codename",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Group not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
     "/v0/moderation/logs": {
       "get": {
         "tags": [
@@ -5305,6 +5248,63 @@
           },
           "500": {
             "description": "Internal Server Error - Database error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session_id_cookie": []
+          }
+        ]
+      }
+    },
+    "/v0/permissions": {
+      "get": {
+        "tags": [
+          "ACL"
+        ],
+        "summary": "List all defined permissions",
+        "description": "Lists every permission codename the application defines. Mod or above.",
+        "operationId": "list_permissions",
+        "responses": {
+          "200": {
+            "description": "Permission list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Login required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Insufficient permissions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
             "content": {
               "application/json": {
                 "schema": {
@@ -6404,170 +6404,6 @@
   },
   "components": {
     "schemas": {
-      "AclGroupListResponse": {
-        "type": "object",
-        "description": "Response payload for listing ACL groups.",
-        "required": [
-          "groups"
-        ],
-        "properties": {
-          "groups": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AclGroupResponse"
-            }
-          }
-        }
-      },
-      "AclGroupMemberListResponse": {
-        "type": "object",
-        "description": "Response payload for listing an ACL group's active members.",
-        "required": [
-          "data",
-          "has_more"
-        ],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AclGroupMemberResponse"
-            }
-          },
-          "has_more": {
-            "type": "boolean",
-            "description": "Whether older entries exist beyond this page."
-          }
-        }
-      },
-      "AclGroupMemberResponse": {
-        "type": "object",
-        "description": "Response payload for one ACL group membership.",
-        "required": [
-          "id",
-          "group_id",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "created_by": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid"
-          },
-          "expires_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "description": "Membership expiration time (None = permanent)"
-          },
-          "group_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ip_address": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "IP/CIDR member (None for user members)",
-            "example": "192.168.1.0/24"
-          },
-          "reason": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "user_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "description": "User member (None for IP members)"
-          }
-        }
-      },
-      "AclGroupPermissionsResponse": {
-        "type": "object",
-        "description": "A group's granted permission codenames.",
-        "required": [
-          "group_id",
-          "permissions"
-        ],
-        "properties": {
-          "group_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Granted permission codenames (e.g. \"board:pin_post\")"
-          }
-        }
-      },
-      "AclGroupResponse": {
-        "type": "object",
-        "description": "Response payload for one ACL group.",
-        "required": [
-          "id",
-          "name",
-          "is_system",
-          "created_at"
-        ],
-        "properties": {
-          "created_at": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "is_system": {
-            "type": "boolean",
-            "description": "System groups are known to the code and cannot be deleted."
-          },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "AclPermissionListResponse": {
-        "type": "object",
-        "description": "Every permission codename the application defines — what an admin UI can\noffer as checkboxes (Django's permission list).",
-        "required": [
-          "permissions"
-        ],
-        "properties": {
-          "permissions": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
       "ActionLogAction": {
         "type": "string",
         "description": "Action Log Action enum (stored in action_logs.action field)\nFormat: \"{resource}:{operation}\"",
@@ -6724,7 +6560,7 @@
           }
         }
       },
-      "AddAclGroupMemberRequest": {
+      "AddGroupMemberRequest": {
         "type": "object",
         "description": "Request payload for adding a member (a user XOR an IP/CIDR) to an ACL group.",
         "required": [
@@ -7360,30 +7196,6 @@
           }
         }
       },
-      "CreateAclGroupRequest": {
-        "type": "object",
-        "description": "Request payload for creating an ACL group.",
-        "required": [
-          "name",
-          "reason"
-        ],
-        "properties": {
-          "description": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "Human-readable group description"
-          },
-          "name": {
-            "type": "string",
-            "description": "Unique group name (e.g. \"vpn-ranges\")"
-          },
-          "reason": {
-            "type": "string"
-          }
-        }
-      },
       "CreateBoardCommentRequest": {
         "type": "object",
         "required": [
@@ -7492,6 +7304,30 @@
           }
         }
       },
+      "CreateGroupRequest": {
+        "type": "object",
+        "description": "Request payload for creating an ACL group.",
+        "required": [
+          "name",
+          "reason"
+        ],
+        "properties": {
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Human-readable group description"
+          },
+          "name": {
+            "type": "string",
+            "description": "Unique group name (e.g. \"vpn-ranges\")"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "CreateUserRequest": {
         "type": "object",
         "description": "Request body for starting an email and password signup.",
@@ -7545,24 +7381,6 @@
           "Older",
           "Newer"
         ]
-      },
-      "DeleteAclGroupRequest": {
-        "type": "object",
-        "description": "Request payload for deleting an ACL group.",
-        "required": [
-          "group_id",
-          "reason"
-        ],
-        "properties": {
-          "group_id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "ID of the group to delete"
-          },
-          "reason": {
-            "type": "string"
-          }
-        }
       },
       "DeleteBoardCommentRequest": {
         "type": "object",
@@ -7633,6 +7451,24 @@
           "id": {
             "type": "string",
             "format": "uuid"
+          }
+        }
+      },
+      "DeleteGroupRequest": {
+        "type": "object",
+        "description": "Request payload for deleting an ACL group.",
+        "required": [
+          "group_id",
+          "reason"
+        ],
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the group to delete"
+          },
+          "reason": {
+            "type": "string"
           }
         }
       },
@@ -8210,7 +8046,156 @@
           }
         }
       },
-      "ListAclGroupMembersRequest": {
+      "GroupListResponse": {
+        "type": "object",
+        "description": "Response payload for listing ACL groups.",
+        "required": [
+          "groups"
+        ],
+        "properties": {
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupResponse"
+            }
+          }
+        }
+      },
+      "GroupMemberListResponse": {
+        "type": "object",
+        "description": "Response payload for listing an ACL group's active members.",
+        "required": [
+          "data",
+          "has_more"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupMemberResponse"
+            }
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether older entries exist beyond this page."
+          }
+        }
+      },
+      "GroupMemberResponse": {
+        "type": "object",
+        "description": "Response payload for one ACL group membership.",
+        "required": [
+          "id",
+          "group_id",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Membership expiration time (None = permanent)"
+          },
+          "group_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ip_address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "IP/CIDR member (None for user members)",
+            "example": "192.168.1.0/24"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "User member (None for IP members)"
+          }
+        }
+      },
+      "GroupPermissionsResponse": {
+        "type": "object",
+        "description": "A group's granted permission codenames.",
+        "required": [
+          "group_id",
+          "permissions"
+        ],
+        "properties": {
+          "group_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Granted permission codenames (e.g. \"board:pin_post\")"
+          }
+        }
+      },
+      "GroupResponse": {
+        "type": "object",
+        "description": "Response payload for one ACL group.",
+        "required": [
+          "id",
+          "name",
+          "is_system",
+          "created_at"
+        ],
+        "properties": {
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "is_system": {
+            "type": "boolean",
+            "description": "System groups are known to the code and cannot be deleted."
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "ListGroupMembersRequest": {
         "type": "object",
         "description": "Request payload for listing an ACL group's active members.",
         "required": [
@@ -8389,11 +8374,11 @@
           "board:lock",
           "board:unlock",
           "board:reorder_pins",
-          "acl:group_create",
-          "acl:group_delete",
-          "acl:group_member_add",
-          "acl:group_member_remove",
-          "acl:group_permissions_replace"
+          "group:create",
+          "group:delete",
+          "group:member_add",
+          "group:member_remove",
+          "group:permissions_replace"
         ]
       },
       "ModerationLogListItem": {
@@ -8450,7 +8435,7 @@
         "enum": [
           "User",
           "System",
-          "AclGroup",
+          "Group",
           "Board",
           "BoardPost"
         ]
@@ -8726,6 +8711,21 @@
           }
         }
       },
+      "PermissionListResponse": {
+        "type": "object",
+        "description": "Every permission codename the application defines — what an admin UI can\noffer as checkboxes (Django's permission list).",
+        "required": [
+          "permissions"
+        ],
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "PublicUserProfile": {
         "type": "object",
         "description": "Response payload for public user profile.",
@@ -8801,7 +8801,7 @@
           }
         }
       },
-      "RemoveAclGroupMemberRequest": {
+      "RemoveGroupMemberRequest": {
         "type": "object",
         "description": "Request payload for removing a member from an ACL group.",
         "required": [
@@ -8819,7 +8819,7 @@
           }
         }
       },
-      "ReplaceAclGroupPermissionsRequest": {
+      "ReplaceGroupPermissionsRequest": {
         "type": "object",
         "description": "Request payload for replacing a group's permission grants (whole-list\nreplacement: submit the desired end state).",
         "required": [

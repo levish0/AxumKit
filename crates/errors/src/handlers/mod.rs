@@ -1,9 +1,9 @@
-pub mod acl_handler;
 pub mod board_handler;
 pub mod email_handler;
 pub mod eventstream_handler;
 pub mod file_handler;
 pub mod general_handler;
+pub mod group_handler;
 pub mod meilisearch_handler;
 pub mod oauth_handler;
 pub mod password_handler;

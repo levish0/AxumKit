@@ -29,16 +29,16 @@ pub enum ModerationAction {
     BoardReorderPins,
 
     // ACL
-    #[serde(rename = "acl:group_create")]
-    AclGroupCreate,
-    #[serde(rename = "acl:group_delete")]
-    AclGroupDelete,
-    #[serde(rename = "acl:group_member_add")]
-    AclGroupMemberAdd,
-    #[serde(rename = "acl:group_member_remove")]
-    AclGroupMemberRemove,
-    #[serde(rename = "acl:group_permissions_replace")]
-    AclGroupPermissionsReplace,
+    #[serde(rename = "group:create")]
+    GroupCreate,
+    #[serde(rename = "group:delete")]
+    GroupDelete,
+    #[serde(rename = "group:member_add")]
+    GroupMemberAdd,
+    #[serde(rename = "group:member_remove")]
+    GroupMemberRemove,
+    #[serde(rename = "group:permissions_replace")]
+    GroupPermissionsReplace,
 }
 
 impl ModerationAction {
@@ -54,11 +54,11 @@ impl ModerationAction {
             ModerationAction::BoardLock => "board:lock",
             ModerationAction::BoardUnlock => "board:unlock",
             ModerationAction::BoardReorderPins => "board:reorder_pins",
-            ModerationAction::AclGroupCreate => "acl:group_create",
-            ModerationAction::AclGroupDelete => "acl:group_delete",
-            ModerationAction::AclGroupMemberAdd => "acl:group_member_add",
-            ModerationAction::AclGroupMemberRemove => "acl:group_member_remove",
-            ModerationAction::AclGroupPermissionsReplace => "acl:group_permissions_replace",
+            ModerationAction::GroupCreate => "group:create",
+            ModerationAction::GroupDelete => "group:delete",
+            ModerationAction::GroupMemberAdd => "group:member_add",
+            ModerationAction::GroupMemberRemove => "group:member_remove",
+            ModerationAction::GroupPermissionsReplace => "group:permissions_replace",
         }
     }
 }
@@ -84,11 +84,11 @@ impl FromStr for ModerationAction {
             "board:lock" => Ok(ModerationAction::BoardLock),
             "board:unlock" => Ok(ModerationAction::BoardUnlock),
             "board:reorder_pins" => Ok(ModerationAction::BoardReorderPins),
-            "acl:group_create" => Ok(ModerationAction::AclGroupCreate),
-            "acl:group_delete" => Ok(ModerationAction::AclGroupDelete),
-            "acl:group_member_add" => Ok(ModerationAction::AclGroupMemberAdd),
-            "acl:group_member_remove" => Ok(ModerationAction::AclGroupMemberRemove),
-            "acl:group_permissions_replace" => Ok(ModerationAction::AclGroupPermissionsReplace),
+            "group:create" => Ok(ModerationAction::GroupCreate),
+            "group:delete" => Ok(ModerationAction::GroupDelete),
+            "group:member_add" => Ok(ModerationAction::GroupMemberAdd),
+            "group:member_remove" => Ok(ModerationAction::GroupMemberRemove),
+            "group:permissions_replace" => Ok(ModerationAction::GroupPermissionsReplace),
             _ => Err(format!("Unknown moderation action: {}", s)),
         }
     }

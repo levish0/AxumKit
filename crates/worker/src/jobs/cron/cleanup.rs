@@ -3,7 +3,7 @@ use sea_orm::DatabaseConnection;
 use super::cleanup_expired_roles::run_cleanup_expired_roles;
 use super::cleanup_old_notifications::run_cleanup_old_notifications;
 use super::expiry::run_batched_expiry_delete;
-use entity::{acl_group_members, user_bans};
+use entity::{group_members, user_bans};
 
 /// Batch size for cleanup operations
 const BATCH_SIZE: u64 = 1000;
@@ -22,13 +22,13 @@ pub async fn run_cleanup(db: &DatabaseConnection) {
     tracing::info!("Starting scheduled cleanup job");
 
     // 1. Cleanup expired ACL group members
-    let acl_group_members = run_batched_expiry_delete(
+    let group_members = run_batched_expiry_delete(
         db,
-        acl_group_members::Entity,
-        acl_group_members::Column::Id,
-        acl_group_members::Column::ExpiresAt,
+        group_members::Entity,
+        group_members::Column::Id,
+        group_members::Column::ExpiresAt,
         "agm",
-        "acl_group_members",
+        "group_members",
         BATCH_SIZE,
     )
     .await
@@ -72,7 +72,7 @@ pub async fn run_cleanup(db: &DatabaseConnection) {
         });
 
     tracing::info!(
-        expired_acl_group_members = acl_group_members,
+        expired_group_members = group_members,
         expired_roles = roles,
         expired_bans = bans,
         old_notifications = notifs,

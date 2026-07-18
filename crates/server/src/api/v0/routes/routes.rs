@@ -1,7 +1,7 @@
-use super::acl::routes::acl_routes as AclRoutes;
 use super::action_logs::routes::action_logs_routes as ActionLogsRoutes;
 use super::auth::routes::auth_routes as AuthRoutes;
 use super::board::routes::board_routes as BoardRoutes;
+use super::groups::routes::group_routes as GroupRoutes;
 use super::moderation::routes::moderation_routes as ModerationRoutes;
 use super::notification::routes::notification_routes as NotificationRoutes;
 use super::search::routes::search_routes as SearchRoutes;
@@ -19,7 +19,7 @@ pub fn v0_routes(state: AppState) -> Router<AppState> {
         .merge(ActionLogsRoutes())
         .merge(ModerationRoutes(state.clone()))
         .merge(StreamRoutes())
-        .merge(AclRoutes())
+        .merge(GroupRoutes())
         .merge(NotificationRoutes())
         .merge(BoardRoutes())
 }

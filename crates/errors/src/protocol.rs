@@ -28,14 +28,17 @@ pub mod user {
         "user:cannot_manage_higher_or_equal_role";
 }
 
-pub mod acl {
-    pub const ACL_DENIED: &str = "acl:denied";
-    pub const ACL_GROUP_NOT_FOUND: &str = "acl:group_not_found";
-    pub const ACL_GROUP_ALREADY_EXISTS: &str = "acl:group_already_exists";
-    pub const ACL_GROUP_IS_SYSTEM: &str = "acl:group_is_system";
-    pub const ACL_GROUP_MEMBER_NOT_FOUND: &str = "acl:group_member_not_found";
-    pub const ACL_GROUP_MEMBER_ALREADY_EXISTS: &str = "acl:group_member_already_exists";
-    pub const ACL_INVALID_RULE: &str = "acl:invalid_rule";
+pub mod group {
+    pub const GROUP_NOT_FOUND: &str = "group:not_found";
+    pub const GROUP_ALREADY_EXISTS: &str = "group:already_exists";
+    pub const GROUP_IS_SYSTEM: &str = "group:is_system";
+    pub const GROUP_MEMBER_NOT_FOUND: &str = "group:member_not_found";
+    pub const GROUP_MEMBER_ALREADY_EXISTS: &str = "group:member_already_exists";
+}
+
+pub mod permission {
+    pub const PERMISSION_DENIED: &str = "permission:denied";
+    pub const PERMISSION_INVALID: &str = "permission:invalid";
 }
 
 pub mod board {

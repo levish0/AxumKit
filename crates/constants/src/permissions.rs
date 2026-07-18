@@ -3,7 +3,7 @@ use std::fmt;
 use std::str::FromStr;
 use utoipa::ToSchema;
 
-/// Grantable permission codename for `acl_group_permissions.permission`.
+/// Grantable permission codename for `group_permissions.permission`.
 ///
 /// Django-style RBAC: a permission names an elevated capability; users hold it
 /// through group membership (or implicitly through the `Mod`/`Admin` roles).

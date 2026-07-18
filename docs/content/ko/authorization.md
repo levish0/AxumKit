@@ -30,22 +30,22 @@ order: 6
 `UserContext::has_perm`은 다음 순서로 해석합니다: **차단(ban) 하드 게이트**(차단된
 사용자는 어떤 권한도 갖지 않음), **Admin 우회**(관리자는 모든 검사를 통과 — 잠금 방지),
 **Mod 기본 세트**(`pin`, `lock`, `moderate`), 마지막으로 그룹 멤버십을 통해 부여된
-권한의 합집합. 거부 시에는 `acl:denied` 코드와 누락된 codename을 담아 `403`을
+권한의 합집합. 거부 시에는 `permission:denied` 코드와 누락된 codename을 담아 `403`을
 반환하므로, 클라이언트는 정확히 어떤 권한이 없었는지 알 수 있습니다.
 
 권한 추가는 코드 변경만으로 끝납니다 — 새로운 enum variant 하나면 되고, 마이그레이션은
 필요 없습니다. 더 이상 파싱되지 않는 저장된 codename은 어떤 검사와도 일치하지 않습니다
 (fail closed, 로그 기록).
 
-## ACL 그룹
+## 그룹
 
 그룹은 Django의 그룹 모델을 따릅니다: 멤버십 메타데이터를 가진 이름 있는 권한 묶음입니다.
 
 | 테이블 | 의미 |
 | --- | --- |
-| `acl_groups` | 이름, 설명, `is_system` (시스템 그룹은 API를 통해 변경 불가) |
-| `acl_group_members` | 행마다 사용자 한 명(또는 IP/CIDR), `reason`, `expires_at`, `created_by` 포함 |
-| `acl_group_permissions` | 행마다 codename 하나, 그룹별로 유니크 |
+| `groups` | 이름, 설명, `is_system` (시스템 그룹은 API를 통해 변경 불가) |
+| `group_members` | 행마다 사용자 한 명(또는 IP/CIDR), `reason`, `expires_at`, `created_by` 포함 |
+| `group_permissions` | 행마다 codename 하나, 그룹별로 유니크 |
 
 멤버십 만료는 읽기 시점에 필터링되므로, 일시적인 권한 부여(예: "30일간
 trusted-uploaders")에는 별도의 회수 작업이 필요 없습니다 — 주간 크론이 죽은 행을
@@ -57,19 +57,19 @@ trusted-uploaders")에는 별도의 회수 작업이 필요 없습니다 — 주
 읽기에는 최소 `Mod`가 필요합니다:
 
 ```
-GET  /v0/acl/groups                       list groups
-POST /v0/acl/groups                       create (name, description, reason)
-POST /v0/acl/groups/delete                delete (system groups refused)
-GET  /v0/acl/groups/members?group_id=…    list members (active only, paginated)
-POST /v0/acl/groups/members               add member (user or ip, reason, expires_at)
-POST /v0/acl/groups/members/remove        remove member
-GET  /v0/acl/permissions                  every codename the app defines
-GET  /v0/acl/groups/permissions?group_id=…
-POST /v0/acl/groups/permissions/replace   whole-list replacement; unknown codenames rejected
+GET  /v0/groups                       list groups
+POST /v0/groups                       create (name, description, reason)
+POST /v0/groups/delete                delete (system groups refused)
+GET  /v0/groups/members?group_id=…    list members (active only, paginated)
+POST /v0/groups/members               add member (user or ip, reason, expires_at)
+POST /v0/groups/members/remove        remove member
+GET  /v0/permissions                  every codename the app defines
+GET  /v0/groups/permissions?group_id=…
+POST /v0/groups/permissions/replace   whole-list replacement; unknown codenames rejected
 ```
 
 권한 교체는 전체 목록 방식("원하는 최종 상태를 제출")이므로, 관리자 UI는
-`GET /v0/acl/permissions`로 체크박스를 렌더링하고 diff 계산 없이 결과를 그대로
+`GET /v0/permissions`로 체크박스를 렌더링하고 diff 계산 없이 결과를 그대로
 다시 제출할 수 있습니다.
 
 ## 도메인 정책 객체

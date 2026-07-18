@@ -3,15 +3,15 @@
 //! effect. Run via `just e2e`.
 //!
 //! Policy references (from `crates/server/src/permission/*`,
-//! `crates/server/src/service/acl/*`):
+//! `crates/server/src/service/groups/*`):
 //! - Group/member/permission reads require `Mod` (or admin); every mutation is
 //!   admin-only. Anonymous callers get 401.
 //! - Permissions are Django-style codenames (`board:pin_post`, `board:moderate`,
-//!   ...). `Permission::ALL` is served by `GET /v0/acl/permissions`; a codename
-//!   the application does not define is rejected (`acl:invalid_rule`) so typos
+//!   ...). `Permission::ALL` is served by `GET /v0/permissions`; a codename
+//!   the application does not define is rejected (`permission:invalid`) so typos
 //!   never become silent dead grants.
 //! - A plain user holds a permission only through an active group membership.
-//!   Missing permissions surface as 403 `acl:denied` with the codename in
+//!   Missing permissions surface as 403 `permission:denied` with the codename in
 //!   `details`.
 //! - The board post pin/unpin/lock/unlock endpoints are all gated by the
 //!   `board:moderate` codename (`BoardPermission::Moderate`), so that is the
@@ -20,7 +20,7 @@
 //!   an expired membership stops granting without any cleanup job.
 //! - System groups carry code-known meaning: they cannot be deleted and their
 //!   membership cannot be edited through the generic ACL admin API
-//!   (`acl:group_is_system`). The API itself only ever creates non-system
+//!   (`group:is_system`). The API itself only ever creates non-system
 //!   groups, so the test seeds one out-of-band.
 
 use e2e::TestClient;
@@ -56,7 +56,7 @@ async fn seed_system_group(name: &str) -> String {
         .await
         .expect("connect to test database");
 
-    let group = entity::acl_groups::ActiveModel {
+    let group = entity::groups::ActiveModel {
         id: Set(Uuid::new_v4()),
         name: Set(name.to_string()),
         description: Set(Some("e2e: seeded system group".to_string())),
@@ -105,13 +105,13 @@ async fn pin(client: &TestClient, post_id: &str) -> reqwest::Response {
         .await
 }
 
-/// Asserts a 403 `acl:denied` error body and returns its `details` string
+/// Asserts a 403 `permission:denied` error body and returns its `details` string
 /// (the missing permission codename).
-async fn assert_acl_denied(resp: reqwest::Response) -> String {
+async fn assert_permission_denied(resp: reqwest::Response) -> String {
     let body = TestClient::json_ok(resp, StatusCode::FORBIDDEN).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:denied"),
+        Some("permission:denied"),
         "expected an RBAC denial: {body}"
     );
     body["details"].as_str().unwrap_or_default().to_string()
@@ -122,7 +122,7 @@ async fn create_group(admin: &TestClient, prefix: &str) -> (String, String) {
     let name = format!("{prefix}-{}", &e2e::unique()[..12]);
     let resp = admin
         .post_json(
-            "/v0/acl/groups",
+            "/v0/groups",
             &json!({
                 "name": name,
                 "description": "e2e: rbac test group",
@@ -140,7 +140,7 @@ async fn create_group(admin: &TestClient, prefix: &str) -> (String, String) {
 async fn add_member(admin: &TestClient, group_id: &str, user_id: &str) -> String {
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({ "group_id": group_id, "user_id": user_id, "reason": "e2e: member" }),
         )
         .await;
@@ -153,7 +153,7 @@ async fn add_member(admin: &TestClient, group_id: &str, user_id: &str) -> String
 async fn replace_permissions(admin: &TestClient, group_id: &str, permissions: &[&str]) {
     let resp = admin
         .post_json(
-            "/v0/acl/groups/permissions/replace",
+            "/v0/groups/permissions/replace",
             &json!({
                 "group_id": group_id,
                 "permissions": permissions,
@@ -177,13 +177,13 @@ async fn replace_permissions(admin: &TestClient, group_id: &str, permissions: &[
 async fn permissions_catalog_is_mod_readable_and_lists_board_codenames() {
     // Anonymous callers are rejected outright.
     let anon = TestClient::new();
-    let resp = anon.get("/v0/acl/permissions").await;
+    let resp = anon.get("/v0/permissions").await;
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "anon catalog read");
 
     // A plain user is below the Mod bar.
     let user = TestClient::new();
     user.signup_and_login().await;
-    let resp = user.get("/v0/acl/permissions").await;
+    let resp = user.get("/v0/permissions").await;
     let body = TestClient::json_ok(resp, StatusCode::FORBIDDEN).await;
     assert_eq!(
         body["code"].as_str(),
@@ -193,7 +193,7 @@ async fn permissions_catalog_is_mod_readable_and_lists_board_codenames() {
 
     // A moderator sees the full catalog.
     let moderator = new_mod().await;
-    let resp = moderator.get("/v0/acl/permissions").await;
+    let resp = moderator.get("/v0/permissions").await;
     let body = TestClient::json_ok(resp, StatusCode::OK).await;
     let listed: Vec<&str> = body["permissions"]
         .as_array()
@@ -224,20 +224,20 @@ async fn group_management_is_admin_gated() {
     // Creating the same name again is a conflict, not a silent upsert.
     let resp = admin
         .post_json(
-            "/v0/acl/groups",
+            "/v0/groups",
             &json!({ "name": group_name, "reason": "e2e: duplicate" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::CONFLICT).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:group_already_exists"),
+        Some("group:already_exists"),
         "duplicate group name: {body}"
     );
 
     // A moderator can list groups and sees the new one...
     let moderator = new_mod().await;
-    let resp = moderator.get("/v0/acl/groups").await;
+    let resp = moderator.get("/v0/groups").await;
     let body = TestClient::json_ok(resp, StatusCode::OK).await;
     assert!(
         body["groups"]
@@ -251,7 +251,7 @@ async fn group_management_is_admin_gated() {
     // ...but reads are the ceiling of the Mod tier: mutations stay admin-only.
     let resp = moderator
         .post_json(
-            "/v0/acl/groups",
+            "/v0/groups",
             &json!({ "name": format!("e2e-nope-{}", &e2e::unique()[..12]), "reason": "must fail" }),
         )
         .await;
@@ -260,37 +260,37 @@ async fn group_management_is_admin_gated() {
     // A plain user can neither list nor create; anonymous gets 401.
     let user = TestClient::new();
     user.signup_and_login().await;
-    let resp = user.get("/v0/acl/groups").await;
+    let resp = user.get("/v0/groups").await;
     assert_eq!(resp.status(), StatusCode::FORBIDDEN, "list groups as user");
     let resp = user
         .post_json(
-            "/v0/acl/groups",
+            "/v0/groups",
             &json!({ "name": format!("e2e-nope-{}", &e2e::unique()[..12]), "reason": "must fail" }),
         )
         .await;
     assert_eq!(resp.status(), StatusCode::FORBIDDEN, "create group as user");
     let anon = TestClient::new();
-    let resp = anon.get("/v0/acl/groups").await;
+    let resp = anon.get("/v0/groups").await;
     assert_eq!(resp.status(), StatusCode::UNAUTHORIZED, "list groups anon");
 
     // Delete works once, then the group is genuinely gone.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/delete",
+            "/v0/groups/delete",
             &json!({ "group_id": group_id, "reason": "e2e: cleanup" }),
         )
         .await;
     assert_eq!(resp.status(), StatusCode::OK, "delete group");
     let resp = admin
         .post_json(
-            "/v0/acl/groups/delete",
+            "/v0/groups/delete",
             &json!({ "group_id": group_id, "reason": "e2e: double delete" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::NOT_FOUND).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:group_not_found"),
+        Some("group:not_found"),
         "second delete: {body}"
     );
 }
@@ -310,7 +310,7 @@ async fn group_permission_grant_gates_post_pinning() {
     let post_id = create_probe_post(&alice, &general).await;
 
     // Before any grant: denied, and the denial names the missing codename.
-    let details = assert_acl_denied(pin(&alice, &post_id).await).await;
+    let details = assert_permission_denied(pin(&alice, &post_id).await).await;
     assert_eq!(
         details, "board:moderate",
         "the denial must carry the missing permission codename"
@@ -323,7 +323,7 @@ async fn group_permission_grant_gates_post_pinning() {
 
     // The grant is visible on the group's permission read.
     let resp = admin
-        .get_q("/v0/acl/groups/permissions", &[("group_id", &group_id)])
+        .get_q("/v0/groups/permissions", &[("group_id", &group_id)])
         .await;
     let body = TestClient::json_ok(resp, StatusCode::OK).await;
     assert!(
@@ -356,13 +356,13 @@ async fn group_permission_grant_gates_post_pinning() {
     // Deleting the group cascades memberships and grants away.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/delete",
+            "/v0/groups/delete",
             &json!({ "group_id": group_id, "reason": "e2e: revoke via delete" }),
         )
         .await;
     assert_eq!(resp.status(), StatusCode::OK, "delete granting group");
 
-    let details = assert_acl_denied(pin(&alice, &post_id).await).await;
+    let details = assert_permission_denied(pin(&alice, &post_id).await).await;
     assert_eq!(
         details, "board:moderate",
         "after group deletion the denial must be back"
@@ -389,7 +389,7 @@ async fn membership_removal_revokes_the_grant() {
     // A member is a user XOR an IP — both (or neither) is an invalid subject.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({
                 "group_id": group_id,
                 "user_id": bob_id,
@@ -401,19 +401,19 @@ async fn membership_removal_revokes_the_grant() {
     let body = TestClient::json_ok(resp, StatusCode::BAD_REQUEST).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:invalid_rule"),
+        Some("permission:invalid"),
         "both subjects: {body}"
     );
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({ "group_id": group_id, "reason": "must fail" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::BAD_REQUEST).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:invalid_rule"),
+        Some("permission:invalid"),
         "no subject: {body}"
     );
 
@@ -422,21 +422,21 @@ async fn membership_removal_revokes_the_grant() {
     // An active duplicate is a conflict, not a second row.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({ "group_id": group_id, "user_id": bob_id, "reason": "duplicate" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::CONFLICT).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:group_member_already_exists"),
+        Some("group:member_already_exists"),
         "duplicate member: {body}"
     );
 
     // The membership is visible on the (Mod-gated) member list...
     let resp = admin
         .get_q(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &[("group_id", &group_id), ("limit", "100")],
         )
         .await;
@@ -457,7 +457,7 @@ async fn membership_removal_revokes_the_grant() {
     // Removing the membership revokes the grant on the next request.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members/remove",
+            "/v0/groups/members/remove",
             &json!({ "member_id": member_id, "reason": "e2e: remove member" }),
         )
         .await;
@@ -465,7 +465,7 @@ async fn membership_removal_revokes_the_grant() {
 
     let resp = admin
         .get_q(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &[("group_id", &group_id), ("limit", "100")],
         )
         .await;
@@ -479,7 +479,7 @@ async fn membership_removal_revokes_the_grant() {
         "removed membership must leave the list: {body}"
     );
 
-    assert_acl_denied(pin(&bob, &post_id).await).await;
+    assert_permission_denied(pin(&bob, &post_id).await).await;
 }
 
 /// Scenario 5: `expires_at` bounds a membership. A past timestamp is rejected
@@ -502,7 +502,7 @@ async fn membership_expiry_ends_the_grant() {
     // A membership that would already be expired is refused up front.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({
                 "group_id": group_id,
                 "user_id": carol_id,
@@ -521,7 +521,7 @@ async fn membership_expiry_ends_the_grant() {
     let expires_at = chrono::Utc::now() + chrono::Duration::seconds(8);
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({
                 "group_id": group_id,
                 "user_id": carol_id,
@@ -557,7 +557,7 @@ async fn membership_expiry_ends_the_grant() {
         tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
     let denied = denied.expect("membership expiry never took effect");
-    let details = assert_acl_denied(denied).await;
+    let details = assert_permission_denied(denied).await;
     assert_eq!(details, "board:moderate", "expired grant denial codename");
 }
 
@@ -570,7 +570,7 @@ async fn unknown_permission_codename_is_rejected() {
 
     let resp = admin
         .post_json(
-            "/v0/acl/groups/permissions/replace",
+            "/v0/groups/permissions/replace",
             &json!({
                 "group_id": group_id,
                 "permissions": ["board:pin_post_typo"],
@@ -581,7 +581,7 @@ async fn unknown_permission_codename_is_rejected() {
     let body = TestClient::json_ok(resp, StatusCode::BAD_REQUEST).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:invalid_rule"),
+        Some("permission:invalid"),
         "unknown codename must be rejected: {body}"
     );
 
@@ -589,7 +589,7 @@ async fn unknown_permission_codename_is_rejected() {
     // when valid codenames ride along.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/permissions/replace",
+            "/v0/groups/permissions/replace",
             &json!({
                 "group_id": group_id,
                 "permissions": ["board:pin_post", "not-a-permission"],
@@ -601,7 +601,7 @@ async fn unknown_permission_codename_is_rejected() {
 
     // Nothing stuck: the group still has zero grants.
     let resp = admin
-        .get_q("/v0/acl/groups/permissions", &[("group_id", &group_id)])
+        .get_q("/v0/groups/permissions", &[("group_id", &group_id)])
         .await;
     let body = TestClient::json_ok(resp, StatusCode::OK).await;
     assert_eq!(
@@ -613,12 +613,12 @@ async fn unknown_permission_codename_is_rejected() {
     // Reads stop at Mod; the replace itself is admin-only.
     let moderator = new_mod().await;
     let resp = moderator
-        .get_q("/v0/acl/groups/permissions", &[("group_id", &group_id)])
+        .get_q("/v0/groups/permissions", &[("group_id", &group_id)])
         .await;
     assert_eq!(resp.status(), StatusCode::OK, "permission read as mod");
     let resp = moderator
         .post_json(
-            "/v0/acl/groups/permissions/replace",
+            "/v0/groups/permissions/replace",
             &json!({ "group_id": group_id, "permissions": ["board:pin_post"], "reason": "must fail" }),
         )
         .await;
@@ -641,7 +641,7 @@ async fn system_groups_are_immutable_via_the_generic_api() {
     let group_id = seed_system_group(&name).await;
 
     // Visible, and flagged as system, in the group list.
-    let resp = admin.get("/v0/acl/groups").await;
+    let resp = admin.get("/v0/groups").await;
     let body = TestClient::json_ok(resp, StatusCode::OK).await;
     let listed = body["groups"]
         .as_array()
@@ -654,28 +654,28 @@ async fn system_groups_are_immutable_via_the_generic_api() {
     // Deletion is refused.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/delete",
+            "/v0/groups/delete",
             &json!({ "group_id": group_id, "reason": "must fail" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::FORBIDDEN).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:group_is_system"),
+        Some("group:is_system"),
         "system group deletion must fail: {body}"
     );
 
     // So is membership editing through the generic member API.
     let resp = admin
         .post_json(
-            "/v0/acl/groups/members",
+            "/v0/groups/members",
             &json!({ "group_id": group_id, "user_id": admin_id, "reason": "must fail" }),
         )
         .await;
     let body = TestClient::json_ok(resp, StatusCode::FORBIDDEN).await;
     assert_eq!(
         body["code"].as_str(),
-        Some("acl:group_is_system"),
+        Some("group:is_system"),
         "adding a member to a system group must fail: {body}"
     );
 }
