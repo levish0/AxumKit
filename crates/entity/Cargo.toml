@@ -3,6 +3,7 @@ name = "entity"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 repository.workspace = true
 description = "axumkit/entity"
 

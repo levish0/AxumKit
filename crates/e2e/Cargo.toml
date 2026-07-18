@@ -2,6 +2,7 @@
 name = "e2e"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
 publish = false
 
 # Black-box end-to-end tests. These talk to a running stack over HTTP, so they are
