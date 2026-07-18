@@ -5,14 +5,14 @@ use std::convert::Infallible;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
 
-/// 필터 가능한 액션 로그 SSE 스트림을 생성한다.
+/// Creates a filterable action-log SSE stream.
 ///
-/// # 역할
-/// - 브로드캐스트 채널을 구독한다.
-/// - 요청 파라미터 기준으로 이벤트를 필터링한다.
-/// - `action_log` SSE 이벤트 포맷으로 직렬화해 반환한다.
+/// # Role
+/// - Subscribes to the broadcast channel.
+/// - Filters events based on request parameters.
+/// - Serializes them into the `action_log` SSE event format.
 ///
-/// # 연계
+/// # Related
 /// - `EventStreamSender`
 /// - `StreamActionsQuery`
 pub fn service_stream_actions(

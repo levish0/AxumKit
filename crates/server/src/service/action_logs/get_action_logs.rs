@@ -7,20 +7,20 @@ use dto::pagination::CursorDirection;
 use errors::errors::ServiceResult;
 use sea_orm::DatabaseConnection;
 
-/// 액션 로그 목록을 커서 기반으로 조회한다.
+/// Fetches the action log list using cursor-based pagination.
 ///
-/// # 역할
-/// - 요청 필터를 `ActionLogFilter`로 변환한다.
-/// - 커서 페이지를 조회하고 `has_newer`/`has_older`를 계산한다.
-/// - 결과를 API 응답 DTO로 매핑한다.
+/// # Responsibilities
+/// - Converts the request filters into an `ActionLogFilter`.
+/// - Fetches the cursor page and computes `has_newer`/`has_older`.
+/// - Maps the results into API response DTOs.
 ///
-/// # 연계
+/// # Related
 /// - `repository_find_action_logs`
 /// - `repository_exists_newer_action_log`
 /// - `repository_exists_older_action_log`
 ///
 /// # Errors
-/// - 조회 실패 시 DB/저장소 에러를 반환한다.
+/// - Returns DB/repository errors when the query fails.
 pub async fn service_get_action_logs(
     conn: &DatabaseConnection,
     payload: GetActionLogsRequest,
