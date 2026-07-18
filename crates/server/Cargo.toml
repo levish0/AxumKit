@@ -25,7 +25,9 @@ constants.workspace = true
 dto.workspace = true
 entity.workspace = true
 errors.workspace = true
-worker.workspace = true
+job_queue.workspace = true
+search_index.workspace = true
+notification_repository.workspace = true
 storage.workspace = true
 
 # External dependencies
@@ -37,6 +39,7 @@ tower-http.workspace = true
 tower-cookies.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+ipnetwork.workspace = true
 sea-orm.workspace = true
 redis.workspace = true
 argon2.workspace = true

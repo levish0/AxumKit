@@ -1,0 +1,14 @@
+[package]
+name = "search_index"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Shared Meilisearch index contract (index names, document schemas, enum encodings) between the API server reader and the worker writer"
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }

@@ -1,18 +1,9 @@
 use crate::connection::MeilisearchClient;
 use dto::search::{SearchUsersRequest, SearchUsersResponse, UserSearchItem};
 use errors::errors::{Errors, ServiceResult};
-use serde::Deserialize;
+use search_index::users::{SearchUser, USERS_INDEX};
 use tracing::{info, warn};
 use uuid::Uuid;
-
-#[derive(Debug, Deserialize)]
-struct IndexedUser {
-    id: String,
-    handle: String,
-    display_name: String,
-    bio: Option<String>,
-    profile_image: Option<String>,
-}
 
 pub async fn service_search_users(
     client: &MeilisearchClient,
@@ -25,7 +16,7 @@ pub async fn service_search_users(
     );
 
     // Build and execute search query using page/hitsPerPage mode for exact total_hits
-    let index = client.get_client().index("users");
+    let index = client.get_client().index(USERS_INDEX);
     let mut search_query = index.search();
 
     // Empty query returns all users (MeiliSearch behavior)
@@ -33,7 +24,7 @@ pub async fn service_search_users(
     search_query.with_page(request.page as usize);
     search_query.with_hits_per_page(request.page_size as usize);
 
-    let results = search_query.execute::<IndexedUser>().await.map_err(|e| {
+    let results = search_query.execute::<SearchUser>().await.map_err(|e| {
         tracing::error!("MeiliSearch user search failed: {}", e);
         Errors::MeiliSearchQueryFailed
     })?;

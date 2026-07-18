@@ -4,36 +4,20 @@ use crate::nats::streams::{INDEX_USER_CONSUMER, INDEX_USER_STREAM};
 use crate::{DbPool, SearchClient};
 use entity::users;
 use sea_orm::EntityTrait;
-use serde::{Deserialize, Serialize};
-use serde_json::{Value as JsonValue, json};
-use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-/// Worker job payload for index user job.
-pub struct IndexUserJob {
-    pub user_id: Uuid,
-    pub action: UserIndexAction,
-}
+pub use job_queue::jobs::index::user::{IndexUserJob, UserIndexAction};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-/// Enum describing user index action.
-pub enum UserIndexAction {
-    Index,
-    Delete,
-}
+pub use search_index::users::{SearchUser, USERS_INDEX};
 
-/// Constant value for users index.
-pub const USERS_INDEX: &str = "users";
-
-/// Build a search document JSON from user model
-pub fn build_user_search_json(user: &users::Model) -> JsonValue {
-    json!({
-        "id": user.id.to_string(),
-        "handle": user.handle,
-        "display_name": user.display_name,
-        "bio": user.bio,
-        "profile_image": user.profile_image,
-    })
+/// Build a [`SearchUser`] from a user model.
+pub fn build_user_search_json(user: &users::Model) -> SearchUser {
+    SearchUser {
+        id: user.id.to_string(),
+        handle: user.handle.clone(),
+        display_name: user.display_name.clone(),
+        bio: user.bio.clone(),
+        profile_image: user.profile_image.clone(),
+    }
 }
 
 /// MeiliSearch index settings for users
