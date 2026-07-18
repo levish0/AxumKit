@@ -6,15 +6,19 @@ use axum::extract::State;
 use dto::oauth::request::{OAuthAuthorizeFlow, OAuthAuthorizeQuery};
 use dto::oauth::response::OAuthUrlResponse;
 use dto::validator::query_validator::ValidatedQuery;
-use errors::errors::Errors;
+use errors::errors::{ErrorResponse, Errors};
 
+/// Generates a GitHub OAuth authorization URL.
 #[utoipa::path(
     get,
     path = "/v0/auth/oauth/github/authorize",
+    summary = "Create a GitHub OAuth authorization URL",
+    description = "Generates a GitHub authorization URL with PKCE and stores a single-use state record in Redis. The state is bound to the current anonymous browser context and to the requested flow, which defaults to login.",
     params(OAuthAuthorizeQuery),
     responses(
-        (status = 200, description = "OAuth URL generated", body = OAuthUrlResponse),
-        (status = 500, description = "Internal Server Error - Redis or OAuth URL generation error")
+        (status = 200, description = "Authorization URL generated successfully", body = OAuthUrlResponse),
+        (status = 400, description = "Invalid query parameters", body = ErrorResponse),
+        (status = 500, description = "Unexpected Redis or OAuth URL generation error", body = ErrorResponse)
     ),
     tag = "Auth"
 )]

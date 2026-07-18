@@ -4,6 +4,7 @@ use crate::repository::oauth::find_oauth_connection::repository_find_oauth_conne
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::OAuthStateData;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::get_json_and_delete;
 use constants::oauth_state_key;
 use dto::oauth::request::OAuthAuthorizeFlow;
@@ -23,8 +24,10 @@ pub async fn service_link_github_oauth(
     state: &str,
     anonymous_user_id: &str,
 ) -> ServiceResult<()> {
-    // 1. Validate state and retrieve PKCE verifier from Redis (single-use via get_del)
-    let state_key = oauth_state_key(state);
+    // 1. Validate the state and fetch the PKCE verifier from Redis (single-use via get_del)
+    // Stored under the hashed state (hash-at-rest); hash the callback's raw
+    // state to derive the lookup key.
+    let state_key = oauth_state_key(&hash_token(state));
     let state_data: OAuthStateData = get_json_and_delete(
         redis_conn,
         &state_key,
@@ -33,7 +36,7 @@ pub async fn service_link_github_oauth(
     )
     .await?;
 
-    // 2. Exchange authorization code for access token
+    // 2. Exchange the authorization code for an access token
     if state_data.provider != OAuthProvider::Github
         || state_data.flow != OAuthAuthorizeFlow::Link
         || state_data.anonymous_user_id != anonymous_user_id
@@ -44,12 +47,12 @@ pub async fn service_link_github_oauth(
     let access_token =
         exchange_code::<GithubProvider>(http_client, code, &state_data.pkce_verifier).await?;
 
-    // 3. Fetch user info with access token
+    // 3. Fetch user info with the access token
     let user_info = fetch_github_user_info(http_client, &access_token).await?;
 
     let txn = db.begin().await?;
 
-    // 4. Check if already linked to another account
+    // 4. Check whether it is already linked to another account
     if repository_find_user_by_oauth(&txn, OAuthProvider::Github, &user_info.id.to_string())
         .await?
         .is_some()
@@ -57,7 +60,7 @@ pub async fn service_link_github_oauth(
         return Err(Errors::OauthAccountAlreadyLinked);
     }
 
-    // 5. Check if GitHub is already linked to the current user
+    // 5. Check whether the current user already has GitHub linked
     if repository_find_oauth_connection(&txn, user_id, OAuthProvider::Github)
         .await?
         .is_some()
@@ -65,7 +68,7 @@ pub async fn service_link_github_oauth(
         return Err(Errors::OauthAccountAlreadyLinked);
     }
 
-    // 6. Create OAuth connection
+    // 6. Create the OAuth connection
     repository_create_oauth_connection(
         &txn,
         &user_id,

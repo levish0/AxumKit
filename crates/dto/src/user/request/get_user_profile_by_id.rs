@@ -5,6 +5,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, ToSchema, IntoParams, Validate)]
 #[into_params(parameter_in = Query)]
+/// Request payload for get user profile by id request.
 pub struct GetUserProfileByIdRequest {
     pub user_id: Uuid,
 }

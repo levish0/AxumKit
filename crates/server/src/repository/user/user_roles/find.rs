@@ -5,6 +5,7 @@ use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, ExprTrait, QueryFilter};
 use uuid::Uuid;
 
+/// Fetches a user's active roles (non-expired only)
 pub async fn repository_find_user_roles<C>(conn: &C, user_id: Uuid) -> Result<Vec<Role>, Errors>
 where
     C: ConnectionTrait,
@@ -17,7 +18,7 @@ where
         .all(conn)
         .await?
         .into_iter()
-        .map(|entry| entry.role)
+        .map(|e| e.role)
         .collect::<Vec<_>>();
 
     roles.sort_by_key(|role| std::cmp::Reverse(role.display_priority()));

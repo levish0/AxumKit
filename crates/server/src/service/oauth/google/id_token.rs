@@ -34,9 +34,9 @@ pub struct GoogleIdTokenClaims {
     pub email: String,
     pub email_verified: bool,
     pub picture: Option<String>,
-    /// Single-use nonce echoed back by Google. Present in the One Tap web flow; absent/ignored in
-    /// the native-app `provider/token` flow, where the token's `aud` (= our client id) + signature
-    /// + expiry are the protection.
+    /// Single-use nonce echoed back by Google. Present in the One Tap web flow (verified against
+    /// Redis to block replay); absent/ignored in the native-app `provider/token` flow, where the
+    /// token's `aud` (= our client id) + signature + expiry are the protection.
     pub nonce: Option<String>,
 }
 
@@ -46,6 +46,7 @@ pub struct GoogleIdTokenClaims {
 /// This is the audience-bound core shared by both Google sign-in flows. The `aud` claim is pinned
 /// to our client id, so a token Google minted for a different app is rejected — which is exactly
 /// what lets the native-app flow skip the browser-cookie binding the redirect flow needs.
+/// Caller-specific replay protection (the One Tap nonce) is layered on top by the caller.
 pub async fn verify_google_id_token(
     http_client: &reqwest::Client,
     credential: &str,

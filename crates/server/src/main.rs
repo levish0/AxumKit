@@ -4,7 +4,7 @@ use config::ServerConfig;
 use dto::action_logs::ActionLogResponse;
 use server::api::routes::api_routes;
 use server::connection::{
-    MeilisearchClient, create_http_client, establish_connection, establish_r2_connection,
+    MeilisearchClient, create_http_client, establish_connection, establish_r2_assets_connection,
     establish_redis_connection,
 };
 use server::eventstream::start_eventstream_subscriber;
@@ -30,7 +30,7 @@ use tracing::{Level, error};
 
 pub async fn run_server() -> anyhow::Result<()> {
     let db = establish_connection().await?;
-    let r2_client = establish_r2_connection().await.map_err(|e| {
+    let r2_assets = establish_r2_assets_connection().await.map_err(|e| {
         error!("Failed to establish cloudflare_r2 connection: {}", e);
         anyhow::anyhow!("R2 connection failed: {}", e)
     })?;
@@ -65,6 +65,18 @@ pub async fn run_server() -> anyhow::Result<()> {
         })?;
     let worker = Arc::new(async_nats::jetstream::new(nats_client.clone()));
 
+    // Declare the job streams before serving: publishes await a JetStream ack, so
+    // on a fresh NATS with the server up before any worker every enqueue would
+    // fail ("no stream matches subject") — dropped index jobs and user-visible
+    // signup-email failures. Creation is idempotent (get_or_create), so the
+    // worker running the same initialization is harmless.
+    job_queue::streams::initialize_all_streams(&worker)
+        .await
+        .map_err(|e| {
+            error!("Failed to initialize JetStream job streams: {}", e);
+            anyhow::anyhow!("JetStream stream initialization failed: {}", e)
+        })?;
+
     // Create broadcast channel for EventStream SSE fan-out
     let (eventstream_tx, _) = broadcast::channel::<ActionLogResponse>(1000);
 
@@ -94,7 +106,7 @@ pub async fn run_server() -> anyhow::Result<()> {
 
     let state = AppState {
         db,
-        r2_client,
+        r2_assets,
         redis_session,
         redis_cache,
         worker,

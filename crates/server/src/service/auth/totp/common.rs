@@ -2,11 +2,15 @@ use errors::errors::{Errors, ServiceResult};
 use rand::RngExt;
 use totp_rs::{Algorithm, Secret, TOTP};
 
+/// Constant value for issuer.
 pub const ISSUER: &str = "Sevenwiki";
+/// Constant value for backup code count.
 pub const BACKUP_CODE_COUNT: usize = 10;
+/// Constant value for backup code length.
 pub const BACKUP_CODE_LENGTH: usize = 8;
 const BACKUP_CODE_CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
+/// Verify a TOTP code
 pub fn verify_totp_code(secret_base32: &str, email: &str, code: &str) -> ServiceResult<bool> {
     let secret = Secret::Encoded(secret_base32.to_string())
         .to_bytes()
@@ -26,6 +30,7 @@ pub fn verify_totp_code(secret_base32: &str, email: &str, code: &str) -> Service
     Ok(totp.check_current(code).unwrap_or(false))
 }
 
+/// Generate backup codes (10 codes, 8 alphanumeric characters each)
 pub fn generate_backup_codes() -> Vec<String> {
     let mut rng = rand::rng();
     (0..BACKUP_CODE_COUNT)

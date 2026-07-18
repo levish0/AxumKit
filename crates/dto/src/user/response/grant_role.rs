@@ -1,4 +1,8 @@
-use axum::{Json, http::StatusCode, response::IntoResponse, response::Response};
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::{DateTime, Utc};
 use entity::common::Role;
 use serde::{Deserialize, Serialize};

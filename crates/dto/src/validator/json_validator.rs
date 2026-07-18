@@ -6,6 +6,7 @@ use serde::de::DeserializeOwned;
 use validator::Validate;
 
 #[derive(Debug, Clone, Copy, Default)]
+/// Validated extractor wrapper for validated json.
 pub struct ValidatedJson<T>(pub T);
 
 impl<T, S> FromRequest<S> for ValidatedJson<T>

@@ -54,6 +54,14 @@ mod tests {
     }
 
     #[test]
+    fn test_grant_role_request_rejects_implicit_role_via_serde() {
+        // Deserialization itself fails since the Role enum has no "everyone" variant
+        let json = r#"{"user_id":"01234567-89ab-cdef-0123-456789abcdef","role":"everyone","reason":"test"}"#;
+        let result = serde_json::from_str::<GrantRoleRequest>(json);
+        assert!(result.is_err());
+    }
+
+    #[test]
     fn test_grant_role_request_accepts_explicit_role() {
         let req = GrantRoleRequest {
             user_id: Uuid::now_v7(),

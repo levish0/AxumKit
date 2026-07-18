@@ -1,14 +1,6 @@
-pub mod check_handle_available;
-pub mod confirm_account_deletion;
-pub mod delete_banner_image;
-pub mod delete_my_account;
-pub mod delete_profile_image;
-pub mod get_my_profile;
-pub mod get_user_profile;
-pub mod get_user_profile_by_id;
+pub mod account;
 pub mod management;
 pub mod openapi;
+pub mod profile;
+pub mod public;
 pub mod routes;
-pub mod update_my_profile;
-pub mod upload_banner_image;
-pub mod upload_profile_image;

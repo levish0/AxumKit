@@ -6,7 +6,7 @@ use entity::common::OAuthProvider;
 use errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 
-/// Generates a GitHub OAuth authorization URL and stores the state in Redis.
+/// Generates the GitHub OAuth authorization URL and stores the state in Redis.
 pub async fn service_generate_github_oauth_url(
     redis_conn: &ConnectionManager,
     anonymous_user_id: &str,

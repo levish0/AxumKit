@@ -1,4 +1,3 @@
-use chrono::Utc;
 use entity::users::{ActiveModel as UserActiveModel, Model as UserModel};
 use errors::errors::Errors;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, DbErr, Set, SqlErr};
@@ -25,7 +24,7 @@ fn map_create_user_db_err(err: DbErr) -> Errors {
     }
 }
 
-/// Create a new user via OAuth (no password, email verified)
+/// Creates a new user via OAuth (no password).
 pub async fn repository_create_oauth_user<C>(
     conn: &C,
     email: &str,
@@ -42,14 +41,14 @@ where
         handle: Set(handle.to_string()),
         bio: Set(None),
         email: Set(normalize_email(email)),
-        password: Set(None),                // OAuth users have no password
-        verified_at: Set(Some(Utc::now())), // OAuth provider already verified email
+        password: Set(None),
         profile_image: Set(profile_image),
         banner_image: Set(None),
         totp_secret: Set(None),
         totp_enabled_at: Set(None),
         totp_backup_codes: Set(None),
         created_at: Default::default(),
+        deleted_at: Set(None),
     };
 
     let user = new_user

@@ -4,6 +4,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 
 #[derive(Debug, Serialize, ToSchema)]
+/// Response payload for check handle available response.
 pub struct CheckHandleAvailableResponse {
     pub available: bool,
 }

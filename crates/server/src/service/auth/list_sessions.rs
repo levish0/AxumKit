@@ -4,6 +4,18 @@ use errors::errors::ServiceResult;
 use redis::aio::ConnectionManager;
 use uuid::Uuid;
 
+/// Fetches the user's active sessions and converts them into response DTOs.
+///
+/// # Responsibilities
+/// - Maps the Redis `Session` payload into the response `SessionInfo`.
+/// - Marks the entry matching the caller's session ID with `is_current = true`.
+/// - The response includes only the public management ID, never the bearer session ID.
+///
+/// # Related
+/// - `SessionService::list_user_sessions`
+///
+/// # Errors
+/// - Redis lookup failures are propagated to the caller.
 pub async fn service_list_sessions(
     redis: &ConnectionManager,
     user_id: Uuid,
@@ -14,6 +26,8 @@ pub async fn service_list_sessions(
     let infos = sessions
         .into_iter()
         .map(|s| {
+            // The stored management_id is a UUIDv7 string, but if corrupted data slips in,
+            // fall back to the nil UUID on parse failure so the whole list response doesn't fail.
             let is_current = s.session_id == current_session_id;
             let management_id = Uuid::parse_str(&s.management_id).unwrap_or(Uuid::nil());
             SessionInfo {

@@ -3,6 +3,7 @@ use errors::errors::Errors;
 use validator::Validate;
 
 #[derive(Debug)]
+/// Validated extractor wrapper for validated multipart.
 pub struct ValidatedMultipart<T>(pub T);
 
 /// Trait for types that can be parsed from multipart form data

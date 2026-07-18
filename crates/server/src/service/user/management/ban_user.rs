@@ -42,7 +42,14 @@ pub async fn service_ban_user(
 
     repository_delete_expired_user_ban(&txn, target_user_id).await?;
 
-    let ban = repository_create_user_ban(&txn, target_user_id, expires_at).await?;
+    let ban = repository_create_user_ban(
+        &txn,
+        target_user_id,
+        Some(reason.clone()),
+        Some(session.user_id),
+        expires_at,
+    )
+    .await?;
 
     repository_create_moderation_log(
         &txn,

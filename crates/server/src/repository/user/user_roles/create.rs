@@ -5,6 +5,7 @@ use errors::errors::Errors;
 use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 use uuid::Uuid;
 
+/// Grants a role to a user
 pub async fn repository_create_user_role<C>(
     conn: &C,
     user_id: Uuid,

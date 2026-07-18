@@ -5,15 +5,17 @@ use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 use serde_json::Value as JsonValue;
 use uuid::Uuid;
 
-/// Authentication event types recorded in `auth_events` (OWASP ASVS V16).
+/// Authentication event types recorded in `auth_events` (SEC-009 / OWASP ASVS V16).
 ///
-/// A closed vocabulary kept as string constants: the column is `text`, so new event types are
-/// additive with no enum migration.
+/// A closed vocabulary kept as string constants (mirrors `constants::ActionLogAction`): the column
+/// is `text`, so new event types are additive with no enum migration.
 pub const AUTH_EVENT_LOGIN_SUCCESS: &str = "login_success";
 pub const AUTH_EVENT_LOGIN_FAILED: &str = "login_failed";
 pub const AUTH_EVENT_LOGOUT: &str = "logout";
 pub const AUTH_EVENT_PASSWORD_CHANGED: &str = "password_changed";
+pub const AUTH_EVENT_PASSWORD_RESET: &str = "password_reset";
 pub const AUTH_EVENT_EMAIL_CHANGE_REQUESTED: &str = "email_change_requested";
+pub const AUTH_EVENT_EMAIL_CHANGED: &str = "email_changed";
 pub const AUTH_EVENT_TOTP_ENABLED: &str = "totp_enabled";
 pub const AUTH_EVENT_TOTP_DISABLED: &str = "totp_disabled";
 pub const AUTH_EVENT_NEW_DEVICE: &str = "new_device_login";

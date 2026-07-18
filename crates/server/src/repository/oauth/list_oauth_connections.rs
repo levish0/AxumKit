@@ -6,7 +6,7 @@ use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, Order, QueryFilter, QueryOrder};
 use uuid::Uuid;
 
-/// Queries all OAuth connections for a user.
+/// Lists all OAuth connections for a user.
 pub async fn repository_list_oauth_connections_by_user_id<C>(
     conn: &C,
     user_id: Uuid,

@@ -1,16 +1,6 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Whether new-device verification applies to a login.
-pub enum DeviceCheck {
-    /// Browser flow: apply new-device verification. Carries the device-cookie token if the
-    /// browser presented one.
-    Browser(Option<String>),
-    /// Native-app flow (no cookie jar): skip verification and mint the session directly.
-    /// App clients are a separate device-trust model (no browser device cookie).
-    Skip,
-}
-
 /// Outcome of resolving an authenticated login against the trusted-device registry.
 pub enum DeviceLoginOutcome {
     /// Trusted device (or app flow): a session was created; carries the raw session token.
@@ -24,8 +14,10 @@ pub enum DeviceLoginOutcome {
 pub struct DevicePendingData {
     pub user_id: Uuid,
     pub remember_me: bool,
-    /// The device-cookie token to trust once confirmed (existing cookie value, or a freshly
-    /// minted one when the browser had no cookie yet).
+    /// The device-recognition token to trust once confirmed — the token the client presented
+    /// (browser device cookie, or the app's `X-Device-Token` header), or a freshly minted one
+    /// when the client presented none yet. The client stores it and re-presents it to skip the
+    /// challenge next time.
     pub device_token: String,
     pub user_agent: Option<String>,
     pub ip_address: Option<String>,

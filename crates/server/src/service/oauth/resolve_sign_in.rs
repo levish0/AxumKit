@@ -3,7 +3,7 @@ use crate::repository::user::find_by_email::repository_find_user_by_email;
 use crate::service::auth::session::SessionService;
 use crate::service::auth::verify_email::find_pending_email_signup_by_email;
 use crate::service::oauth::types::{PendingSignupData, PendingSignupTokenState};
-use crate::utils::crypto::token::hash_token;
+use crate::utils::crypto::token::{generate_secure_token, hash_token};
 use crate::utils::redis_cache::issue_token_and_store_json_with_ttl;
 use config::ServerConfig;
 use constants::oauth_pending_key;
@@ -15,12 +15,14 @@ use sea_orm::ConnectionTrait;
 
 /// Shared OAuth sign-in handling after provider authentication.
 ///
-/// Each provider sign-in (authorization code / one-tap / native provider-token) only performs
-/// provider-specific token verification and user-info extraction, then delegates the common flow
-/// here:
+/// Each provider sign-in (authorization code / one-tap) only performs provider-specific token
+/// verification and user-info extraction, then delegates the common flow here:
 /// - If a connected account exists, create a session and return `Success`.
 /// - Otherwise reject email collisions (existing account or pending email/password signup) and
 ///   issue a pending-signup token, returning `PendingSignup`.
+///
+/// Soft-deleted accounts have their connections removed and should not resolve here; the
+/// `deleted_at` guard is defense-in-depth against a lingering connection.
 pub async fn resolve_oauth_sign_in<C>(
     conn: &C,
     redis_conn: &ConnectionManager,
@@ -37,9 +39,10 @@ pub async fn resolve_oauth_sign_in<C>(
 where
     C: ConnectionTrait,
 {
-    // Existing OAuth connection → sign in immediately.
+    // Existing OAuth connection (excluding soft-deleted accounts).
     if let Some(existing_user) =
         repository_find_user_by_oauth(conn, provider.clone(), provider_user_id).await?
+        && existing_user.deleted_at.is_none()
     {
         let (raw_token, _session) = SessionService::create_session(
             redis_conn,
@@ -68,7 +71,7 @@ where
         return Err(Errors::OauthEmailAlreadyExists);
     }
 
-    // New user: store pending-signup data in Redis (consumed by complete-signup after handle input).
+    // New user: store pending-signup data in Redis (created in complete-signup after handle input).
     let config = ServerConfig::get();
     let pending_data = PendingSignupData {
         provider,
@@ -81,10 +84,10 @@ where
     let ttl_seconds = (config.oauth_pending_signup_ttl_minutes * 60) as u64;
     let pending_state = PendingSignupTokenState::Pending { data: pending_data };
     // Store under the token's hash so a Redis leak yields only non-replayable hashes; the raw
-    // token lives only in the response body (parity with the session-token at-rest scheme).
+    // token lives only in the response body (parity with the email-verification flow / issue #133).
     let pending_token = issue_token_and_store_json_with_ttl(
         redis_conn,
-        || uuid::Uuid::new_v4().to_string(),
+        generate_secure_token,
         |token| oauth_pending_key(&hash_token(token)),
         &pending_state,
         ttl_seconds,

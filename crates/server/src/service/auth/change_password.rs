@@ -14,34 +14,46 @@ use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
 
+/// Changes the user's password.
 ///
 /// # Arguments
+/// * `db` - Database connection
+/// * `redis_conn` - Redis connection
+/// * `user_id` - User ID
+/// * `session_id` - Current session ID (the session to keep)
+/// * `payload` - Password change request
 pub async fn service_change_password(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     redis_conn: &ConnectionManager,
     worker: &WorkerClient,
     user_id: Uuid,
     session_id: &str,
     payload: ChangePasswordRequest,
 ) -> ServiceResult<()> {
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
+    // 1. Look up the user
     let user = repository_get_user_by_id(&txn, user_id).await?;
     let email = user.email.clone();
     let handle = user.handle.clone();
 
+    // 2. Ensure a password is set (excludes OAuth-only users)
     let password_hash = user.password.ok_or(Errors::UserPasswordNotSet)?;
 
+    // 3. Verify the current password
     verify_password(&payload.current_password, &password_hash)?;
 
+    // 4. Check that the new password differs from the current one
     if payload.current_password == payload.new_password {
         return Err(Errors::BadRequestError(
             "New password must be different from current password.".to_string(),
         ));
     }
 
+    // 5. Hash the new password
     let new_password_hash = hash_password(&payload.new_password)?;
 
+    // 6. Update the password
     repository_update_user(
         &txn,
         user_id,
@@ -54,6 +66,7 @@ pub async fn service_change_password(
 
     txn.commit().await?;
 
+    // 7. Invalidate all sessions except the current one
     let deleted_count =
         SessionService::delete_other_sessions(redis_conn, &user_id.to_string(), session_id).await?;
 
@@ -61,7 +74,7 @@ pub async fn service_change_password(
 
     // Durable audit + owner notification of the credential change (OWASP ASVS 6.3.7).
     record_auth_event(
-        conn,
+        db,
         Some(user_id),
         AUTH_EVENT_PASSWORD_CHANGED,
         None,

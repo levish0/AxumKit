@@ -5,9 +5,16 @@ use sea_orm::{ConnectionTrait, EntityTrait, QueryFilter};
 
 use crate::utils::email::normalize_email;
 
-/// Find a user by email, case-insensitively. The email is normalized and matched
-/// against `lower(email)`, so case/whitespace variants resolve to the same account
-/// and the query rides the `users_email_lower_key` functional unique index.
+/// Looks up whether a user exists by email.
+///
+/// # Role
+/// Normalizes the email (`normalize_email`), then fetches a single record matched
+/// on `lower(email)`, so the same account is found regardless of case or
+/// whitespace differences. The lookup uses the functional unique index on
+/// `lower(email)`, so it is index-backed.
+///
+/// # Errors
+/// - Returns a DB/repository error if the query fails.
 pub async fn repository_find_user_by_email<C>(
     conn: &C,
     email: String,

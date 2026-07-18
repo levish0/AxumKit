@@ -27,5 +27,6 @@ axum.workspace = true
 axum-extra.workspace = true
 cookie.workspace = true
 serde_json.workspace = true
+serde_with.workspace = true
 tracing.workspace = true
 unicode-general-category.workspace = true

@@ -6,8 +6,8 @@ use sea_orm::PaginatorTrait;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-/// Queries the number of OAuth connections for a user.
-/// Used to protect the last authentication method.
+/// Counts a user's OAuth connections.
+/// Used to protect the last remaining authentication method.
 pub async fn repository_count_oauth_connections<C>(conn: &C, user_id: Uuid) -> Result<u64, Errors>
 where
     C: ConnectionTrait,

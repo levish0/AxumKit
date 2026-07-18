@@ -5,7 +5,7 @@ use sea_orm::{ActiveModelTrait, ConnectionTrait, Set};
 use tracing::error;
 use uuid::Uuid;
 
-/// Create an OAuth connection
+/// Creates an OAuth connection.
 pub async fn repository_create_oauth_connection<C>(
     conn: &C,
     user_id: &Uuid,

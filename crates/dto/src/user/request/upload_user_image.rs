@@ -6,8 +6,9 @@ use utoipa::ToSchema;
 use validator::Validate;
 
 #[derive(Debug, Validate, ToSchema)]
+/// Request payload for upload user image request.
 pub struct UploadUserImageRequest {
-    /// Image file binary data
+    /// Image file binary data. Supported input formats: JPEG, PNG, GIF, WebP. Stored output is sanitized WebP.
     #[schema(value_type = String, format = Binary, content_media_type = "image/*")]
     pub file: Vec<u8>,
 }

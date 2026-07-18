@@ -4,6 +4,7 @@ use crate::repository::oauth::find_oauth_connection::repository_find_oauth_conne
 use crate::repository::oauth::find_user_by_oauth::repository_find_user_by_oauth;
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::types::OAuthStateData;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::get_json_and_delete;
 use constants::oauth_state_key;
 use dto::oauth::request::OAuthAuthorizeFlow;
@@ -24,7 +25,9 @@ pub async fn service_link_google_oauth(
     anonymous_user_id: &str,
 ) -> ServiceResult<()> {
     // 1. Validate state and retrieve PKCE verifier from Redis (single-use via get_del)
-    let state_key = oauth_state_key(state);
+    // Stored under the hashed state (hash-at-rest); hash the callback's raw
+    // state to derive the lookup key.
+    let state_key = oauth_state_key(&hash_token(state));
     let state_data: OAuthStateData = get_json_and_delete(
         redis_conn,
         &state_key,

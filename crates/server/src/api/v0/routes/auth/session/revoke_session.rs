@@ -36,6 +36,7 @@ pub async fn auth_revoke_session(
 ) -> Result<Response, Errors> {
     service_revoke_session(&state.redis_session, session_context.user_id, management_id).await?;
 
+    // If the current session was revoked, also clear the cookie to keep client state in sync
     if management_id.to_string() == session_context.management_id {
         return create_logout_response();
     }

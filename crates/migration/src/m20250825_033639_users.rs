@@ -28,11 +28,6 @@ impl MigrationTrait for Migration {
                     // constraint, so Foo@x.com and foo@x.com cannot both exist.
                     .col(string_len(Users::Email, 254).not_null())
                     .col(ColumnDef::new(Users::Password).text().null())
-                    .col(
-                        ColumnDef::new(Users::VerifiedAt)
-                            .timestamp_with_time_zone()
-                            .null(),
-                    )
                     .col(ColumnDef::new(Users::ProfileImage).text().null())
                     .col(ColumnDef::new(Users::BannerImage).text().null())
                     // TOTP 2FA
@@ -53,17 +48,12 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .default(Expr::cust("now()")),
                     )
-                    .to_owned(),
-            )
-            .await?;
-
-        // Create index on handle column (optimize login/search performance)
-        manager
-            .create_index(
-                Index::create()
-                    .name("idx_users_handle")
-                    .table(Users::Table)
-                    .col(Users::Handle)
+                    // Soft delete: NULL = active, timestamp = deactivated (account deleted)
+                    .col(
+                        ColumnDef::new(Users::DeletedAt)
+                            .timestamp_with_time_zone()
+                            .null(),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -71,8 +61,8 @@ impl MigrationTrait for Migration {
         // Case-insensitive unique email. The app normalizes email to lowercase at
         // the repository boundary (normalize_email) and looks up via lower(email),
         // so this functional unique index both enforces uniqueness and serves those
-        // lookups (replacing the plain idx_users_email). Defense-in-depth: even a
-        // write that bypassed normalization could not create a case-variant duplicate.
+        // lookups. Defense-in-depth: even a write that bypassed normalization could
+        // not create a case-variant duplicate.
         manager
             .get_connection()
             .execute_unprepared(
@@ -81,6 +71,33 @@ impl MigrationTrait for Migration {
             )
             .await?;
 
+        // profile image orphan lookup optimization
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_users_profile_image")
+                    .table(Users::Table)
+                    .col(Users::ProfileImage)
+                    .cond_where(Expr::col(Users::ProfileImage).is_not_null())
+                    .to_owned(),
+            )
+            .await?;
+
+        // banner image orphan lookup optimization
+        manager
+            .create_index(
+                Index::create()
+                    .name("idx_users_banner_image")
+                    .table(Users::Table)
+                    .col(Users::BannerImage)
+                    .cond_where(Expr::col(Users::BannerImage).is_not_null())
+                    .to_owned(),
+            )
+            .await?;
+
+        // Note: idx_users_handle removed - redundant with the UNIQUE constraint
+        // (PostgreSQL auto-creates users_handle_key). Email uniqueness/lookups are
+        // served by the users_email_lower_key functional unique index above.
         Ok(())
     }
 
@@ -100,7 +117,6 @@ pub enum Users {
     Bio,
     Email,
     Password,
-    VerifiedAt,
     ProfileImage,
     BannerImage,
     // TOTP 2FA
@@ -108,4 +124,5 @@ pub enum Users {
     TotpEnabledAt,
     TotpBackupCodes,
     CreatedAt,
+    DeletedAt,
 }

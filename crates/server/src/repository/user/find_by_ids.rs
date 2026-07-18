@@ -3,6 +3,13 @@ use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
+/// Fetches users by a list of user IDs.
+///
+/// # Role
+/// Returns an empty vector immediately for empty input; otherwise runs an `IN` query.
+///
+/// # Errors
+/// - Returns a DB/repository error if the query fails.
 pub async fn repository_find_users_by_ids<C>(
     conn: &C,
     ids: &[Uuid],

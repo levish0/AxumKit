@@ -170,6 +170,10 @@ async fn find_pending_email_signup_by_index(
     let Some(signup_data) =
         get_json::<PendingEmailSignupData>(redis_conn, &verification_key).await?
     else {
+        // Token payload is gone (consumed by verify or expired).
+        // Don't eagerly delete the index — it will expire via its own TTL,
+        // and deleting here would open a race window that lets a concurrent
+        // create_user re-reserve the same email/handle.
         return Ok(None);
     };
 
@@ -177,6 +181,10 @@ async fn find_pending_email_signup_by_index(
 }
 
 /// Verify a pending signup email token and create the user account.
+///
+/// The data is read **without** deleting first. Redis keys are only cleaned up
+/// after the DB commit succeeds, so a transient Postgres failure does not lose
+/// the pending signup.
 pub async fn service_verify_email(
     db: &DatabaseConnection,
     redis_conn: &ConnectionManager,

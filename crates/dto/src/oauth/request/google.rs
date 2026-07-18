@@ -2,8 +2,9 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
-/// Google OAuth sign-in request
+/// Google OAuth login request.
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for signing in with Google OAuth.")]
 pub struct GoogleLoginRequest {
     /// Authorization code from Google OAuth callback
     #[validate(length(min = 1, message = "Authorization code is required"))]

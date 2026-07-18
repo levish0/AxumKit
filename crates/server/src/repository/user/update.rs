@@ -7,10 +7,10 @@ use uuid::Uuid;
 use crate::utils::email::normalize_email;
 
 /// User update parameters
-/// - `Option<T>`: None = no change, Some(value) = change to value
-/// - `Option<Option<T>>`: None = no change, Some(None) = set to NULL, Some(Some(value)) = set to value
+/// - `Option<T>`: None = leave unchanged, Some(value) = set to value
+/// - `Option<Option<T>>`: None = leave unchanged, Some(None) = set to NULL, Some(Some(value)) = set to value
 ///
-/// # Usage Example
+/// # Example
 /// ```ignore
 /// repository_update_user(conn, user_id, UserUpdateParams {
 ///     totp_secret: Some(Some(secret)),
@@ -21,18 +21,19 @@ use crate::utils::email::normalize_email;
 #[derive(Default)]
 pub struct UserUpdateParams {
     pub email: Option<String>,
+    pub handle: Option<String>,
     pub display_name: Option<String>,
     pub bio: Option<Option<String>>,
     pub password: Option<Option<String>>,
-    pub verified_at: Option<Option<DateTimeUtc>>,
     pub profile_image: Option<Option<String>>,
     pub banner_image: Option<Option<String>>,
     pub totp_secret: Option<Option<String>>,
     pub totp_enabled_at: Option<Option<DateTimeUtc>>,
     pub totp_backup_codes: Option<Option<Vec<String>>>,
+    pub deleted_at: Option<Option<DateTimeUtc>>,
 }
 
-/// General-purpose user information update
+/// General-purpose user info update
 pub async fn repository_update_user<C>(
     conn: &C,
     user_id: Uuid,
@@ -51,6 +52,9 @@ where
     if let Some(email) = params.email {
         user_active.email = Set(normalize_email(&email));
     }
+    if let Some(handle) = params.handle {
+        user_active.handle = Set(handle);
+    }
     if let Some(display_name) = params.display_name {
         user_active.display_name = Set(display_name);
     }
@@ -59,9 +63,6 @@ where
     }
     if let Some(password) = params.password {
         user_active.password = Set(password);
-    }
-    if let Some(verified_at) = params.verified_at {
-        user_active.verified_at = Set(verified_at);
     }
     if let Some(profile_image) = params.profile_image {
         user_active.profile_image = Set(profile_image);
@@ -77,6 +78,9 @@ where
     }
     if let Some(totp_backup_codes) = params.totp_backup_codes {
         user_active.totp_backup_codes = Set(totp_backup_codes);
+    }
+    if let Some(deleted_at) = params.deleted_at {
+        user_active.deleted_at = Set(deleted_at);
     }
 
     let updated_user = user_active.update(conn).await?;

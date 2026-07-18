@@ -6,6 +6,7 @@ use serde::de::DeserializeOwned;
 use validator::Validate;
 
 #[derive(Debug, Clone, Copy, Default)]
+/// Validated extractor wrapper for validated query.
 pub struct ValidatedQuery<T>(pub T);
 
 impl<T, S> FromRequestParts<S> for ValidatedQuery<T>

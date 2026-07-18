@@ -6,6 +6,7 @@ pub mod public_user_profile;
 pub mod revoke_role;
 pub mod unban_user;
 pub mod upload_user_image;
+pub mod user_brief;
 pub mod user_profile;
 
 pub use ban_user::BanUserResponse;
@@ -16,4 +17,5 @@ pub use public_user_profile::PublicUserProfile;
 pub use revoke_role::RevokeRoleResponse;
 pub use unban_user::UnbanUserResponse;
 pub use upload_user_image::UploadUserImageResponse;
+pub use user_brief::UserBriefResponse;
 pub use user_profile::UserResponse;

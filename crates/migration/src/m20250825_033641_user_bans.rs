@@ -25,6 +25,8 @@ impl MigrationTrait for Migration {
                             .not_null()
                             .unique_key(),
                     )
+                    .col(ColumnDef::new(UserBans::Reason).text().null())
+                    .col(ColumnDef::new(UserBans::CreatedBy).uuid().null())
                     .col(
                         ColumnDef::new(UserBans::ExpiresAt)
                             .timestamp_with_time_zone()
@@ -42,6 +44,13 @@ impl MigrationTrait for Migration {
                             .from(UserBans::Table, UserBans::UserId)
                             .to(Users::Table, Users::Id)
                             .on_delete(ForeignKeyAction::Cascade),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .name("fk_user_bans_created_by")
+                            .from(UserBans::Table, UserBans::CreatedBy)
+                            .to(Users::Table, Users::Id)
+                            .on_delete(ForeignKeyAction::SetNull),
                     )
                     .to_owned(),
             )
@@ -70,6 +79,8 @@ pub enum UserBans {
     Table,
     Id,
     UserId,
+    Reason,
+    CreatedBy,
     ExpiresAt,
     CreatedAt,
 }

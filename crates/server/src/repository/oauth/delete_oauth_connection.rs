@@ -6,7 +6,7 @@ use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-/// Deletes a specific provider's OAuth connection for a user.
+/// Deletes a user's OAuth connection for a specific provider.
 pub async fn repository_delete_oauth_connection<C>(
     conn: &C,
     user_id: Uuid,
@@ -26,4 +26,23 @@ where
     }
 
     Ok(())
+}
+
+/// Deletes all OAuth connections for a user.
+///
+/// Used on account deletion. Idempotent: returns no error when there are no connections.
+/// Removing the connections ensures a future sign-in with the same provider starts a fresh signup.
+pub async fn repository_delete_oauth_connections_for_user<C>(
+    conn: &C,
+    user_id: Uuid,
+) -> Result<u64, Errors>
+where
+    C: ConnectionTrait,
+{
+    let result = OAuthConnectionsEntity::delete_many()
+        .filter(OAuthConnectionsColumn::UserId.eq(user_id))
+        .exec(conn)
+        .await?;
+
+    Ok(result.rows_affected)
 }

@@ -45,7 +45,7 @@ where
 {
     // 1. Acquire per-token lock so only one completion attempt runs at a time.
     // Keys are derived from the token's hash (the raw token never lives at rest in Redis; it is
-    // stored hashed in resolve_oauth_sign_in — session-token at-rest parity).
+    // stored hashed in resolve_oauth_sign_in — issue #133 parity).
     let token_hash = hash_token(pending_token);
     let pending_key = oauth_pending_key(&token_hash);
     let lock_key = oauth_pending_lock_key(&token_hash);
@@ -108,8 +108,11 @@ where
 
         // If the DB commit succeeded but the response was lost before the token
         // state was updated, recover by treating the token as completed.
+        // Soft-deleted accounts have their connections removed, so this should not resolve one;
+        // the deleted_at guard is defense-in-depth against a lingering connection.
         if let Some(existing_user) =
             repository_find_user_by_oauth(conn, provider.clone(), &provider_user_id).await?
+            && existing_user.deleted_at.is_none()
         {
             store_completed_signup_state(
                 redis_conn,

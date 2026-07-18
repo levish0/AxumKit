@@ -30,8 +30,8 @@ pub fn create_login_response(session_id: String, remember_me: bool) -> Result<Re
         cookie_builder = cookie_builder.domain(domain);
     }
 
-    // remember_me=true: persistent cookie (maximum session lifetime)
-    // remember_me=false: session cookie (deleted when browser is closed)
+    // remember_me=true: persistent cookie (max session lifetime)
+    // remember_me=false: session cookie (deleted when the browser closes)
     if remember_me {
         cookie_builder =
             cookie_builder.max_age(Duration::hours(config.auth_session_max_lifetime_hours));

@@ -35,6 +35,8 @@ pub async fn service_signup(
     // Enumeration-safe: an already-registered email returns the same response as a
     // fresh signup — no account/pending is created and no email is sent — so signup
     // does not reveal whether an email is registered (OWASP / WSTG-ATHN-03).
+    // (Note: a registered email still returns faster than a fresh signup, which does
+    // the pending reserve + mail send; closing that timing channel is a separate item.)
     let existing_user_by_email = repository_find_user_by_email(db, payload.email.clone()).await?;
     if existing_user_by_email.is_some() {
         return Ok(verification_sent());

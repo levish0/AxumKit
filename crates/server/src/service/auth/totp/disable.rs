@@ -12,18 +12,21 @@ use sea_orm::{DatabaseConnection, TransactionTrait};
 use tracing::info;
 use uuid::Uuid;
 
+/// Disable TOTP: verify the current code, then clear all TOTP fields
 pub async fn service_totp_disable(
-    conn: &DatabaseConnection,
+    db: &DatabaseConnection,
     worker: &WorkerClient,
     user_id: Uuid,
     code: &str,
 ) -> ServiceResult<()> {
-    let txn = conn.begin().await?;
+    let txn = db.begin().await?;
 
+    // Look up the user
     let user = repository_get_user_by_id(&txn, user_id).await?;
     let email = user.email.clone();
     let handle = user.handle.clone();
 
+    // TOTP must be enabled
     if user.totp_enabled_at.is_none() {
         return Err(Errors::TotpNotEnabled);
     }
@@ -32,11 +35,13 @@ pub async fn service_totp_disable(
     let secret_base32 = crate::utils::crypto::totp_secret::decrypt_totp_secret(&encrypted_secret)?;
     let backup_codes = user.totp_backup_codes.clone().unwrap_or_default();
 
+    // Verify the code (6-digit TOTP or 8-character backup code)
     if code.len() == 6 {
         if !verify_totp_code(&secret_base32, &user.email, code)? {
             return Err(Errors::TotpInvalidCode);
         }
     } else if code.len() == 8 {
+        // Verify the backup code by hash comparison
         if verify_backup_code(code, &backup_codes).is_none() {
             return Err(Errors::TotpInvalidCode);
         }
@@ -44,6 +49,7 @@ pub async fn service_totp_disable(
         return Err(Errors::TotpInvalidCode);
     }
 
+    // Disable TOTP (clear all fields)
     repository_update_user(
         &txn,
         user_id,
@@ -62,7 +68,7 @@ pub async fn service_totp_disable(
 
     // Durable audit + owner notification of the 2FA change (OWASP ASVS 6.3.7).
     record_auth_event(
-        conn,
+        db,
         Some(user_id),
         AUTH_EVENT_TOTP_DISABLED,
         None,

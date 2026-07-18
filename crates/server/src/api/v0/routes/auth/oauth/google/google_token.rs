@@ -48,7 +48,7 @@ pub async fn auth_google_token_app(
         &state.redis_session,
         &state.http_client,
         &payload.id_token,
-        Some(user_agent),
+        user_agent,
         Some(ip_address),
     )
     .await?;

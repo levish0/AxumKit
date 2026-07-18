@@ -5,18 +5,21 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use dto::oauth::request::unlink::UnlinkOAuthRequest;
 use dto::validator::json_validator::ValidatedJson;
-use errors::errors::Errors;
+use errors::errors::{ErrorResponse, Errors};
 
+/// Unlinks an OAuth connection.
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/connections/unlink",
+    summary = "Unlink an OAuth provider from the current account",
+    description = "Removes one linked OAuth provider from the authenticated account. This endpoint refuses to unlink the last remaining sign-in method when the account has no password set.",
     request_body = UnlinkOAuthRequest,
     responses(
-        (status = 204, description = "OAuth unlinked successfully"),
-        (status = 400, description = "Bad request - Invalid JSON, validation error, or cannot unlink last authentication method"),
-        (status = 401, description = "Unauthorized - Invalid or expired session"),
-        (status = 404, description = "Not Found - User or OAuth connection not found"),
-        (status = 500, description = "Internal Server Error - Database error")
+        (status = 204, description = "The requested OAuth provider was unlinked"),
+        (status = 400, description = "Malformed JSON payload, validation error, or unlinking this provider would remove the last sign-in method", body = ErrorResponse),
+        (status = 401, description = "Missing, invalid, or expired session cookie", body = ErrorResponse),
+        (status = 404, description = "The requested OAuth provider is not linked to this account", body = ErrorResponse),
+        (status = 500, description = "Unexpected database error", body = ErrorResponse)
     ),
     tag = "Auth",
     security(

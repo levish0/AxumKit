@@ -12,6 +12,12 @@ use cookie::{Cookie, SameSite, time::Duration};
 /// browser. Server-side trust lives in the `known_devices` row; the cookie is just the handle.
 const DEVICE_COOKIE_MAX_AGE_DAYS: i64 = 400;
 
+/// Header a native-app client uses to present its stored device-recognition token — the app-channel
+/// equivalent of the browser's device cookie. Apps have no cookie jar, so they replay the token the
+/// device-verify endpoint handed them here on each login. Same opaque value, same `known_devices`
+/// lookup; a missing/unknown value simply triggers a fresh email challenge (fail-safe).
+pub const DEVICE_TOKEN_HEADER: &str = "X-Device-Token";
+
 /// Device cookie name, with the same name-prefix hardening as the session cookie
 /// (`__Host-`/`__Secure-` in production, plain on dev HTTP).
 pub fn device_cookie_name() -> String {

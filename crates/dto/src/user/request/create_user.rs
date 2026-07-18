@@ -10,7 +10,10 @@ use validator::Validate;
 /// Request payload for create user request.
 pub struct CreateUserRequest {
     #[schema(example = "user@example.com")]
-    #[validate(email)]
+    #[validate(
+        email,
+        length(max = 254, message = "Email must not exceed 254 characters.")
+    )]
     pub email: String,
     /// Unique user handle.
     ///

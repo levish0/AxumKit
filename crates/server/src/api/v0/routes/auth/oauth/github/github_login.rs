@@ -13,26 +13,28 @@ use axum_extra::{TypedHeader, headers::UserAgent};
 use dto::oauth::request::github::GithubLoginRequest;
 use dto::oauth::response::{OAuthPendingSignupResponse, OAuthSignInResponse};
 use dto::validator::json_validator::ValidatedJson;
-use errors::errors::Errors;
+use errors::errors::{ErrorResponse, Errors};
 use std::net::SocketAddr;
 
+/// Handles GitHub OAuth login.
+///
+/// - Existing user: 204 No Content + Set-Cookie
+/// - New user: 200 OK + pending signup info (complete-signup required)
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/github/login",
+    summary = "Sign in with GitHub OAuth",
+    description = "Exchanges the GitHub authorization code and validated state for provider identity. Existing linked accounts receive a session immediately. New identities receive a pending signup token that must be completed via POST /v0/auth/complete-signup. If the profile payload does not include an email, the service fetches verified emails from GitHub.",
     request_body = GithubLoginRequest,
     responses(
-        (status = 200, description = "New user - pending signup required", body = OAuthPendingSignupResponse),
-        (status = 204, description = "Login successful (existing user)"),
-        (status = 400, description = "Bad request - Invalid JSON, validation error, invalid/expired state/code, or no verified email"),
-        (status = 409, description = "Conflict - Email already exists"),
-        (status = 500, description = "Internal Server Error - Database, Redis, or OAuth provider error")
+        (status = 200, description = "GitHub identity was accepted but profile completion is still required", body = OAuthPendingSignupResponse),
+        (status = 204, description = "GitHub identity matched an existing account and a session cookie was issued"),
+        (status = 400, description = "Malformed JSON payload, validation error, invalid or expired state or code, or GitHub did not provide a verified primary email", body = ErrorResponse),
+        (status = 409, description = "A local account already uses the same email address", body = ErrorResponse),
+        (status = 500, description = "Unexpected database, Redis, or GitHub OAuth error", body = ErrorResponse)
     ),
     tag = "Auth"
 )]
-/// GitHub OAuth 로그인을 처리합니다.
-///
-/// - 기존 사용자: 204 No Content + Set-Cookie
-/// - 신규 사용자: 200 OK + pending signup 토큰 (complete-signup 필요)
 pub async fn auth_github_login(
     user_agent: Option<TypedHeader<UserAgent>>,
     headers: HeaderMap,
@@ -41,9 +43,10 @@ pub async fn auth_github_login(
     Extension(anonymous): Extension<AnonymousUserContext>,
     ValidatedJson(payload): ValidatedJson<GithubLoginRequest>,
 ) -> Result<Response, Errors> {
-    let user_agent_str = extract_user_agent(user_agent);
+    let user_agent = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
+    // Handle GitHub OAuth login
     let result = service_github_sign_in(
         &state.db,
         &state.redis_session,
@@ -51,10 +54,11 @@ pub async fn auth_github_login(
         &payload.code,
         &payload.state,
         &anonymous.anonymous_user_id,
-        Some(user_agent_str),
+        user_agent,
         Some(ip_address),
     )
     .await?;
 
+    // Convert SignInResult into an HTTP response
     OAuthSignInResponse::from_result(result).into_response_result()
 }

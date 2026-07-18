@@ -5,8 +5,15 @@ use sea_orm::{ConnectionTrait, EntityTrait, QueryFilter};
 
 use crate::utils::email::normalize_email;
 
-/// Get a user by email, case-insensitively (errors if absent). Normalizes the
-/// email and matches against `lower(email)`, riding the functional unique index.
+/// Fetches a single user by email (errors if not found).
+///
+/// # Role
+/// Normalizes the email, then queries a single row matched on `lower(email)`;
+/// returns `Errors::UserNotFound` if no user exists.
+///
+/// # Errors
+/// - `Errors::UserNotFound` if the user does not exist
+/// - Returns a DB/repository error if the query fails.
 pub async fn repository_get_user_by_email<C>(conn: &C, email: String) -> Result<UserModel, Errors>
 where
     C: ConnectionTrait,

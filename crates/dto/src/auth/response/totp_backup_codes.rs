@@ -5,8 +5,9 @@ use utoipa::ToSchema;
 
 /// Backup code regeneration response
 #[derive(Debug, Serialize, ToSchema)]
+#[schema(description = "Response body returned after TOTP backup codes are regenerated.")]
 pub struct TotpBackupCodesResponse {
-    /// Newly generated list of backup codes (10 codes, 8-character alphanumeric)
+    /// Newly generated backup codes (10 codes, 8-character alphanumeric)
     pub backup_codes: Vec<String>,
 }
 

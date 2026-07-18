@@ -2,6 +2,7 @@ use super::{GoogleProvider, fetch_google_user_info};
 use crate::service::oauth::provider::client::exchange_code;
 use crate::service::oauth::resolve_sign_in::resolve_oauth_sign_in;
 use crate::service::oauth::types::OAuthStateData;
+use crate::utils::crypto::token::hash_token;
 use crate::utils::redis_cache::get_json_and_delete;
 use constants::oauth_state_key;
 use dto::oauth::internal::SignInResult;
@@ -29,7 +30,9 @@ where
     C: ConnectionTrait,
 {
     // 1. Validate state and retrieve PKCE verifier from Redis (single-use via get_del)
-    let state_key = oauth_state_key(state);
+    // Stored under the hashed state (hash-at-rest); hash the callback's raw
+    // state to derive the lookup key.
+    let state_key = oauth_state_key(&hash_token(state));
     let state_data: OAuthStateData = get_json_and_delete(
         redis_conn,
         &state_key,
@@ -57,7 +60,7 @@ where
         return Err(Errors::OauthEmailNotVerified);
     }
 
-    // 4. Resolve account / issue pending signup (shared with one-tap and native-app flows).
+    // 4. Resolve common sign-in flow (existing user → session, new user → pending signup)
     resolve_oauth_sign_in(
         conn,
         redis_conn,
@@ -65,7 +68,6 @@ where
         &user_info.id,
         user_info.email,
         Some(user_info.picture),
-        // Browser flow: bind the pending token to the same anonymous browser context.
         Some(anonymous_user_id),
         user_agent,
         ip_address,

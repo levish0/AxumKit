@@ -16,6 +16,10 @@ use dto::validator::json_validator::ValidatedJson;
 use errors::errors::{ErrorResponse, Errors};
 use std::net::SocketAddr;
 
+/// Handle Google One Tap sign-in.
+///
+/// - Existing user: 204 No Content + Set-Cookie
+/// - New user: 200 OK + pending signup payload (requires complete-signup)
 #[utoipa::path(
     post,
     path = "/v0/auth/oauth/google/one-tap/login",
@@ -39,7 +43,7 @@ pub async fn auth_google_one_tap_login(
     Extension(anonymous): Extension<AnonymousUserContext>,
     ValidatedJson(payload): ValidatedJson<GoogleOneTapLoginRequest>,
 ) -> Result<Response, Errors> {
-    let user_agent_str = extract_user_agent(user_agent);
+    let user_agent = extract_user_agent(user_agent);
     let ip_address = extract_ip_address(&headers, addr);
 
     let result = service_google_one_tap_sign_in(
@@ -48,7 +52,7 @@ pub async fn auth_google_one_tap_login(
         &state.http_client,
         &payload.credential,
         &anonymous.anonymous_user_id,
-        Some(user_agent_str),
+        user_agent,
         Some(ip_address),
     )
     .await?;

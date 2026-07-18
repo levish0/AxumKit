@@ -1,4 +1,4 @@
-use super::types::{DeviceCheck, DeviceLoginOutcome, DevicePendingData};
+use super::types::{DeviceLoginOutcome, DevicePendingData};
 use crate::bridge::worker_client;
 use crate::repository::auth_events::AUTH_EVENT_LOGIN_SUCCESS;
 use crate::repository::known_devices::{
@@ -17,36 +17,27 @@ use sea_orm::DatabaseConnection;
 
 /// Resolve an authenticated login against the trusted-device registry (OWASP ASVS 6.3.5).
 ///
-/// Called after the credentials (password [+ TOTP]) have been fully verified. On a trusted device
-/// (or the native-app flow) it mints the session; on an unrecognized browser device it withholds
-/// the session and emails a verification challenge, returning
-/// [`DeviceLoginOutcome::VerificationRequired`].
-#[allow(clippy::too_many_arguments)]
+/// Called after the credentials (password [+ TOTP]) have been fully verified, on **every** channel:
+/// browsers present their device-recognition cookie, native apps present the same opaque token in
+/// the `X-Device-Token` header. On a trusted (recognized) device it mints the session; on an
+/// unrecognized device it withholds the session and emails a verification challenge, returning
+/// [`DeviceLoginOutcome::VerificationRequired`]. The channel only decides how the caller transports
+/// the outcome (cookie vs. response body) — the trust decision here is identical, so no channel can
+/// bypass the gate.
 pub async fn resolve_device_login(
     db: &DatabaseConnection,
     redis: &RedisClient,
     worker: &WorkerClient,
     user: &UserModel,
-    device_check: DeviceCheck,
+    presented_device_token: Option<String>,
     user_agent: Option<String>,
     ip_address: Option<String>,
     remember_me: bool,
 ) -> Result<DeviceLoginOutcome, Errors> {
     let audit_ip = parse_ip(ip_address.as_deref());
 
-    let cookie_token = match device_check {
-        // App flow: no browser device cookie, mint the session directly.
-        DeviceCheck::Skip => {
-            let session_token =
-                create_session_and_record(redis, db, user, user_agent.clone(), ip_address.clone())
-                    .await?;
-            return Ok(DeviceLoginOutcome::SessionCreated { session_token });
-        }
-        DeviceCheck::Browser(token) => token,
-    };
-
-    // Trusted device? Look up the presented cookie token for this user.
-    if let Some(token) = cookie_token.as_deref() {
+    // Trusted device? Look up the presented device token for this user.
+    if let Some(token) = presented_device_token.as_deref() {
         let device_hash = hash_token(token);
         if let Some(device) = repository_find_known_device(db, user.id, &device_hash).await? {
             repository_touch_known_device(db, device, audit_ip).await?;
@@ -57,9 +48,9 @@ pub async fn resolve_device_login(
         }
     }
 
-    // Unknown device → email challenge. Reuse the browser's existing cookie token if present,
+    // Unknown device → email challenge. Reuse the presented token if the client had one,
     // otherwise mint one to become the trusted device once confirmed.
-    let device_token = cookie_token.unwrap_or_else(generate_secure_token);
+    let device_token = presented_device_token.unwrap_or_else(generate_secure_token);
     let pending = DevicePendingData {
         user_id: user.id,
         remember_me,

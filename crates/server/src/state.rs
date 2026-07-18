@@ -2,7 +2,7 @@ use redis::aio::ConnectionManager as RedisClient;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
-use crate::connection::{MeilisearchClient, R2Client};
+use crate::connection::{MeilisearchClient, R2AssetsClient};
 use dto::action_logs::ActionLogResponse;
 use reqwest::Client as HttpClient;
 use sea_orm::DatabaseConnection as PostgresqlClient;
@@ -20,7 +20,7 @@ pub type EventStreamSender = broadcast::Sender<ActionLogResponse>;
 pub struct AppState {
     /// Database connection (via PgDog connection pooler)
     pub db: PostgresqlClient,
-    pub r2_client: R2Client,
+    pub r2_assets: R2AssetsClient,
     /// Redis for sessions, tokens, rate-limiting (persistent, AOF)
     pub redis_session: RedisClient,
     /// Redis for document cache (volatile, LRU eviction)

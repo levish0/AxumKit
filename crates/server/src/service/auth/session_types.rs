@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
+/// Data structure for session context.
 pub struct SessionContext {
     pub user_id: Uuid,
     pub session_id: String,
@@ -10,6 +11,7 @@ pub struct SessionContext {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+/// Data structure for session.
 pub struct Session {
     pub session_id: String,
     pub management_id: String,
@@ -22,6 +24,12 @@ pub struct Session {
 }
 
 impl Session {
+    /// Creates a base session object.
+    ///
+    /// # Role
+    /// Computes the creation time, sliding expiration, and maximum expiration
+    /// relative to the current time.
+    ///
     /// `session_id` is the server-side identifier — the **hash** of the raw bearer
     /// token (see `crate::utils::crypto::token::hash_token`), never the raw token
     /// itself, so the raw token is never persisted. The caller (`create_session`)
@@ -50,6 +58,11 @@ impl Session {
         }
     }
 
+    /// Injects client identification info into the session.
+    ///
+    /// # Role
+    /// Stores the user agent and IP address in the session payload for
+    /// tracking and security decisions.
     pub fn with_client_info(
         mut self,
         user_agent: Option<String>,
@@ -60,10 +73,12 @@ impl Session {
         self
     }
 
+    /// Checks whether the session can be extended (max lifetime check)
     pub fn can_refresh(&self) -> bool {
         Utc::now() < self.max_expires_at
     }
 
+    /// Checks whether the session needs refreshing (TTL threshold check)
     pub fn needs_refresh(&self, threshold_percent: u8, sliding_ttl_hours: i64) -> bool {
         let now = Utc::now();
         let remaining = (self.expires_at - now).num_seconds();

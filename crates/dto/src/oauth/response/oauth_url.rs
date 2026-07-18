@@ -8,6 +8,7 @@ use utoipa::ToSchema;
 
 /// OAuth authorization URL response
 #[derive(Debug, Clone, Serialize, ToSchema)]
+#[schema(description = "Response body containing a provider authorization URL.")]
 pub struct OAuthUrlResponse {
     /// Google/GitHub OAuth authorization URL (includes state parameter)
     pub auth_url: String,

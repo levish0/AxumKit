@@ -4,6 +4,7 @@ use validator::Validate;
 
 /// Google OAuth link request
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for linking a Google account to the current user.")]
 pub struct GoogleLinkRequest {
     /// Authorization code from Google OAuth callback
     #[validate(length(min = 1, message = "Authorization code is required"))]
@@ -16,6 +17,7 @@ pub struct GoogleLinkRequest {
 
 /// GitHub OAuth link request
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for linking a GitHub account to the current user.")]
 pub struct GithubLinkRequest {
     /// Authorization code from GitHub OAuth callback
     #[validate(length(min = 1, message = "Authorization code is required"))]

@@ -34,6 +34,18 @@ pub fn oauth_pending_lock_key(token: &str) -> String {
     format!("{}{}", OAUTH_PENDING_LOCK_PREFIX, token)
 }
 
+/// Google One Tap nonce TTL in seconds (5 minutes)
+pub const OAUTH_ONE_TAP_NONCE_TTL_SECONDS: u64 = 300;
+
+/// Google One Tap nonce key prefix (single-use replay guard)
+/// Format: "oauth:one_tap_nonce:{nonce}"
+pub const OAUTH_ONE_TAP_NONCE_PREFIX: &str = "oauth:one_tap_nonce:";
+
+/// Build Google One Tap nonce key.
+pub fn oauth_one_tap_nonce_key(nonce: &str) -> String {
+    format!("{}{}", OAUTH_ONE_TAP_NONCE_PREFIX, nonce)
+}
+
 /// TOTP used-code TTL in seconds. Covers a code's full acceptance window
 /// (period 30s with skew ±1 ≈ 90s), after which the code is time-invalid anyway.
 pub const TOTP_USED_CODE_TTL_SECONDS: u64 = 90;

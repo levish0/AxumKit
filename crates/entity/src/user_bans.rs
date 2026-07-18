@@ -8,6 +8,12 @@ pub struct Model {
     pub id: Uuid,
     #[sea_orm(not_null, unique)]
     pub user_id: Uuid,
+    /// Human-readable ban reason, surfaced on the banned user's profile.
+    #[sea_orm(nullable)]
+    pub reason: Option<String>,
+    /// Moderator who issued the ban (SetNull on account deletion).
+    #[sea_orm(nullable)]
+    pub created_by: Option<Uuid>,
     #[sea_orm(column_type = "TimestampWithTimeZone", nullable)]
     pub expires_at: Option<DateTimeUtc>,
     #[sea_orm(column_type = "TimestampWithTimeZone", not_null)]

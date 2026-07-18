@@ -1,4 +1,4 @@
-//! Authentication audit-event repository (OWASP ASVS V16).
+//! Authentication audit-event repository (SEC-009).
 //!
 //! Durable, private-tier record of authentication decisions (login success/failure, logout,
 //! credential/2FA changes). Recording is best-effort at call sites so a write failure never breaks

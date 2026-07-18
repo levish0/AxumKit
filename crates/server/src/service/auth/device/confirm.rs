@@ -44,6 +44,9 @@ pub async fn confirm_device_verification(
     let user = repository_find_user_by_id(db, user_id)
         .await?
         .ok_or(Errors::UserNotFound)?;
+    if user.deleted_at.is_some() {
+        return Err(Errors::UserNotFound);
+    }
 
     let device_hash = hash_token(&pending.device_token);
     let device_ip = parse_ip(pending.ip_address.as_deref());
@@ -90,9 +93,6 @@ pub async fn confirm_device_verification(
         None,
     )
     .await;
-
-    // `user` is only needed to confirm the account still exists; drop it explicitly.
-    let _ = user;
 
     Ok(DeviceVerifyResult {
         session_token,

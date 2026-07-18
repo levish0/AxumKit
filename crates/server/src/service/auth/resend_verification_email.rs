@@ -40,7 +40,8 @@ pub async fn service_resend_verification_email(
     )
     .await?;
 
-    info!(email = %signup_data.email, handle = %signup_data.handle, "Pending signup verification email resent");
+    // Do not log PII (email/handle); the pending-signup flow has no user_id to correlate on yet.
+    info!("Pending signup verification email resent");
 
     Ok(())
 }

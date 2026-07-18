@@ -1,3 +1,4 @@
+pub mod app_device_verify;
 pub mod auth_check;
 pub mod cookie;
 pub mod device_cookie;
@@ -12,9 +13,10 @@ pub mod totp_required;
 pub mod totp_setup;
 pub mod totp_status;
 
+pub use app_device_verify::AppDeviceVerifyResponse;
 pub use auth_check::{AuthCheckIdentity, create_auth_check_response};
 pub use cookie::session_cookie_name;
-pub use device_cookie::{build_device_cookie, device_cookie_name};
+pub use device_cookie::{DEVICE_TOKEN_HEADER, build_device_cookie, device_cookie_name};
 pub use device_verification_required::DeviceVerificationRequiredResponse;
 pub use login::create_login_response;
 pub use logout::create_logout_response;

@@ -7,6 +7,9 @@ use validator::Validate;
 #[schema(description = "Request body for resending a pending signup verification email.")]
 pub struct ResendVerificationEmailRequest {
     /// Verification email recipient address
-    #[validate(email)]
+    #[validate(
+        email,
+        length(max = 254, message = "Email must not exceed 254 characters.")
+    )]
     pub email: String,
 }

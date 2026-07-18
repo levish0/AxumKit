@@ -9,11 +9,12 @@ use utoipa::ToSchema;
 
 /// OAuth connection info response
 #[derive(Debug, Clone, Serialize, ToSchema)]
+#[schema(description = "One OAuth provider currently linked to the user.")]
 pub struct OAuthConnectionResponse {
     /// OAuth provider (Google, Github)
     pub provider: OAuthProvider,
 
-    /// Connection creation time
+    /// When the connection was created
     pub created_at: DateTime<Utc>,
 }
 
@@ -28,6 +29,7 @@ impl From<OAuthConnectionModel> for OAuthConnectionResponse {
 
 /// OAuth connection list response
 #[derive(Debug, Serialize, ToSchema)]
+#[schema(description = "List of OAuth providers linked to the user.")]
 pub struct OAuthConnectionListResponse {
     pub connections: Vec<OAuthConnectionResponse>,
 }

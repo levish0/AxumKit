@@ -2,6 +2,14 @@ use entity::users::{Column as UsersColumn, Entity as UserEntity, Model as UserMo
 use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 
+/// Fetches a single user by handle (errors if not found).
+///
+/// # Role
+/// Queries a single row filtered by `handle` and returns `Errors::UserNotFound` if no result.
+///
+/// # Errors
+/// - `Errors::UserNotFound` if the user does not exist
+/// - Returns a DB/repository error if the query fails.
 pub async fn repository_get_user_by_handle<C>(conn: &C, handle: String) -> Result<UserModel, Errors>
 where
     C: ConnectionTrait,

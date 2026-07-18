@@ -1,5 +1,8 @@
+//! User repository layer.
+//!
+//! Provides data access for users, roles, and user-role assignments.
+
 pub mod create;
-pub mod delete;
 pub mod find_by_email;
 pub mod find_by_handle;
 pub mod find_by_id;
@@ -7,15 +10,16 @@ pub mod find_by_ids;
 pub mod get_by_email;
 pub mod get_by_handle;
 pub mod get_by_id;
+pub mod is_image_referenced;
 pub mod update;
 pub mod user_bans;
 pub mod user_roles;
 
 pub use create::{repository_create_user, repository_create_user_with_password_hash};
-pub use delete::repository_delete_user;
 pub use find_by_email::repository_find_user_by_email;
 pub use find_by_handle::repository_find_user_by_handle;
 pub use find_by_id::repository_find_user_by_id;
 pub use find_by_ids::repository_find_users_by_ids;
-pub use get_by_id::repository_get_user_by_id;
+pub use get_by_id::{repository_get_user_by_id, repository_get_user_by_id_for_update};
+pub use is_image_referenced::repository_is_user_image_referenced;
 pub use update::{UserUpdateParams, repository_update_user};

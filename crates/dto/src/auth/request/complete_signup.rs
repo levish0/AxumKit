@@ -5,13 +5,13 @@ use serde::Deserialize;
 use utoipa::ToSchema;
 use validator::Validate;
 
-/// OAuth pending signup completion request
+/// Request to complete an OAuth pending signup
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
 #[schema(
     description = "Request body for completing an OAuth signup after a provider login for a new user."
 )]
 pub struct CompleteSignupRequest {
-    /// Pending signup token (returned during OAuth sign-in)
+    /// Pending signup token (returned on OAuth login)
     // Server-issued opaque token (UUID/CSPRNG); cap to bound abuse via Redis-key length.
     #[validate(length(min = 1, max = 256, message = "Pending token is required"))]
     pub pending_token: String,

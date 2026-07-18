@@ -4,6 +4,7 @@ use validator::Validate;
 
 /// GitHub OAuth sign-in request
 #[derive(Debug, Clone, Deserialize, Validate, ToSchema)]
+#[schema(description = "Request body for signing in with GitHub OAuth.")]
 pub struct GithubLoginRequest {
     /// Authorization code from GitHub OAuth callback
     #[validate(length(min = 1, message = "Authorization code is required"))]

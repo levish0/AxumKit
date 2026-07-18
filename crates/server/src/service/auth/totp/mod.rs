@@ -1,6 +1,9 @@
+//! TOTP authentication service APIs.
+//!
+//! Covers enrollment, status, verification, disable, and backup code rotation.
+
 pub mod backup_codes;
 mod common;
-pub use common::verify_totp_code;
 pub mod disable;
 pub mod enable;
 pub mod setup;
@@ -9,6 +12,7 @@ pub mod temp_token;
 pub mod verify;
 
 pub use backup_codes::service_regenerate_backup_codes;
+pub use common::verify_totp_code;
 pub use disable::service_totp_disable;
 pub use enable::service_totp_enable;
 pub use setup::service_totp_setup;

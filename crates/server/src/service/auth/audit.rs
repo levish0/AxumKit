@@ -1,4 +1,4 @@
-//! Best-effort authentication audit recording (OWASP ASVS V16).
+//! Best-effort authentication audit recording (SEC-009).
 //!
 //! Recording must never break the auth flow it observes, so failures are logged and swallowed.
 

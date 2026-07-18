@@ -1,10 +1,11 @@
 use axum::Json;
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, ToSchema)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+/// Response payload for upload user image response.
 pub struct UploadUserImageResponse {
     /// URL of the uploaded image
     pub image_url: String,

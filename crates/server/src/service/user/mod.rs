@@ -1,13 +1,12 @@
-pub mod account;
-pub mod check_handle_available;
-pub mod delete_banner_image;
-pub mod delete_profile_image;
-pub mod get_my_profile;
-pub mod get_user_profile_by_handle;
-pub mod get_user_profile_by_id;
-pub mod management;
-pub mod update_my_profile;
-pub mod upload_banner_image;
-pub mod upload_profile_image;
+//! User service layer.
+//!
+//! Provides handle availability checks, profile management, public profile
+//! reads, user moderation actions, and role administration use cases.
 
+pub mod account;
+pub mod bans;
+pub mod management;
+pub mod mapper;
+pub mod profile;
+pub mod public;
 pub mod utils;

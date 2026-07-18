@@ -1,4 +1,5 @@
-use crate::service::auth::totp::{TotpVerifyResult, service_totp_verify};
+use crate::service::auth::totp::TotpVerifyResult;
+use crate::service::auth::totp::service_totp_verify;
 use crate::state::AppState;
 use axum::extract::State;
 use axum::response::{IntoResponse, Response};
@@ -12,12 +13,14 @@ use errors::errors::{ErrorResponse, Errors};
 #[utoipa::path(
     post,
     path = "/v0/auth/totp/verify",
+    summary = "Finish login with TOTP",
+    description = "Consumes the temporary token returned by POST /v0/auth/login, verifies either a 6-digit authenticator code or an 8-character backup code, and issues the session cookie. Backup codes are single-use and are removed after successful verification.",
     request_body = TotpVerifyRequest,
     responses(
-        (status = 204, description = "TOTP verified, login successful"),
-        (status = 202, description = "New-device email verification required", body = DeviceVerificationRequiredResponse),
-        (status = 400, description = "Invalid TOTP code or temp token"),
-        (status = 500, description = "Internal Server Error")
+        (status = 204, description = "TOTP verification succeeded and a session cookie was issued"),
+        (status = 400, description = "Malformed JSON payload, validation error, invalid or expired temporary token, or invalid verification code", body = ErrorResponse),
+        (status = 401, description = "A backup code was submitted but no backup codes remain for this account", body = ErrorResponse),
+        (status = 500, description = "Unexpected database or session store error", body = ErrorResponse)
     ),
     tag = "Auth - TOTP"
 )]
@@ -77,8 +80,8 @@ pub async fn totp_verify_app(
         TotpVerifyResult::SessionCreated { session_id, .. } => {
             Ok(SessionTokenResponse::new(session_id).into_response())
         }
-        // Unreachable for the app flow (temp token carries apply_device_check=false), but handle
-        // exhaustively.
+        // Unrecognized device after TOTP: session withheld, challenge emailed. The app completes it
+        // via POST /v0/app/auth/device/verify (returns the session + device token in the body).
         TotpVerifyResult::DeviceVerificationRequired => {
             Ok(DeviceVerificationRequiredResponse::new().into_response())
         }

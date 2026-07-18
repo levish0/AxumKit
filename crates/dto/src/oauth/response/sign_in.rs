@@ -11,7 +11,7 @@ use errors::errors::Errors;
 #[derive(Debug, Serialize, ToSchema)]
 #[schema(description = "Response body returned when OAuth sign-in requires profile completion.")]
 pub struct OAuthPendingSignupResponse {
-    /// One-time token for completing pending signup
+    /// One-time token for completing the pending signup
     pub pending_token: String,
     /// Email received from the OAuth provider
     pub email: String,
@@ -23,16 +23,16 @@ impl IntoResponse for OAuthPendingSignupResponse {
     }
 }
 
-/// Converts OAuth sign-in result to HTTP response
+/// Converts the OAuth sign-in result into an HTTP response
 pub enum OAuthSignInResponse {
-    /// Sign-in success - 204 No Content + Set-Cookie
+    /// Sign-in succeeded - 204 No Content + Set-Cookie
     Success { session_id: String },
     /// Pending signup - 200 OK + JSON body
     PendingSignup(OAuthPendingSignupResponse),
 }
 
 impl OAuthSignInResponse {
-    /// Converts SignInResult to OAuthSignInResponse
+    /// Converts a SignInResult into an OAuthSignInResponse
     pub fn from_result(result: SignInResult) -> Self {
         match result {
             SignInResult::Success(session_id) => OAuthSignInResponse::Success { session_id },
@@ -46,9 +46,8 @@ impl OAuthSignInResponse {
         }
     }
 
-    /// Converts to HTTP response. OAuth has no remember-me input, so it issues a
-    /// non-persistent browser session cookie (remember_me=false). The server's
-    /// absolute session TTL still applies.
+    /// Converts to an HTTP response. Since OAuth has no remember-me input, a browser
+    /// session cookie (remember_me=false) is issued — the server's absolute TTL still applies.
     pub fn into_response_result(self) -> Result<axum::response::Response, Errors> {
         match self {
             OAuthSignInResponse::Success { session_id } => {

@@ -7,7 +7,7 @@ use errors::errors::Errors;
 use sea_orm::{ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
-/// Queries a specific provider's OAuth connection for a user.
+/// Finds a user's OAuth connection for a specific provider.
 pub async fn repository_find_oauth_connection<C>(
     conn: &C,
     user_id: Uuid,

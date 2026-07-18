@@ -1,24 +1,25 @@
-use super::change_email::auth_change_email;
-use super::change_password::auth_change_password;
-use super::complete_signup::{auth_complete_signup, auth_complete_signup_app};
-use super::confirm_email_change::auth_confirm_email_change;
-use super::forgot_password::auth_forgot_password;
-use super::login::{auth_login, auth_login_app};
-use super::logout::auth_logout;
-use super::resend_verification_email::auth_resend_verification_email;
-use super::reset_password::auth_reset_password;
+use super::email::change_email::auth_change_email;
+use super::email::confirm_email_change::auth_confirm_email_change;
+use super::email::resend_verification_email::auth_resend_verification_email;
+use super::email::verify_email::{auth_verify_email, auth_verify_email_app};
+use super::password::change_password::auth_change_password;
+use super::password::forgot_password::auth_forgot_password;
+use super::password::reset_password::auth_reset_password;
+use super::password::set_initial_password::auth_set_initial_password;
 use super::session::check::auth_check;
+use super::session::complete_signup::{auth_complete_signup, auth_complete_signup_app};
 use super::session::list_sessions::auth_list_sessions;
+use super::session::login::{auth_login, auth_login_app};
+use super::session::logout::auth_logout;
 use super::session::revoke_session::auth_revoke_session;
-use super::signup::auth_signup;
+use super::session::signup::auth_signup;
+use super::session::verify_device::{auth_verify_device, auth_verify_device_app};
 use super::totp::disable::totp_disable;
 use super::totp::enable::totp_enable;
 use super::totp::regenerate_backup_codes::totp_regenerate_backup_codes;
 use super::totp::setup::totp_setup;
 use super::totp::status::totp_status;
 use super::totp::verify::{totp_verify, totp_verify_app};
-use super::verify_device::auth_verify_device;
-use super::verify_email::{auth_verify_email, auth_verify_email_app};
 use crate::api::v0::routes::auth::oauth::github::github_authorize::auth_github_authorize;
 use crate::api::v0::routes::auth::oauth::github::github_link::auth_github_link;
 use crate::api::v0::routes::auth::oauth::github::github_login::auth_github_login;
@@ -27,6 +28,7 @@ use crate::api::v0::routes::auth::oauth::google::google_authorize::auth_google_a
 use crate::api::v0::routes::auth::oauth::google::google_link::auth_google_link;
 use crate::api::v0::routes::auth::oauth::google::google_login::auth_google_login;
 use crate::api::v0::routes::auth::oauth::google::google_one_tap_login::auth_google_one_tap_login;
+use crate::api::v0::routes::auth::oauth::google::google_one_tap_nonce::auth_google_one_tap_nonce;
 use crate::api::v0::routes::auth::oauth::google::google_token::auth_google_token_app;
 use crate::api::v0::routes::auth::oauth::list_oauth_connections::list_oauth_connections;
 use crate::api::v0::routes::auth::oauth::unlink_oauth_connection::unlink_oauth_connection;
@@ -37,6 +39,9 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
     Router::new()
         // Protected routes (authentication via extractors)
         .route("/auth/logout", post(auth_logout))
+        // Gateway forward-auth endpoint (rate-limit identity for APISIX; always 200)
+        .route("/auth/check", get(auth_check))
+        // Active sessions management (require session)
         .route("/auth/sessions", get(auth_list_sessions))
         .route(
             "/auth/sessions/{management_id}",
@@ -56,6 +61,10 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         // OAuth login routes (code exchange)
         .route("/auth/oauth/google/login", post(auth_google_login))
         .route(
+            "/auth/oauth/google/one-tap/nonce",
+            get(auth_google_one_tap_nonce),
+        )
+        .route(
             "/auth/oauth/google/one-tap/login",
             post(auth_google_one_tap_login),
         )
@@ -65,13 +74,12 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         // OAuth link routes (link existing account)
         .route("/auth/oauth/google/link", post(auth_google_link))
         .route("/auth/oauth/github/link", post(auth_github_link))
+        // Email/password signup route
+        .route("/auth/signup", post(auth_signup))
         // Email/password login route
         .route("/auth/login", post(auth_login))
-        // Email signup route (public, deferred creation)
-        .route("/auth/signup", post(auth_signup))
-        // Email verification route (public)
+        // Email verification routes (public)
         .route("/auth/verify-email", post(auth_verify_email))
-        // Resend verification email (public, email-based)
         .route(
             "/auth/resend-verification-email",
             post(auth_resend_verification_email),
@@ -81,7 +89,7 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         .route("/auth/totp/enable", post(totp_enable))
         // TOTP verify route (public, for 2FA login)
         .route("/auth/totp/verify", post(totp_verify))
-        // New-device sign-in confirmation (public, emailed-token proof; OWASP ASVS 6.3.5)
+        // New-device sign-in confirmation (public; the emailed token is the proof)
         .route("/auth/device/verify", post(auth_verify_device))
         // TOTP backup codes regeneration (require session)
         .route(
@@ -92,23 +100,26 @@ pub fn auth_routes(_state: AppState) -> Router<AppState> {
         .route("/auth/forgot-password", post(auth_forgot_password))
         .route("/auth/reset-password", post(auth_reset_password))
         // Password and email change routes (require session)
+        .route(
+            "/auth/set-initial-password",
+            post(auth_set_initial_password),
+        )
         .route("/auth/change-password", post(auth_change_password))
         .route("/auth/change-email", post(auth_change_email))
         .route(
             "/auth/confirm-email-change",
             post(auth_confirm_email_change),
         )
-        // Gateway forward-auth: resolve the session identity for rate-limit keying (always 200).
-        .route("/auth/check", get(auth_check))
         // Native-app (non-browser) variants: same flows, but the session token is returned in the
         // response body for `Authorization: Bearer` use instead of an HttpOnly cookie. Only the
         // session-minting flows without a browser-cookie dependency are mirrored here; OAuth uses a
         // browser-cookie-bound state/nonce and needs a separate provider-token flow for apps.
         .route("/app/auth/login", post(auth_login_app))
         .route("/app/auth/totp/verify", post(totp_verify_app))
+        .route("/app/auth/device/verify", post(auth_verify_device_app))
         .route("/app/auth/verify-email", post(auth_verify_email_app))
         // Native-app OAuth: provider-token flow (app submits a provider id_token/access_token; the
-        // server verifies it directly — no redirect/state/anonymous-cookie binding).
+        // server verifies it directly — no redirect/state/anonymous-cookie binding). Google first.
         .route("/app/auth/oauth/google/token", post(auth_google_token_app))
         .route("/app/auth/oauth/github/token", post(auth_github_token_app))
         .route("/app/auth/complete-signup", post(auth_complete_signup_app))

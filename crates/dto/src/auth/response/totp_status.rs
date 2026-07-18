@@ -6,13 +6,14 @@ use utoipa::ToSchema;
 
 /// TOTP status response
 #[derive(Debug, Serialize, ToSchema)]
+#[schema(description = "Response body describing the current TOTP status.")]
 pub struct TotpStatusResponse {
     /// Whether TOTP is enabled
     pub enabled: bool,
-    /// TOTP activation time (only when enabled)
+    /// When TOTP was enabled (only if enabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub enabled_at: Option<DateTime<Utc>>,
-    /// Remaining backup code count (only when enabled)
+    /// Number of remaining backup codes (only if enabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backup_codes_remaining: Option<usize>,
 }

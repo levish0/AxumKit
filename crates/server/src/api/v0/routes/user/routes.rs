@@ -1,18 +1,18 @@
-use super::check_handle_available::check_handle_available;
-use super::confirm_account_deletion::confirm_account_deletion;
-use super::delete_banner_image::delete_banner_image;
-use super::delete_my_account::delete_my_account;
-use super::delete_profile_image::delete_profile_image;
-use super::get_my_profile::get_my_profile;
-use super::get_user_profile::get_user_profile;
-use super::get_user_profile_by_id::get_user_profile_by_id;
+use super::account::check_handle_available::check_handle_available;
+use super::account::confirm_account_deletion::confirm_account_deletion;
+use super::account::delete_my_account::delete_my_account;
 use super::management::ban_user::ban_user;
 use super::management::grant_role::grant_role;
 use super::management::revoke_role::revoke_role;
 use super::management::unban_user::unban_user;
-use super::update_my_profile::update_my_profile;
-use super::upload_banner_image::upload_banner_image;
-use super::upload_profile_image::upload_profile_image;
+use super::profile::delete_banner_image::delete_banner_image;
+use super::profile::delete_profile_image::delete_profile_image;
+use super::profile::get_my_profile::get_my_profile;
+use super::profile::update_my_profile::update_my_profile;
+use super::profile::upload_banner_image::upload_banner_image;
+use super::profile::upload_profile_image::upload_profile_image;
+use super::public::get_user_profile::get_user_profile;
+use super::public::get_user_profile_by_id::get_user_profile_by_id;
 use crate::state::AppState;
 use axum::{
     Router,
@@ -46,7 +46,7 @@ pub fn user_routes() -> Router<AppState> {
                 .patch(update_my_profile)
                 .delete(delete_my_account),
         )
-        // User Management (admin actions)
+        // User Management (moderator actions)
         .route("/users/ban", post(ban_user))
         .route("/users/unban", post(unban_user))
         .route("/users/roles/grant", post(grant_role))
@@ -54,7 +54,7 @@ pub fn user_routes() -> Router<AppState> {
 
     // Public routes (no authentication required)
     let public_routes = Router::new()
-        // Account deletion confirmation (emailed-token proof, no session required)
+        // The emailed single-use token is the re-authentication proof, so no session is required.
         .route("/user/me/deletion/confirm", post(confirm_account_deletion))
         .route("/users/profile", get(get_user_profile))
         .route("/users/profile/id", get(get_user_profile_by_id))

@@ -2,7 +2,7 @@ use entity::common::OAuthProvider;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Data temporarily stored in Redis when a new user requests OAuth sign-in without a handle
+/// Data temporarily stored in Redis when a new user starts OAuth login without a handle
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PendingSignupData {
     pub provider: OAuthProvider,

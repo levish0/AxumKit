@@ -5,6 +5,7 @@ use serde::de::DeserializeOwned;
 use validator::Validate;
 
 #[derive(Debug, Clone, Copy, Default)]
+/// Validated extractor wrapper for validated path.
 pub struct ValidatedPath<T>(pub T);
 
 impl<T, S> FromRequestParts<S> for ValidatedPath<T>

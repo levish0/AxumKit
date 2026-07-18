@@ -81,12 +81,24 @@ pub fn validate_handle(handle: &str) -> Result<(), ValidationError> {
 ///   or paragraph separators (`Zp`)
 /// - No emoji or miscellaneous symbols (`So` — covers 😀, 🎉, ©, ®, ™, etc.)
 /// - No more than 2 consecutive non-spacing marks (blocks Zalgo text)
+/// - No angle brackets (`<`, `>`) — the HTML tag-injection primitives. Names are
+///   echoed into profile responses, the search index and email templates, so a
+///   sink that forgets to escape must still never receive a `<script>` payload.
+///   `&` and quotes stay allowed (legitimate in names — "Q&A", "O'Brien" — and
+///   cannot open a tag on their own).
 ///
-/// Unicode letters, spaces, and punctuation are permitted.
+/// Unicode letters, spaces, and (other) punctuation are permitted.
 pub fn validate_display_name(name: &str) -> Result<(), ValidationError> {
     let mut consecutive_combining: u32 = 0;
 
     for ch in name.chars() {
+        // Defense-in-depth against HTML injection: `<`/`>` are Unicode category
+        // Sm (math symbols), which the category filter below permits, so reject
+        // them explicitly.
+        if ch == '<' || ch == '>' {
+            return Err(ValidationError::new("display_name_invalid_chars"));
+        }
+
         let category = get_general_category(ch);
 
         match category {
@@ -121,4 +133,30 @@ pub fn validate_display_name(name: &str) -> Result<(), ValidationError> {
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validate_display_name;
+
+    #[test]
+    fn display_name_rejects_angle_brackets() {
+        assert!(validate_display_name("<script>alert(1)</script>").is_err());
+        assert!(validate_display_name("<img src=x onerror=x>").is_err());
+        assert!(validate_display_name("a<b").is_err());
+        assert!(validate_display_name("a>b").is_err());
+    }
+
+    #[test]
+    fn display_name_allows_ampersand_and_quotes() {
+        assert!(validate_display_name("Q&A enjoyer").is_ok());
+        assert!(validate_display_name("O'Brien").is_ok());
+        assert!(validate_display_name("The \"Real\" One").is_ok());
+    }
+
+    #[test]
+    fn display_name_allows_plain_names() {
+        assert!(validate_display_name("김철수").is_ok());
+        assert!(validate_display_name("Jane Doe").is_ok());
+    }
 }
