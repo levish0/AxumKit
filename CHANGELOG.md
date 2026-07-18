@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-07-18
+
+Breaking: the RBAC surface drops its legacy `acl` naming (fresh migration set — reset
+the database; API paths and error codes change).
+
+### Changed
+
+- Tables `acl_groups` / `acl_group_members` / `acl_group_permissions` are now
+  `groups` / `group_members` / `group_permissions`.
+- Admin endpoints move from `/v0/acl/*` to `/v0/groups`, `/v0/groups/delete`,
+  `/v0/groups/members` (+`/remove`), `/v0/permissions`, and
+  `/v0/groups/permissions` (+`/replace`).
+- Wire codes: `acl:denied` → `permission:denied`, `acl:invalid_rule` →
+  `permission:invalid`, `acl:group_*` → `group:*`; moderation log actions follow
+  (`group:create`, `group:permissions_replace`, …).
+- Matching type and function renames throughout (`Errors::PermissionDenied`,
+  `GroupListResponse`, `service_create_group`, …).
+
+### Removed
+
+- The GitHub Pages docs workflow — the docs site deploys on Cloudflare.
+
 ## [0.18.2] - 2026-07-18
 
 Tooling, tests, and documentation.
