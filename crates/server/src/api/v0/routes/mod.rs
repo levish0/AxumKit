@@ -1,6 +1,9 @@
+mod acl;
 mod action_logs;
 mod auth;
+mod board;
 mod moderation;
+mod notification;
 pub mod openapi;
 pub mod routes;
 mod search;

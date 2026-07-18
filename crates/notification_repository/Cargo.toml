@@ -1,0 +1,17 @@
+[package]
+name = "notification_repository"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Shared notification persistence (event + delivery insertion) used by both the API server and the worker"
+
+[lints]
+workspace = true
+
+[dependencies]
+constants = { workspace = true }
+entity = { workspace = true }
+sea-orm = { workspace = true }
+uuid = { workspace = true }

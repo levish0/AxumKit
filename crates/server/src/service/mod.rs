@@ -1,7 +1,13 @@
+pub mod acl;
 pub mod action_logs;
+pub mod actors;
 pub mod auth;
+pub mod blob_cleanup;
+pub mod board;
+pub mod cursor_pagination;
 pub mod eventstream;
 pub mod moderation;
+pub mod notification;
 pub mod oauth;
 pub mod search;
 pub mod user;
