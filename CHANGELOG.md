@@ -5,6 +5,155 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.2] - 2026-07-18
+
+Tooling, tests, and documentation.
+
+### Added
+
+- **Black-box e2e harness + suites** — cookie-jar `TestClient` with per-actor IPs, Mailpit
+  token polling, and direct-DB role bootstrap. Ten suites (59 tests) cover auth, TOTP
+  (incl. concurrent single-use backup codes), account lifecycle, moderation, RBAC grants
+  taking real effect, boards, notifications (incl. IDOR probes), search indexing, and
+  public profiles — all green against the disposable docker stack.
+- **CI split** — unit tests run in a parallel `test` workflow; `check` gates fmt, clippy
+  `-D warnings`, OpenAPI schema drift, and fresh-database migrations; `e2e` keeps the
+  docker stack. `just e2e` preserves the suite's exit status and caps parallelism.
+- **Docs site** — lily-pad guide (EN/KO): getting started, architecture, configuration,
+  authentication, authorization, boards & notifications, background jobs, testing,
+  deployment.
+
+### Fixed
+
+- e2e defaults use `127.0.0.1` instead of `localhost` (which can resolve to `::1`,
+  unanswered by Docker's port proxy on some hosts).
+- Committed test/example env trees gained the missing `TOTP_ENCRYPTION_KEY` and worker
+  frontend-path variables.
+
+## [0.18.1] - 2026-07-18
+
+### Changed
+
+- **`search_index` crate** — the Meilisearch index uid and document schema are defined
+  once and shared by the worker (writer) and server (reader), so schema drift becomes a
+  compile error.
+- Gateway auth-check identity carries `user_id` as a real `Uuid` (string only at the
+  header boundary).
+
+## [0.18.0] - 2026-07-18
+
+### Added
+
+- **In-app notification inbox** — one `notification_events` row per occurrence, one
+  `notification_deliveries` row per recipient; target shape and action/type combinations
+  are CHECK-constrained in the database. Producers (comment alerts, mentions) flow
+  through a single chokepoint that drops self-notifications and honors per-action
+  opt-outs. Cursor-paginated inbox with unread counts, read state, and preference
+  endpoints; the shared `notification_repository` crate keeps server and worker writes
+  identical. Old notifications are reclaimed by the weekly cleanup (90-day retention).
+
+## [0.17.0] - 2026-07-18
+
+### Added
+
+- **Board domain (template demo feature)** — boards, posts, and comments (reply depth
+  capped at 2) with owner-only edits, RBAC-gated pinning/locking/moderation, stale-set-
+  rejecting pin reorder, `@handle` mentions, and per-viewer-deduped view counts buffered
+  in Redis and flushed to Postgres by a per-minute worker cron. Content is stored raw.
+  Three boards are seeded (`notice`, `general`, `qna`).
+- Actor model (`actors`) for content attribution that survives account deactivation.
+
+### Changed
+
+- The weekly cleanup cron now performs real batched deletes: expired ACL group
+  memberships, expired roles, expired bans, and old notifications.
+
+## [0.16.0] - 2026-07-18
+
+### Added
+
+- **Django-style RBAC** — grantable permission codenames (`board:pin_post`,
+  `board:lock_post`, `board:moderate`, `board:manage`) resolved by
+  `UserContext::has_perm` in fixed order: ban hard gate → admin bypass → the Mod default
+  set → the union of group-granted permissions. Denials return `acl:denied` with the
+  missing codename. `acl_groups` / `acl_group_members` / `acl_group_permissions` tables
+  with member reason/expiry metadata, plus an admin API (list/create/delete groups,
+  member add/remove, whole-list permission replacement with codename validation).
+  Stored codenames that no longer parse fail closed.
+
+## [0.15.0] - 2026-07-18
+
+Breaking: accounts now soft-delete; the users table drops `verified_at` and gains
+`deleted_at` (fresh migration set — reset the database).
+
+### Added
+
+- `POST /v0/auth/set-initial-password` for OAuth-only accounts, Google One Tap nonce
+  issuance + login, native-app mirrors for device verification and provider-token OAuth.
+- User-image blob cleanup that only deletes unreferenced content-addressed assets.
+
+### Changed
+
+- **Account deletion is a soft delete with a PII scrub** — email is freed, credentials
+  and images nulled, OAuth connections and roles removed; handle/display name stay
+  reserved for attribution. Session resolution rejects deactivated users; public
+  profiles mask them.
+- `UserResponse.id` is a proper `Uuid`.
+- Login timing is uniform across unknown/deactivated/OAuth-only/wrong-password paths;
+  email lookups are case-insensitive at the database level.
+
+### Fixed
+
+- The media-processor client reads the current response headers, restoring profile- and
+  banner-image uploads.
+
+## [0.14.0] - 2026-07-18
+
+### Changed
+
+- **Error protocol** — per-domain wire codes (`"domain:snake_case"`) in a dedicated
+  module; 4xx responses always include details, 5xx details are hidden outside
+  development; structured `tracing` fields throughout.
+- **Storage** — S3 operation/attempt timeouts so a stalled connection cannot hang a
+  handler; auto-paginating prefix listing; private-bucket client with zstd content
+  helpers.
+- **Edge hardening** — production CORS panics when origins are unset and mirrors request
+  headers (credential-safe); the anonymous cookie uses env-aware `__Host-`/`__Secure-`
+  prefixes; internal-secret comparison is constant-time; Turnstile verification forwards
+  the client IP.
+
+## [0.13.0] - 2026-07-18
+
+### Changed
+
+- **`job_queue` crate** — job payloads, stream/subject/consumer names, and idempotent
+  stream creation now live in one contract crate consumed by both binaries. The server
+  no longer links the worker crate, and both declare the JetStream streams at startup so
+  a fresh NATS works regardless of boot order.
+
+## [0.12.1] - 2026-07-18
+
+### Changed
+
+- **Worker consumer engine hardening** — per-handler timeout backstop (nak on expiry,
+  900s for reindex batches), panic isolation into the normal failure path, consumer
+  create-or-update so tuning reaches existing durables, DLQ publishes confirmed before
+  the original is dropped, and process-wide graceful shutdown that drains in-flight
+  handlers. Dedup markers moved to the noeviction lock Redis.
+
+## [0.12.0] - 2026-07-18
+
+Breaking: database configuration is now a single URL.
+
+### Changed
+
+- **`DATABASE_URL`** replaces the assembled `POSTGRES_HOST/PORT/NAME/USER/PASSWORD`
+  variables for the server, worker, and migration binaries alike — the deployment
+  controls the full URL including the query string (`?sslmode=require`,
+  `channel_binding` for managed providers). Logs redact credentials via
+  `redact_database_url`, and config loading reports every missing variable in one
+  message.
+
 ## [0.11.0] - 2026-07-05
 
 Security-hardening release. A batch of auth/security features ported from the downstream
