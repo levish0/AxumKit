@@ -53,6 +53,44 @@ fn trusted_proxy_client_ip(headers: &HeaderMap, expected_secret: Option<&str>) -
 mod tests {
     use super::*;
     use axum::http::HeaderValue;
+    use std::sync::Once;
+
+    /// `extract_ip_address` reads `internal_proxy_secret` through the
+    /// process-global `ServerConfig`, whose loader panics on any missing
+    /// required variable. Give it a complete environment here so these tests
+    /// are hermetic instead of depending on a developer's `.env` file (CI has
+    /// none). Values are placeholders — nothing in these tests connects out.
+    fn ensure_config_env() {
+        static INIT: Once = Once::new();
+        INIT.call_once(|| {
+            for (key, value) in [
+                ("TOTP_SECRET", "test-totp-secret"),
+                ("TOTP_ENCRYPTION_KEY", "test-totp-encryption-key"),
+                ("GOOGLE_CLIENT_ID", "test"),
+                ("GOOGLE_CLIENT_SECRET", "test"),
+                ("GOOGLE_REDIRECT_URI", "http://127.0.0.1/oauth/google"),
+                ("GITHUB_CLIENT_ID", "test"),
+                ("GITHUB_CLIENT_SECRET", "test"),
+                ("GITHUB_REDIRECT_URI", "http://127.0.0.1/oauth/github"),
+                ("R2_ENDPOINT", "http://127.0.0.1:9000"),
+                ("R2_REGION", "auto"),
+                ("R2_ACCESS_KEY_ID", "test"),
+                ("R2_SECRET_ACCESS_KEY", "test"),
+                ("R2_ASSETS_PUBLIC_DOMAIN", "http://127.0.0.1:9000/assets"),
+                ("R2_ASSETS_BUCKET_NAME", "assets"),
+                ("TURNSTILE_SECRET_KEY", "test"),
+                ("DATABASE_URL", "postgres://test:test@127.0.0.1:5432/test"),
+                ("HOST", "127.0.0.1"),
+                ("PORT", "8000"),
+            ] {
+                if std::env::var_os(key).is_none() {
+                    // SAFETY: runs once, before the first ServerConfig access in
+                    // this test binary; the keys are test-only placeholders.
+                    unsafe { std::env::set_var(key, value) };
+                }
+            }
+        });
+    }
 
     fn socket_addr() -> SocketAddr {
         "127.0.0.1:8080".parse().unwrap()
@@ -60,6 +98,7 @@ mod tests {
 
     #[test]
     fn uses_valid_cf_connecting_ip() {
+        ensure_config_env();
         let mut headers = HeaderMap::new();
         headers.insert("CF-Connecting-IP", HeaderValue::from_static("203.0.113.10"));
 
@@ -68,6 +107,7 @@ mod tests {
 
     #[test]
     fn trims_cf_connecting_ip() {
+        ensure_config_env();
         let mut headers = HeaderMap::new();
         headers.insert(
             "CF-Connecting-IP",
@@ -79,6 +119,7 @@ mod tests {
 
     #[test]
     fn falls_back_to_socket_addr_when_cf_connecting_ip_is_invalid() {
+        ensure_config_env();
         let mut headers = HeaderMap::new();
         headers.insert("CF-Connecting-IP", HeaderValue::from_static("not-an-ip"));
 
@@ -87,6 +128,7 @@ mod tests {
 
     #[test]
     fn ignores_other_proxy_headers() {
+        ensure_config_env();
         let mut headers = HeaderMap::new();
         headers.insert("X-Real-IP", HeaderValue::from_static("203.0.113.20"));
         headers.insert(
