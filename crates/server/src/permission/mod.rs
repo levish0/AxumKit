@@ -1,3 +1,4 @@
+pub mod board;
 mod permission_service;
 pub mod rule;
 #[cfg(test)]

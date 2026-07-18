@@ -1,0 +1,16 @@
+use dto::acl::AclGroupMemberResponse;
+use entity::acl_group_members::Model as AclGroupMemberModel;
+
+/// Maps a membership row to its API shape.
+pub(super) fn member_to_response(member: AclGroupMemberModel) -> AclGroupMemberResponse {
+    AclGroupMemberResponse {
+        id: member.id,
+        group_id: member.group_id,
+        user_id: member.user_id,
+        ip_address: member.ip_address.map(|ip| ip.to_string()),
+        reason: member.reason,
+        expires_at: member.expires_at,
+        created_by: member.created_by,
+        created_at: member.created_at,
+    }
+}
