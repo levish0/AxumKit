@@ -1,0 +1,23 @@
+name: test
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # e2e is compile-checked by clippy in check.yml and executed against the
+      # full docker stack in e2e.yml; running it here would fail without the stack.
+      - name: Test
+        run: cargo test --workspace --all-targets --exclude e2e

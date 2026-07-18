@@ -25,17 +25,18 @@ jobs:
         with:
           workspaces: "."
 
-      - name: Check
-        run: cargo check --workspace --all-targets --exclude e2e
-
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets --exclude e2e
-
       - name: Format
         run: cargo fmt --all --check
 
-      - name: Test
-        run: cargo test --workspace --exclude e2e
+      - name: Clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      # Unit/integration tests run in the parallel test workflow; the full-stack
+      # e2e suite runs in the dedicated e2e workflow.
+      - name: OpenAPI schema drift
+        run: |
+          cargo xtask openapi
+          git diff --exit-code swagger.json
 
   migrations:
     runs-on: ubuntu-latest
@@ -56,11 +57,7 @@ jobs:
           --health-retries 5
 
     env:
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
-      POSTGRES_NAME: axumkit
-      POSTGRES_USER: axumkit
-      POSTGRES_PASSWORD: axumkit
+      DATABASE_URL: postgres://axumkit:axumkit@localhost:5432/axumkit
 
     steps:
       - uses: actions/checkout@v4

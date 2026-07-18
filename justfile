@@ -67,7 +67,7 @@ fmt:
 # e2e is excluded here: it needs the full docker stack (see `just e2e`).
 check:
     cargo fmt --all --check
-    cargo clippy --workspace --all-targets --exclude e2e -- -D warnings
+    cargo clippy --all-targets -- -D warnings
     cargo test --workspace --exclude e2e
     cargo xtask openapi
     git diff --exit-code swagger.json
@@ -78,10 +78,19 @@ test *args:
 
 # Run end-to-end tests against the full disposable docker stack.
 # Brings the stack up (waiting for healthchecks), runs the e2e crate, then tears it down.
-e2e:
+# Parallelism is capped (default 4) so concurrent tests don't saturate the shared stack's
+# DB connection pool; override with e.g. `just e2e 8`.
+e2e threads="4":
+    #!/usr/bin/env bash
+    set -euo pipefail
     docker compose -f docker-compose.test.yml up -d --build --wait
-    -cargo test -p e2e
+    # Capture the suite's exit code so teardown always runs, but still surface a
+    # failure: a bare `-cargo test` (ignore-error) made `just e2e` exit 0 even when
+    # the suite was red, so CI / the pre-release checklist got a false green.
+    status=0
+    cargo test -p e2e -- --test-threads={{threads}} || status=$?
     docker compose -f docker-compose.test.yml down -v
+    exit $status
 
 # Build and push GHCR Docker images (e.g. `just publish 0.8.0 --latest`)
 publish tag *args:
