@@ -1,3 +1,8 @@
+use crate::repository::notification::{
+    repository_delete_all_notifications_for_user,
+    repository_delete_notification_action_preferences_for_user,
+    repository_delete_notification_preferences_for_user,
+};
 use crate::repository::oauth::delete_oauth_connection::repository_delete_oauth_connections_for_user;
 use crate::repository::user::user_roles::repository_delete_all_user_roles;
 use crate::repository::user::{UserUpdateParams, repository_update_user};
@@ -18,7 +23,9 @@ use uuid::Uuid;
 /// - User row PII: `email` (freed via a dummy address), `password`/`totp_*`/`bio`/images → NULL
 /// - OAuth connections: so a future sign-in starts a fresh signup
 /// - Roles: revoke admin/mod privileges from the deactivated account
+/// - Notification inbox and channel/action preferences: private data
 /// - Roles: revoke admin/mod privileges from the deactivated account
+/// - Notification inbox and channel/action preferences: private data
 pub async fn scrub_user_account<C>(conn: &C, user_id: Uuid) -> Result<(), Errors>
 where
     C: ConnectionTrait,
@@ -49,6 +56,11 @@ where
     // 2. Remove active privileges/credentials.
     repository_delete_oauth_connections_for_user(conn, user_id).await?;
     repository_delete_all_user_roles(conn, user_id).await?;
+
+    // 3. Remove private data (data minimization).
+    repository_delete_notification_preferences_for_user(conn, user_id).await?;
+    repository_delete_notification_action_preferences_for_user(conn, user_id).await?;
+    repository_delete_all_notifications_for_user(conn, user_id).await?;
 
     Ok(())
 }
