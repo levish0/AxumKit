@@ -4,7 +4,7 @@ allowBuilds:
   sharp: true
   esbuild: true
 minimumReleaseAgeExclude:
-  - '@levish0/lily-pad@0.3.0'
-  - '@levish0/lily-pad@0.3.1'
+  # First-party package, released continuously — exempt from the release-age hold.
+  - '@levish0/lily-pad'
 patchedDependencies:
   '@levish0/lily-pad': patches/@levish0__lily-pad.patch
