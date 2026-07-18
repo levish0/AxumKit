@@ -1,0 +1,16 @@
+diff --git a/dist/components/ui/code-block/shiki.js b/dist/components/ui/code-block/shiki.js
+index 9899ca0dc4b6f36bba69d7fb6bd163c537c242d9..ee0193bdd36768e868cdc3b95b4ecb46d2cfb9d6 100644
+--- a/dist/components/ui/code-block/shiki.js
++++ b/dist/components/ui/code-block/shiki.js
+@@ -10,7 +10,10 @@ const langs = [
+     () => import('@shikijs/langs/json'),
+     () => import('@shikijs/langs/yaml'),
+     () => import('@shikijs/langs/markdown'),
+-    () => import('@shikijs/langs/bash')
++    () => import('@shikijs/langs/bash'),
++    () => import('@shikijs/langs/sql'),
++    () => import('@shikijs/langs/rust'),
++    () => import('@shikijs/langs/toml')
+ ];
+ let promise;
+ /**

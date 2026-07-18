@@ -1,0 +1,275 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@levish0/lily-pad/styles.css';
+@plugin '@tailwindcss/typography';
+
+/* The lily-pad theme ships prebuilt Svelte components — point Tailwind's
+ * content scanner at them so their utility classes are generated. */
+@source '../../node_modules/@levish0/lily-pad/dist';
+
+/* lily design system — written into your stylesheet by the lily CLI; yours to edit. */
+
+@custom-variant dark (&:is(.dark *));
+
+/* Motion: a gentle spring easing used as the default transition timing.
+ * Mild overshoot for transforms; negligible on color/opacity tints. */
+@theme {
+	--ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+	--default-transition-timing-function: var(--ease-spring);
+	--default-transition-duration: 150ms;
+}
+
+/* ----------------------------------------------------------------------------
+ * Radius scale (applied via utility classes, by ROLE not pixel size)
+ *
+ *   rounded-3xl  Content surfaces — hold free-form content
+ *                → card, dialog, popover, hover-card
+ *   rounded-2xl  Menu / list surfaces — a stack of selectable rows
+ *                → dropdown, select content, context-menu, menubar, command
+ *   rounded-xl   Single items / labels — rows inside a menu, tooltip
+ *
+ * Why scale down for smaller surfaces: the same absolute radius reads as MORE
+ * round on a smaller element, so menus/items step down to keep PERCEIVED
+ * roundness even, and so nested corners stay concentric (outer ≈ inner + pad).
+ * ------------------------------------------------------------------------- */
+
+/* ----------------------------------------------------------------------------
+ * Design tokens & base styles
+ * ------------------------------------------------------------------------- */
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+
+	:root {
+		--bg: #f8f8f8;
+		--bg-elevated: #ffffff;
+		--text: #0d0d0d;
+
+		/* Chart series palette — the one sanctioned color surface in the
+		 * otherwise-monochrome system. Override to theme charts. */
+		--chart-1: #3182f6;
+		--chart-2: #10b981;
+		--chart-3: #f59e0b;
+		--chart-4: #8b5cf6;
+		--chart-5: #f43f5e;
+	}
+
+	:root.dark {
+		--bg: #111111;
+		--bg-elevated: #1c1c1c;
+		--text: #efefef;
+
+		--chart-1: #4593fc;
+		--chart-2: #34d399;
+		--chart-3: #fbbf24;
+		--chart-4: #a78bfa;
+		--chart-5: #fb7185;
+	}
+
+	body {
+		background: var(--bg);
+		color: var(--text);
+		font-family:
+			'Pretendard JP Variable',
+			-apple-system,
+			BlinkMacSystemFont,
+			system-ui,
+			Roboto,
+			'Helvetica Neue',
+			'Segoe UI',
+			'Apple SD Gothic Neo',
+			'Noto Sans KR',
+			'Malgun Gothic',
+			'Apple Color Emoji',
+			'Segoe UI Emoji',
+			'Segoe UI Symbol',
+			sans-serif;
+		word-break: keep-all;
+		overflow-wrap: break-word;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	::selection {
+		background: color-mix(in srgb, var(--text) 12%, transparent);
+		color: var(--text);
+	}
+
+	h1,
+	h2,
+	h3 {
+		text-wrap: balance;
+	}
+
+	p,
+	li,
+	figcaption {
+		text-wrap: pretty;
+	}
+
+	a {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	/* Press feedback — only button-like controls scale on press. Plain text /
+	 * navigation links (sidebar, TOC, lists) must NOT jump when clicked. The
+	 * Button component carries data-slot="button" even when rendered as <a>. */
+	button,
+	a[data-slot='button'] {
+		transition: transform 0.2s var(--ease-spring);
+	}
+
+	button:active,
+	a[data-slot='button']:active {
+		transform: scale(0.96);
+	}
+}
+
+/* ----------------------------------------------------------------------------
+ * Utilities
+ * ------------------------------------------------------------------------- */
+@layer utilities {
+	.link {
+		background-image: linear-gradient(currentcolor, currentcolor);
+		background-position: 0 100%;
+		background-repeat: no-repeat;
+		background-size: 0% 1px;
+		transition:
+			color 0.15s cubic-bezier(0.2, 0, 0, 1),
+			background-size 0.25s cubic-bezier(0.2, 0, 0, 1),
+			transform 0.15s cubic-bezier(0.2, 0, 0, 1);
+	}
+
+	.link:hover {
+		background-size: 100% 1px;
+	}
+}
+
+/* ----------------------------------------------------------------------------
+ * Shared component helpers (animations, stateful variants)
+ * ------------------------------------------------------------------------- */
+@theme inline {
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
+
+	--animate-accordion-down: accordion-down 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+	--animate-accordion-up: accordion-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+	--animate-collapsible-down: collapsible-down 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+	--animate-collapsible-up: collapsible-up 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+	--animate-caret-blink: caret-blink 1s ease-out infinite;
+
+	@keyframes caret-blink {
+		0%,
+		70%,
+		100% {
+			opacity: 1;
+		}
+		20%,
+		50% {
+			opacity: 0;
+		}
+	}
+
+	@keyframes accordion-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--bits-accordion-content-height, var(--accordion-panel-height, auto));
+		}
+	}
+
+	@keyframes accordion-up {
+		from {
+			height: var(--bits-accordion-content-height, var(--accordion-panel-height, auto));
+		}
+		to {
+			height: 0;
+		}
+	}
+
+	@keyframes collapsible-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--bits-collapsible-content-height);
+		}
+	}
+
+	@keyframes collapsible-up {
+		from {
+			height: var(--bits-collapsible-content-height);
+		}
+		to {
+			height: 0;
+		}
+	}
+}
+
+@custom-variant data-open {
+	&:where([data-state='open']),
+	&:where([data-open]:not([data-open='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-closed {
+	&:where([data-state='closed']),
+	&:where([data-closed]:not([data-closed='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-checked {
+	&:where([data-state='checked']),
+	&:where([data-checked]:not([data-checked='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-unchecked {
+	&:where([data-state='unchecked']),
+	&:where([data-unchecked]:not([data-unchecked='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-disabled {
+	&:where([data-disabled='true']),
+	&:where([data-disabled]:not([data-disabled='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-active {
+	&:where([data-state='active']),
+	&:where([data-active]:not([data-active='false'])) {
+		@slot;
+	}
+}
+
+@custom-variant data-horizontal {
+	&:where([data-orientation='horizontal']) {
+		@slot;
+	}
+}
+
+@custom-variant data-vertical {
+	&:where([data-orientation='vertical']) {
+		@slot;
+	}
+}
+
+@utility no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}

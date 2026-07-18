@@ -1,13 +1,10 @@
 allowBuilds:
-  /: true
-  '@': true
-  a: true
-  e: true
+  '@tailwindcss/oxide': true
+  workerd: true
+  sharp: true
   esbuild: true
-  g: true
-  i: true
-  m: true
-  n: true
-  p: true
-  r: true
-  s: true
+minimumReleaseAgeExclude:
+  - '@levish0/lily-pad@0.3.0'
+  - '@levish0/lily-pad@0.3.1'
+patchedDependencies:
+  '@levish0/lily-pad': patches/@levish0__lily-pad.patch

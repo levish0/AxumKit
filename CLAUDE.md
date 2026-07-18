@@ -4,188 +4,103 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-AxumKit is a production-ready Rust web API template built on Axum, SeaORM, PostgreSQL, Redis, and OAuth2. It implements JWT-based authentication with session management, OAuth2 integrations (Google, GitHub), and Cloudflare R2 storage.
+AxumKit is a production-ready Rust web API template built on Axum, SeaORM, PostgreSQL, Redis, NATS
+JetStream, and Meilisearch. It ships session-based auth (Redis sessions, TOTP 2FA, new-device
+verification, OAuth2 Google/GitHub incl. One Tap), Django-style RBAC (roles + ACL groups +
+permission grants), a board domain (posts/comments/pins/locks) as the demo feature, an in-app
+notification inbox, a background worker (email, search indexing, cron), and Cloudflare R2 storage.
+
+## Workspace Layout
+
+Cargo workspace under `crates/`:
+
+- `server` — API binary: `api/` (routes), `service/`, `repository/`, `permission/`, `middleware/`,
+  `extractors/`, `bridge/` (outbound clients: worker queue, media processor, Turnstile),
+  `connection/`, `eventstream/` (SSE), `utils/`, `state.rs`
+- `worker` — background binary: NATS JetStream consumers (`jobs/`), cron scheduler, email
+  templates (MJML), Meilisearch indexing
+- `job_queue` — shared server↔worker contract: job payloads, stream/subject/consumer names,
+  idempotent stream creation (both binaries call `initialize_all_streams` at startup)
+- `notification_repository` — shared notification persistence (event + delivery insertion,
+  preference filtering) used by server and worker
+- `search_index` — shared Meilisearch index contract (index uids + document schemas) between the
+  server (reader) and worker (writer)
+- `entity` / `migration` — SeaORM entities and migrations (fresh-DB model; `cd` not needed:
+  `cargo run -p migration -- <cmd>`)
+- `dto` — request/response/internal DTOs per domain + validators
+- `errors` — workspace-wide `Errors` enum, per-domain handlers, `protocol.rs` wire codes
+  (`"domain:snake_case"`); 4xx details always shown, 5xx details hidden in production
+- `config` — `ServerConfig` / `WorkerConfig` (LazyLock; missing env vars are collected and
+  reported all at once), `redact_database_url`
+- `auth-core` — project-agnostic crypto primitives (AEAD, constant-time compare, keyed hash,
+  tokens); app adapters live in `server/src/utils/crypto/`
+- `constants` — cache keys, `Permission` / `NotificationAction` / `ModerationAction` codenames
+  (stored as TEXT in DB, parsed with fail-closed semantics)
+- `storage` — R2/S3 clients with operation timeouts
+- `e2e` — black-box HTTP test harness + suites (runs against `docker-compose.test.yml`)
 
 ## Common Commands
 
-### Development
 ```bash
-cargo run                          # Start the development server (localhost:8000)
-cargo build                        # Build the project
-cargo test                         # Run all tests
+just dev                 # infra containers + migrations (then `cargo run -p server` / `-p worker`)
+cargo run -p server      # API server (localhost:8000)
+cargo run -p worker      # background worker
+cargo run -p migration -- fresh   # drop + reapply all migrations
+just check               # fmt --check, clippy -D warnings, tests, OpenAPI drift gate
+just test [filter]       # workspace tests excluding e2e
+just e2e [threads]       # full docker test stack + e2e suite (teardown always runs)
+just openapi             # regenerate swagger.json (CI fails on drift — run after route changes)
 ```
 
-### Database Migrations
-```bash
-cd migration
-cargo run                          # Apply all pending migrations
-cargo run -- up                    # Same as above
-cargo run -- down                  # Rollback last migration
-cargo run -- fresh                 # Drop all tables and reapply migrations
-cargo run -- refresh               # Rollback all, then reapply all migrations
-cargo run -- status                # Check migration status
-cargo run -- generate <NAME>       # Generate new migration file
-```
+Swagger UI at `/docs`, spec at `/swagger.json` (debug builds only).
 
-### API Documentation
-- Swagger UI: http://localhost:8000/docs (debug builds only)
-- OpenAPI JSON: http://localhost:8000/swagger.json (debug builds only)
+## Configuration
 
-## Architecture
+Single `DATABASE_URL` (full connection URL; the deployment controls the query string, e.g.
+`?sslmode=require`) is read by server, worker, and migration. See `.env.example` (native dev) and
+`.envs/` (compose env trees: `.example/` committed templates, `.local/` dev, `.test/` committed
+test values). Required vars include `JWT_SECRET`-style secrets (`TOTP_SECRET`,
+`TOTP_ENCRYPTION_KEY`), Redis session/cache hosts, NATS, Meilisearch, R2, OAuth (Google/GitHub),
+Turnstile, and CORS origins (production panics when unset).
 
-The project follows a layered architecture with clear separation of concerns:
+## Authorization Model (Django-style RBAC)
 
-```
-API Layer (src/api/)
-    ↓
-Service Layer (src/service/)
-    ↓
-Repository Layer (src/repository/)
-    ↓
-Entity Layer (src/entity/)
-```
+Three layers, evaluated in `server/src/permission/`:
 
-### Key Components
+1. **Roles** (`user_roles`, enum `{Mod, Admin}`, optional expiry): coarse capability axis.
+   Router-level gates via `middleware/require_role.rs` (`require_admin`/`require_mod`).
+2. **Permissions** (`constants::Permission`, codenames like `board:pin_post` stored as TEXT):
+   fine-grained grants. `UserContext::has_perm` resolves ban gate → Admin bypass → Mod default
+   set (`Permission::MOD_DEFAULTS`) → group-granted union. Denials return `acl:denied` with the
+   missing codename.
+3. **ACL groups** (`acl_groups` + `acl_group_members` + `acl_group_permissions`): admin-managed
+   permission bundles with member expiry/reason metadata. Admin API under `/v0/acl/*`.
 
-**AppState** (`src/state.rs`): Application-wide shared state containing:
-- `conn`: PostgreSQL database connection (SeaORM)
-- `redis_client`: Redis connection manager for sessions/caching
-- `http_client`: reqwest HTTP client for OAuth2 and external APIs
-
-**Configuration** (`src/config/db_config.rs`):
-- Centralized config using `LazyLock` for environment variables
-- Access via `DbConfig::get()` - returns static reference
-- Loaded from `.env` file on first access
-
-**Error Handling** (`src/errors/`):
-- Centralized error system with `Errors` enum
-- Domain-specific error handlers (user, oauth, session, password, etc.)
-- Errors automatically convert to HTTP responses via `IntoResponse`
-- Development mode shows detailed error info; production mode hides it
-- Standard result types: `ServiceResult<T>` and `ApiResult<T>`
-
-**Authentication Flow**:
-1. Session-based auth using Redis (not JWT tokens in production)
-2. Session data stored as `session:{session_id}` in Redis with TTL
-3. `session_auth` middleware extracts session from cookies and validates via Redis
-4. `SessionContext` (containing `user_id` and `session_id`) injected into request extensions
-5. Handlers extract `SessionContext` from request to get authenticated user info
-6. OAuth2 providers (Google, GitHub) create sessions after successful authentication
-
-**Middleware** (`src/middleware/`):
-- `session_auth`: Validates session cookie and loads `SessionContext`
-- `anonymous_user_middleware`: Handles unauthenticated requests
-- `cors_layer`: CORS configuration from environment
-
-**DTOs** (`src/dto/`):
-- Organized by domain: `auth/`, `oauth/`, `user/`
-- Each domain has `request/`, `response/`, and `internal/` subdirectories
-- Internal DTOs (e.g., `Session`, `SessionContext`) not exposed in API
-
-**Services** (`src/service/`):
-- Business logic layer
-- `SessionService`: Create/get/delete/refresh Redis sessions
-- `auth/`: Login, logout, session management
-- `oauth/`: OAuth2 flow handling for Google and GitHub
-- `validator/`: Request validation (form and JSON)
-
-**Repositories** (`src/repository/`):
-- Database query layer
-- Pattern: `find_by_*` returns `Option<Model>`, `get_by_*` returns `Result<Model, Errors>`
-- Organized by domain (user, oauth)
-
-### Route Structure
-
-Routes are versioned and organized by domain:
-```
-/v0/health/*        - Health check endpoints
-/v0/auth/*          - Authentication endpoints (login, logout, OAuth)
-/docs               - Swagger UI (debug builds only)
-/swagger.json       - OpenAPI spec (debug builds only)
-```
-
-OpenAPI documentation is auto-generated using `utoipa`:
-- Define schemas with `#[derive(ToSchema)]`
-- Document endpoints with `#[utoipa::path(...)]`
-- Register in `src/api/v0/routes/openapi.rs`
-
-## Environment Configuration
-
-Required environment variables (see `.env.example`):
-- `ENVIRONMENT`: Set to "dev" or "development" for development mode
-- `JWT_SECRET`: Secret key for JWT signing
-- `POSTGRES_*`: PostgreSQL connection settings
-- `REDIS_HOST`, `REDIS_PORT`: Redis connection
-- `HOST`, `PORT`: Server bind address
-- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`: Google OAuth
-- `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI`: GitHub OAuth
-- `R2_*`: Cloudflare R2 storage credentials
-- `CORS_ALLOWED_ORIGINS`, `CORS_ALLOWED_HEADERS`: CORS configuration
+Domain policy objects (e.g. `permission/board.rs` `BoardPermission`) implement the `Rule` trait
+and are the single source of truth per domain (owner-only edits, ban-exempt reads, etc.).
 
 ## Development Patterns
 
-### Adding New Endpoints
-
-1. Create handler in `src/api/v0/routes/{domain}/{handler}.rs`
-2. Add `#[utoipa::path(...)]` annotation for OpenAPI docs
-3. Register route in `src/api/v0/routes/{domain}/routes.rs`
-4. Add schemas to `src/api/v0/routes/{domain}/openapi.rs`
-5. Create DTOs in `src/dto/{domain}/request/` and `response/`
-6. Implement service logic in `src/service/{domain}/`
-7. Add repository functions in `src/repository/{domain}/`
-
-### Database Entity Management
-
-- Entities are in `src/entity/` and generated from migrations
-- Use SeaORM's `DeriveEntityModel` for entities
-- Database operations go through repository layer, not directly in handlers
-- Use transactions for multi-step database operations
-
-### Session Management
-
-Sessions are stored in Redis with the key pattern `session:{session_id}`:
-- Create: `SessionService::create_session()`
-- Retrieve: `SessionService::get_session()`
-- Delete: `SessionService::delete_session()`
-- Refresh: `SessionService::refresh_session()`
-
-To access authenticated user in handlers:
-```rust
-pub async fn handler(
-    Extension(session): Extension<SessionContext>,
-) -> Result<Response, Errors> {
-    let user_id = session.user_id; // UUID
-    // ...
-}
-```
-
-### Error Handling Pattern
-
-Return `Errors` from services and handlers - they auto-convert to HTTP responses:
-```rust
-pub async fn handler() -> Result<Json<Response>, Errors> {
-    let user = repository::get_by_id(&conn, id)
-        .await
-        .map_err(|_| Errors::UserNotFound)?;
-    Ok(Json(response))
-}
-```
-
-### OAuth2 Integration
-
-OAuth flow:
-1. Generate auth URL with state (stored in Redis)
-2. User authorizes with provider
-3. Provider redirects back with code and state
-4. Verify state, exchange code for token
-5. Fetch user info from provider
-6. Find or create user account
-7. Create session and return session cookie
+- **New endpoint**: handler in `api/v0/routes/{domain}/` with `#[utoipa::path]` → register in the
+  domain `routes.rs` + `openapi.rs` → DTOs in `dto/{domain}/` → service → repository. Then run
+  `just openapi`.
+- **Repository naming**: `find_*` returns `Option<Model>`, `get_*` returns `Result<Model, Errors>`;
+  one function per file; expiring rows (roles, bans, group members) are filtered at read time.
+- **New background job**: payload + names in `job_queue`, handler + consumer in `worker/src/jobs/`,
+  publish via `server/src/bridge/worker_client/` (post-commit `tokio::spawn` for best-effort jobs).
+- **Auth in handlers**: extractors (`RequiredSession` / optional session), not route middleware;
+  `SessionContext { user_id, session_id, management_id }`.
+- **Errors**: return `Errors` variants; map them in `errors/src/handlers/{domain}_handler.rs` and
+  add wire codes to `protocol.rs`.
+- **Sessions**: opaque bearer tokens stored hashed in Redis (`session:{blake3}`), sliding TTL with
+  absolute lifetime cap, `management_id` indirection for listing/revocation.
+- Comments are English; never reference the codebase this template was derived from.
 
 ## Testing
 
-When writing tests:
-- Unit tests should be in the same file as the code they test
-- Integration tests go in `tests/` directory
-- Use `cargo test` to run all tests
-- Mock external dependencies (database, Redis, HTTP) in tests
+- Unit tests inline (`#[cfg(test)]`); the permission engine and validators carry the largest suites.
+- e2e (`crates/e2e`) is black-box HTTP only: `TestClient` (cookie jar, `with_ip` for per-actor IP),
+  Mailpit polling for emailed tokens, `grant_role`/`backdate_user` direct-DB bootstrap (no
+  first-admin path exists by design). Security regressions are pinned as `sec_NNN` tests.
+- Test stack (`docker-compose.test.yml`): tmpfs Postgres on host port 55432, SeaweedFS as the R2
+  stand-in, Mailpit SMTP, Turnstile stub; server on 18000, Mailpit REST on 18025.
