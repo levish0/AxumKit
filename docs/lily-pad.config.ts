@@ -11,10 +11,9 @@ export const site = defineSiteConfig({
 	rootSection: { en: 'Guide', ko: '가이드' },
 	footer: {
 		message: {
-			en: 'Built by <a href="https://levish-ac.pages.dev" class="link">levish</a>. The source code is available on <a href="https://github.com/levish0/AxumKit" class="link">GitHub</a>.',
-			ko: '<a href="https://levish-ac.pages.dev" class="link">levish</a>가 만들었습니다. 소스 코드는 <a href="https://github.com/levish0/AxumKit" class="link">GitHub</a>에 있습니다.'
+			en: 'Built by <a href="https://levish-ac.pages.dev" class="link">levish</a>. The source code is available on <a href="https://github.com/levish0/AxumKit" class="link">GitHub</a>.'
 		},
-		note: { en: 'Batteries included.', ko: '배터리 포함.' }
+		note: { en: 'Batteries included.' }
 	},
 	home: {
 		features: [
