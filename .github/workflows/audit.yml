@@ -21,6 +21,13 @@ jobs:
   audit:
     runs-on: ubuntu-latest
 
+    # audit-check reports findings by creating a check run (and an issue on
+    # scheduled runs); the default read-only GITHUB_TOKEN cannot do either.
+    permissions:
+      contents: read
+      checks: write
+      issues: write
+
     steps:
       - uses: actions/checkout@v4
 
