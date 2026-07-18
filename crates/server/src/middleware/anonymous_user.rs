@@ -8,7 +8,24 @@ use cookie::time::Duration;
 use tower_cookies::{Cookie, Cookies};
 use uuid::Uuid;
 
-pub const ANONYMOUS_USER_COOKIE_NAME: &str = "anonymous_user_id";
+/// Env-aware cookie name, mirroring `session_cookie_name`/`device_cookie_name`.
+///
+/// This cookie is the binding value the OAuth state / One-Tap nonce checks rely
+/// on to prevent login-CSRF, so its integrity matters like the session cookie's:
+/// in production the `__Host-` prefix (or `__Secure-` when a parent
+/// `cookie_domain` is configured, since `__Host-` forbids the Domain attribute)
+/// makes the browser refuse sibling-origin/insecure injection that could fix the
+/// binding to an attacker-chosen value.
+pub fn anonymous_cookie_name() -> String {
+    let config = ServerConfig::get();
+    if config.is_dev {
+        "anonymous_user_id".to_string()
+    } else if config.cookie_domain.is_some() {
+        "__Secure-anonymous_user_id".to_string()
+    } else {
+        "__Host-anonymous_user_id".to_string()
+    }
+}
 
 #[derive(Clone)]
 pub struct AnonymousUserContext {
@@ -20,20 +37,22 @@ pub async fn anonymous_user_middleware(
     mut req: Request<Body>,
     next: Next,
 ) -> Response {
-    // 쿠키에서 anonymous_user_id 확인
-    let (final_anonymous_id, has_anonymous_id) = match cookies.get(ANONYMOUS_USER_COOKIE_NAME) {
+    let cookie_name = anonymous_cookie_name();
+
+    // Read anonymous_user_id from the cookie
+    let (final_anonymous_id, has_anonymous_id) = match cookies.get(&cookie_name) {
         Some(cookie) => (cookie.value().to_string(), true),
         None => (Uuid::now_v7().to_string(), false),
     };
 
-    // Extension에 익명 사용자 컨텍스트 추가
+    // Attach the anonymous-user context to request extensions
     req.extensions_mut().insert(AnonymousUserContext {
         anonymous_user_id: final_anonymous_id.clone(),
     });
 
     let response = next.run(req).await;
 
-    // 쿠키가 없었다면 새로 생성해서 설정
+    // If the cookie was absent, mint and set a new one
     if !has_anonymous_id {
         let is_dev = ServerConfig::get().is_dev;
 
@@ -44,12 +63,14 @@ pub async fn anonymous_user_middleware(
         };
 
         let config = ServerConfig::get();
-        let mut cookie_builder = Cookie::build((ANONYMOUS_USER_COOKIE_NAME, final_anonymous_id))
+        // `Secure` + `Path=/` always set: required by the `__Host-` prefix (which
+        // additionally forbids `Domain` — only the `__Secure-` branch adds one).
+        let mut cookie_builder = Cookie::build((cookie_name, final_anonymous_id))
             .http_only(true)
             .secure(true)
             .same_site(same_site_attribute)
             .path("/")
-            .max_age(Duration::days(365)); // 1년
+            .max_age(Duration::days(365)); // 1 year
 
         if !is_dev && let Some(ref domain) = config.cookie_domain {
             cookie_builder = cookie_builder.domain(domain);

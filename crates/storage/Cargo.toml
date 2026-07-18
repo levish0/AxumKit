@@ -12,4 +12,6 @@ workspace = true
 [dependencies]
 aws-config.workspace = true
 aws-sdk-s3.workspace = true
+chrono.workspace = true
 tokio.workspace = true
+zstd.workspace = true

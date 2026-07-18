@@ -1,3 +1,4 @@
+use crate::utils::crypto::constant_time::constant_time_str_eq;
 use crate::utils::ip::canonicalize_ip;
 use axum::http::HeaderMap;
 use config::ServerConfig;
@@ -36,7 +37,9 @@ fn trusted_proxy_client_ip(headers: &HeaderMap, expected_secret: Option<&str>) -
     let provided = headers
         .get("X-Internal-Secret")
         .and_then(|v| v.to_str().ok())?;
-    if provided != expected {
+    // Constant-time compare: a plain `!=` here is a timing oracle for recovering the shared
+    // secret, which would let a public client spoof `X-Real-Client-IP` (evade IP bans / rate limits).
+    if !constant_time_str_eq(provided, expected) {
         return None;
     }
 

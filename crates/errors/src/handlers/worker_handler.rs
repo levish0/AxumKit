@@ -3,15 +3,15 @@ use crate::protocol::worker::*;
 use axum::http::StatusCode;
 use tracing::warn;
 
-/// Worker Service error logging handler
+/// Worker-service domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Worker Service errors - warn! level (external service related)
+        // Worker service errors - warn! level (external-service related)
         Errors::WorkerServiceConnectionFailed
         | Errors::WorkerServiceResponseInvalid
         | Errors::VerificationEmailSendFailed
         | Errors::PasswordResetEmailSendFailed => {
-            warn!("Worker Service error: {:?}", error);
+            warn!(error = ?error, "Worker Service error");
         }
 
         _ => {}

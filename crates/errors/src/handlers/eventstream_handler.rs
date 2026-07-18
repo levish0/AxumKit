@@ -3,10 +3,10 @@ use crate::protocol::eventstream::*;
 use axum::http::StatusCode;
 use tracing::warn;
 
-/// EventStream error logging handler
+/// EventStream domain error logging.
 pub fn log_error(error: &Errors) {
     if let Errors::EventStreamPublishFailed = error {
-        warn!("EventStream error: {:?}", error);
+        warn!(error = ?error, "EventStream error");
     }
 }
 

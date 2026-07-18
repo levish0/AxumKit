@@ -3,11 +3,11 @@ use crate::protocol::email::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// Email-related error logging handler
+/// Email domain error logging.
 pub fn log_error(error: &Errors) {
-    // Business logic errors - debug! level (client mistakes)
+    // Client-side/business validation errors - debug! level
     if let Errors::EmailAlreadyVerified = error {
-        debug!("Client error: {:?}", error);
+        debug!(error = ?error, "Client error");
     }
 }
 

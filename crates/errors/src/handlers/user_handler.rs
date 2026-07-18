@@ -4,15 +4,15 @@ use crate::protocol::user::*;
 use axum::http::StatusCode;
 use tracing::{debug, warn};
 
-/// User-related error logging handler
+/// User domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Resource not found - warn! level
+        // Missing resources
         Errors::UserNotFound => {
-            warn!("Resource not found: {:?}", error);
+            warn!(error = ?error, "Resource not found");
         }
 
-        // Business logic errors - debug! level (client mistakes)
+        // Client-side/business validation errors
         Errors::InvalidCredentials
         | Errors::UserInvalidPassword
         | Errors::UserPasswordNotSet
@@ -33,12 +33,7 @@ pub fn log_error(error: &Errors) {
         | Errors::UserAlreadyHasRole
         | Errors::CannotManageSelf
         | Errors::CannotManageHigherOrEqualRole => {
-            debug!("Client error: {:?}", error);
-        }
-
-        // ACL errors - debug! level (denied by ACL rules)
-        Errors::AclDenied(_) => {
-            debug!("ACL denied: {:?}", error);
+            debug!(error = ?error, "Client error");
         }
 
         _ => {}
@@ -75,7 +70,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::UserTokenExpired => Some((StatusCode::UNAUTHORIZED, USER_TOKEN_EXPIRED, None)),
         Errors::UserNoRefreshToken => Some((StatusCode::UNAUTHORIZED, USER_NO_REFRESH_TOKEN, None)),
         Errors::UserInvalidToken => Some((StatusCode::UNAUTHORIZED, USER_INVALID_TOKEN, None)),
-
         Errors::UserNotBanned => Some((StatusCode::BAD_REQUEST, USER_NOT_BANNED, None)),
         Errors::UserAlreadyBanned => Some((StatusCode::CONFLICT, USER_ALREADY_BANNED, None)),
         Errors::UserDoesNotHaveRole => {
@@ -89,6 +83,6 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
             None,
         )),
 
-        _ => None, // Return None for errors from other domains
+        _ => None,
     }
 }

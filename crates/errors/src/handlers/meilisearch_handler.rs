@@ -3,7 +3,7 @@ use crate::protocol::meilisearch::*;
 use axum::http::StatusCode;
 use tracing::error;
 
-/// MeiliSearch error logging handler
+/// MeiliSearch domain error logging.
 pub fn log_error(err: &Errors) {
     if let Errors::MeiliSearchQueryFailed = err {
         error!("MeiliSearch query failed");
@@ -18,6 +18,9 @@ pub fn map_response(err: &Errors) -> Option<(StatusCode, &'static str, Option<St
             MEILISEARCH_QUERY_FAILED,
             None,
         )),
+        Errors::ReindexAlreadyRunning => {
+            Some((StatusCode::CONFLICT, REINDEX_ALREADY_RUNNING, None))
+        }
         _ => None,
     }
 }

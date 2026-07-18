@@ -3,21 +3,21 @@ use crate::protocol::system::*;
 use axum::http::StatusCode;
 use tracing::{error, warn};
 
-/// System-related error logging handler
+/// System domain error logging.
 pub fn log_error(err: &Errors) {
     match err {
-        // Critical system errors - error! level
+        // System-severity errors - error! level
         Errors::SysInternalError(_)
         | Errors::DatabaseError(_)
         | Errors::TransactionError(_)
         | Errors::HashingError(_)
         | Errors::TokenCreationError(_) => {
-            error!("System error occurred: {:?}", err);
+            error!(error = ?err, "System error occurred");
         }
 
-        // Resource not found - warn! level
+        // Missing resources - warn! level
         Errors::NotFound(_) => {
-            warn!("Resource not found: {:?}", err);
+            warn!(error = ?err, "Resource not found");
         }
 
         _ => {}
@@ -28,7 +28,7 @@ pub fn log_error(err: &Errors) {
 pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<String>)> {
     match error {
         Errors::SysInternalError(msg) => Some((
-            StatusCode::BAD_REQUEST,
+            StatusCode::INTERNAL_SERVER_ERROR,
             SYS_INTERNAL_ERROR,
             Some(msg.clone()),
         )),

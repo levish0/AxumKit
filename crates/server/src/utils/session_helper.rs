@@ -17,12 +17,23 @@ pub fn extract_user_or_ip(
     session: Option<&SessionContext>,
     ip_address: &str,
 ) -> Result<(Option<Uuid>, Option<IpNetwork>), Errors> {
-    let ip = ip_address
-        .parse::<IpNetwork>()
-        .map_err(|_| Errors::InvalidIpAddress)?;
+    let ip = parse_attribution_ip(ip_address)?;
 
     match session {
         Some(s) => Ok((Some(s.user_id), Some(ip))),
         None => Ok((None, Some(ip))),
     }
+}
+
+/// Parses the caller's canonicalized IP for audit/attribution purposes.
+///
+/// The string arrives already canonicalized from the `extract_ip_address`
+/// boundary, so a parse failure is an upstream bug. Rather than silently
+/// recording NULL and losing the audit trail (multi-account detection, ban
+/// evasion), the request fails with `Errors::InvalidIpAddress` — the same
+/// policy as `extract_user_or_ip`.
+pub fn parse_attribution_ip(ip_address: &str) -> Result<IpNetwork, Errors> {
+    ip_address
+        .parse::<IpNetwork>()
+        .map_err(|_| Errors::InvalidIpAddress)
 }

@@ -3,7 +3,7 @@ use crate::protocol::turnstile::*;
 use axum::http::StatusCode;
 use tracing::{debug, warn};
 
-/// Turnstile error logging handler
+/// Turnstile domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
         // Client errors - debug! level

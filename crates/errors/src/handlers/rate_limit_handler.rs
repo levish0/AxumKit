@@ -3,7 +3,7 @@ use crate::protocol::rate_limit::*;
 use axum::http::StatusCode;
 use tracing::warn;
 
-/// Rate limit error logging handler
+/// Rate-limit domain error logging.
 pub fn log_error(error: &Errors) {
     if let Errors::RateLimitExceeded = error {
         warn!("Rate limit exceeded");

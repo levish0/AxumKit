@@ -3,22 +3,22 @@ use crate::protocol::totp::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// TOTP error logging handler
+/// TOTP domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Business logic errors - debug! level (client mistakes)
+        // Client-side/business validation errors - debug! level
         Errors::TotpAlreadyEnabled
         | Errors::TotpNotEnabled
         | Errors::TotpInvalidCode
         | Errors::TotpTempTokenInvalid
         | Errors::TotpTempTokenExpired
         | Errors::TotpBackupCodeExhausted => {
-            debug!("TOTP client error: {:?}", error);
+            debug!(error = ?error, "TOTP client error");
         }
 
         // System errors - error! level
         Errors::TotpSecretGenerationFailed | Errors::TotpQrGenerationFailed => {
-            tracing::error!("TOTP system error: {:?}", error);
+            tracing::error!(error = ?error, "TOTP system error");
         }
 
         _ => {}

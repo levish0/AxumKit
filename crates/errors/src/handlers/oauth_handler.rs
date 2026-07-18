@@ -3,41 +3,26 @@ use crate::protocol::oauth::*;
 use axum::http::StatusCode;
 use tracing::{debug, error, warn};
 
-/// OAuth error logging handler
+/// OAuth domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Critical system errors - error! level
+        // System-severity errors - error! level
         Errors::OauthUserInfoParseFailed(msg) => {
-            error!("OAuth user info parse failed: {}", msg);
+            error!(details = %msg, "OAuth user info parse failed");
         }
 
-        // Google One Tap - warn! level (invalid tokens)
-        Errors::GoogleInvalidIdToken => {
-            warn!("Google One Tap: invalid ID token");
-        }
-        // GitHub provider-token flow - warn! level (token not issued for our app / revoked)
-        Errors::GithubInvalidToken => {
-            warn!("GitHub provider-token: access token not issued for this app");
-        }
-
-        // Google One Tap - error! level (JWKS failures)
-        Errors::GoogleJwksFetchFailed => {
-            error!("Google One Tap: failed to fetch JWKS");
-        }
-        Errors::GoogleJwksParseFailed => {
-            error!("Google One Tap: failed to parse JWKS");
-        }
-
-        // OAuth errors - warn! level (external service related)
+        // OAuth errors - warn! level (external-service related)
         Errors::OauthInvalidAuthUrl
         | Errors::OauthInvalidTokenUrl
         | Errors::OauthInvalidRedirectUrl
         | Errors::OauthTokenExchangeFailed
-        | Errors::OauthUserInfoFetchFailed => {
-            warn!("OAuth error: {:?}", error);
+        | Errors::OauthUserInfoFetchFailed
+        | Errors::GoogleJwksFetchFailed
+        | Errors::GoogleJwksParseFailed => {
+            warn!(error = ?error, "OAuth error");
         }
 
-        // Business logic errors - debug! level (client mistakes)
+        // Client-side/business validation errors - debug! level
         Errors::OauthAccountAlreadyLinked
         | Errors::OauthConnectionNotFound
         | Errors::OauthCannotUnlinkLastConnection
@@ -46,8 +31,11 @@ pub fn log_error(error: &Errors) {
         | Errors::OauthStateExpired
         | Errors::OauthHandleRequired
         | Errors::OauthEmailAlreadyExists
-        | Errors::OauthEmailNotVerified => {
-            debug!("Client error: {:?}", error);
+        | Errors::OauthEmailNotVerified
+        | Errors::GoogleInvalidIdToken
+        | Errors::GoogleOneTapNonceInvalid
+        | Errors::GithubInvalidToken => {
+            debug!(error = ?error, "Client error");
         }
 
         _ => {}
@@ -100,9 +88,11 @@ pub fn map_response(error: &Errors) -> Option<(StatusCode, &'static str, Option<
         Errors::OauthEmailNotVerified => {
             Some((StatusCode::BAD_REQUEST, OAUTH_EMAIL_NOT_VERIFIED, None))
         }
-
         Errors::GoogleInvalidIdToken => {
             Some((StatusCode::BAD_REQUEST, GOOGLE_INVALID_ID_TOKEN, None))
+        }
+        Errors::GoogleOneTapNonceInvalid => {
+            Some((StatusCode::BAD_REQUEST, GOOGLE_ONE_TAP_NONCE_INVALID, None))
         }
         Errors::GithubInvalidToken => Some((StatusCode::BAD_REQUEST, GITHUB_INVALID_TOKEN, None)),
         Errors::GoogleJwksFetchFailed => Some((

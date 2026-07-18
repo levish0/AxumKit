@@ -3,10 +3,10 @@ use crate::protocol::token::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// Token-related error logging handler
+/// Token domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Business logic errors - debug! level (client mistakes)
+        // Client-side/business validation errors - debug! level
         Errors::TokenInvalidVerification
         | Errors::TokenExpiredVerification
         | Errors::TokenEmailMismatch
@@ -15,7 +15,7 @@ pub fn log_error(error: &Errors) {
         | Errors::TokenInvalidEmailChange
         | Errors::TokenInvalidAccountDeletion
         | Errors::TokenInvalidDeviceVerify => {
-            debug!("Client error: {:?}", error);
+            debug!(error = ?error, "Client error");
         }
 
         _ => {}

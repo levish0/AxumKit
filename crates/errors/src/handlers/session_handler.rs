@@ -3,12 +3,12 @@ use crate::protocol::session::*;
 use axum::http::StatusCode;
 use tracing::debug;
 
-/// Session-related error logging handler
+/// Session domain error logging.
 pub fn log_error(error: &Errors) {
     match error {
-        // Business logic errors - debug! level (client mistakes)
+        // Client-side/business validation errors - debug! level
         Errors::SessionInvalidUserId | Errors::SessionExpired | Errors::SessionNotFound => {
-            debug!("Client error: {:?}", error);
+            debug!(error = ?error, "Client error");
         }
 
         _ => {}

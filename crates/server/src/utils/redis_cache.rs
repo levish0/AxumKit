@@ -172,6 +172,23 @@ pub async fn set_json_nx_with_ttl<T: Serialize>(
     Ok(matches!(result, Some(v) if v == "OK"))
 }
 
+/// Atomically increment a hash field by `delta` (HINCRBY). Returns the new value.
+pub async fn hincr_by(
+    redis_client: &RedisClient,
+    key: &str,
+    field: &str,
+    delta: i64,
+) -> Result<i64, Errors> {
+    let mut conn = redis_client.clone();
+    let value: i64 = conn.hincr(key, field, delta).await.map_err(|e| {
+        Errors::SysInternalError(format!(
+            "Redis HINCRBY failed for key '{}' field '{}': {}",
+            key, field, e
+        ))
+    })?;
+    Ok(value)
+}
+
 /// Get the remaining TTL of a key in seconds. Returns None if key doesn't exist.
 pub async fn get_ttl_seconds(redis_client: &RedisClient, key: &str) -> Result<Option<u64>, Errors> {
     let mut conn = redis_client.clone();

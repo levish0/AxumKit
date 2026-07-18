@@ -10,7 +10,7 @@ pub fn log_error(error: &Errors) {
         | Errors::PasswordCannotUpdateOauthOnly
         | Errors::PasswordNewPasswordMissing
         | Errors::PasswordAlreadySet => {
-            debug!("Client error: {:?}", error);
+            debug!(error = ?error, "Client error");
         }
 
         _ => {}

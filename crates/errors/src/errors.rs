@@ -73,7 +73,6 @@ pub enum Errors {
     UserUnauthorized,
     UserBanned,
     UserPermissionInsufficient,
-    AclDenied(String),
     UserHandleAlreadyExists,
     UserEmailAlreadyExists,
     UserNotBanned,
@@ -94,22 +93,25 @@ pub enum Errors {
     // Permission errors
     ForbiddenError(String),
 
-    // Document
-    DocumentNotFound,
-    DocumentAlreadyExists,
-    DocumentRevisionNotFound,
-    DocumentNoChanges,
-    DocumentEditRequestNotFound,
-    DocumentDiscussionNotFound,
-    DocumentRatingNotFound,
+    // ACL
+    /// Denied by an ACL rule; the payload names the matched rule/condition.
+    AclDenied(String),
+    AclGroupNotFound,
+    AclGroupAlreadyExists,
+    AclGroupIsSystem,
+    AclGroupMemberNotFound,
+    AclGroupMemberAlreadyExists,
+    AclInvalidRule(String),
 
-    // Discussion
-    DiscussionMessageNotFound,
-    DiscussionClosed,
+    // Board
+    BoardNotFound,
+    BoardPostNotFound,
+    BoardPostLocked,
+    BoardPinSetMismatch,
+    BoardCommentNotFound,
 
-    // Report
-    ReportNotFound,
-    ReportAlreadyExists,
+    // Post
+    PostNotFound,
 
     // OAuth
     OauthInvalidAuthUrl,
@@ -129,6 +131,7 @@ pub enum Errors {
     OauthEmailNotVerified,
     GoogleInvalidIdToken,
     GithubInvalidToken,
+    GoogleOneTapNonceInvalid,
     GoogleJwksFetchFailed,
     GoogleJwksParseFailed,
 
@@ -193,6 +196,8 @@ pub enum Errors {
 
     // MeiliSearch
     MeiliSearchQueryFailed,
+    /// A reindex of the same entity type is already in progress.
+    ReindexAlreadyRunning,
 
     // TOTP 2FA
     TotpAlreadyEnabled,
@@ -207,6 +212,8 @@ pub enum Errors {
 
 domain_error_handlers!(
     user_handler,
+    acl_handler,
+    board_handler,
     oauth_handler,
     session_handler,
     password_handler,
@@ -228,18 +235,22 @@ impl IntoResponse for Errors {
         log_domain_error(&self);
 
         let (status, code, details) = map_domain_response(&self).unwrap_or_else(|| {
-            error!("Unhandled error: {:?}", self);
+            error!(error = ?self, "Unhandled error");
             (StatusCode::INTERNAL_SERVER_ERROR, "UNKNOWN_ERROR", None)
         });
 
-        // Only include details in dev mode
-        let is_dev = ServerConfig::get().is_dev;
+        // 5xx server errors hide details in production (no internal implementation leaks);
+        // 4xx client errors always show details (the user needs to know the cause).
+        let details = if status.is_server_error() && !ServerConfig::get().is_dev {
+            None
+        } else {
+            details
+        };
 
-        // Construct error response
         let body = ErrorResponse {
             status: status.as_u16(),
             code: code.to_string(),
-            details: if is_dev { details } else { None }, // Show details only in dev environment
+            details,
         };
 
         (status, Json(body)).into_response()

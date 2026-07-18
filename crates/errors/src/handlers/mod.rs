@@ -1,3 +1,5 @@
+pub mod acl_handler;
+pub mod board_handler;
 pub mod email_handler;
 pub mod eventstream_handler;
 pub mod file_handler;

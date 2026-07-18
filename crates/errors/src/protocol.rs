@@ -28,6 +28,28 @@ pub mod user {
         "user:cannot_manage_higher_or_equal_role";
 }
 
+pub mod acl {
+    pub const ACL_DENIED: &str = "acl:denied";
+    pub const ACL_GROUP_NOT_FOUND: &str = "acl:group_not_found";
+    pub const ACL_GROUP_ALREADY_EXISTS: &str = "acl:group_already_exists";
+    pub const ACL_GROUP_IS_SYSTEM: &str = "acl:group_is_system";
+    pub const ACL_GROUP_MEMBER_NOT_FOUND: &str = "acl:group_member_not_found";
+    pub const ACL_GROUP_MEMBER_ALREADY_EXISTS: &str = "acl:group_member_already_exists";
+    pub const ACL_INVALID_RULE: &str = "acl:invalid_rule";
+}
+
+pub mod board {
+    pub const BOARD_NOT_FOUND: &str = "board:not_found";
+    pub const BOARD_POST_NOT_FOUND: &str = "board:post_not_found";
+    pub const BOARD_POST_LOCKED: &str = "board:post_locked";
+    pub const BOARD_PIN_SET_MISMATCH: &str = "board:pin_set_mismatch";
+    pub const BOARD_COMMENT_NOT_FOUND: &str = "board:comment_not_found";
+}
+
+pub mod post {
+    pub const POST_NOT_FOUND: &str = "post:not_found";
+}
+
 pub mod oauth {
     pub const OAUTH_INVALID_AUTH_URL: &str = "oauth:invalid_auth_url";
     pub const OAUTH_INVALID_TOKEN_URL: &str = "oauth:invalid_token_url";
@@ -47,6 +69,7 @@ pub mod oauth {
 
     // Google One Tap
     pub const GOOGLE_INVALID_ID_TOKEN: &str = "google:invalid_id_token";
+    pub const GOOGLE_ONE_TAP_NONCE_INVALID: &str = "google:one_tap_nonce_invalid";
     pub const GOOGLE_JWKS_FETCH_FAILED: &str = "google:jwks_fetch_failed";
     pub const GOOGLE_JWKS_PARSE_FAILED: &str = "google:jwks_parse_failed";
     pub const GITHUB_INVALID_TOKEN: &str = "github:invalid_token";
@@ -130,6 +153,7 @@ pub mod turnstile {
 
 pub mod meilisearch {
     pub const MEILISEARCH_QUERY_FAILED: &str = "meilisearch:query_failed";
+    pub const REINDEX_ALREADY_RUNNING: &str = "reindex:already_running";
 }
 
 pub mod totp {
