@@ -572,7 +572,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "auth-core"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "aes-gcm",
  "base64",
@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "config"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "axum",
  "dotenvy",
@@ -2069,7 +2069,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dto"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "axum",
  "axum-extra",
@@ -2213,7 +2213,7 @@ dependencies = [
 
 [[package]]
 name = "entity"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "sea-orm",
  "serde",
@@ -2263,7 +2263,7 @@ dependencies = [
 
 [[package]]
 name = "errors"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "axum",
  "config",
@@ -3256,7 +3256,7 @@ dependencies = [
 
 [[package]]
 name = "job_queue"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "async-nats",
  "serde",
@@ -3732,7 +3732,7 @@ dependencies = [
 
 [[package]]
 name = "notification_repository"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "constants",
  "entity",
@@ -5145,7 +5145,7 @@ checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 
 [[package]]
 name = "search_index"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "serde",
 ]
@@ -5326,7 +5326,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "anyhow",
  "argon2",
@@ -5787,7 +5787,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "storage"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "aws-config",
  "aws-sdk-s3",
@@ -7018,7 +7018,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "worker"
-version = "0.20.1"
+version = "0.20.2"
 dependencies = [
  "anyhow",
  "async-nats",
