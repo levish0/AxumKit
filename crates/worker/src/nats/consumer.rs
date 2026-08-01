@@ -36,8 +36,16 @@ const DEDUP_TTL_SECS: u64 = 24 * 60 * 60;
 /// it further via `with_handler_timeout` for their long batch runs.
 const DEFAULT_HANDLER_TIMEOUT: Duration = Duration::from_secs(300);
 
-/// Default exponential backoff durations for retries
-/// 1s, 2s, 4s, 8s, 16s (5 retries total)
+/// Default exponential retry delays (1s, 2s, 4s, 8s, 16s — 5 retries total),
+/// applied client-side as explicit Nak delays on failure.
+///
+/// Deliberately NOT set as the consumer's `backoff` config: JetStream treats a
+/// configured backoff schedule as the per-delivery ack timeout, *overriding*
+/// `ack_wait` — with a 1s first step, any handler slower than 1s was redelivered
+/// (and re-run concurrently) while the original delivery was still in flight,
+/// which is how transactional emails went out 2-4x. Nak-side delays retry
+/// failures on the same schedule while in-flight messages keep the full
+/// `ack_wait` + in-progress-ack protection.
 fn default_backoff() -> Vec<Duration> {
     vec![
         Duration::from_secs(1),
@@ -54,6 +62,8 @@ pub struct NatsConsumer {
     stream_name: String,
     consumer_name: String,
     concurrency: usize,
+    /// Retry delays, carried on each failure Nak (see `default_backoff` for why
+    /// this must never be set on the consumer config).
     backoff: Vec<Duration>,
     /// When set, redelivered messages already processed once are skipped (by stream
     /// sequence). Enable only for non-idempotent handlers (e.g. email).
@@ -123,7 +133,10 @@ impl NatsConsumer {
             .create_consumer(PullConfig {
                 durable_name: Some(self.consumer_name.clone()),
                 max_deliver,
-                backoff: self.backoff,
+                // No `backoff` here — retry delays ride on each Nak instead. A
+                // configured backoff would replace ack_wait as the ack timeout
+                // and redeliver messages whose handler is still running (see
+                // `default_backoff`).
                 ack_wait: ACK_WAIT,
                 // Don't deliver more than we can process concurrently; otherwise
                 // messages buffered behind the semaphore burn their ack_wait
@@ -140,6 +153,9 @@ impl NatsConsumer {
             max_deliver,
             "Consumer started"
         );
+
+        // Shared with every handler task to compute per-delivery Nak delays.
+        let backoff = Arc::new(self.backoff);
 
         let semaphore = Arc::new(Semaphore::new(self.concurrency));
         let mut messages = consumer.messages().await?;
@@ -178,6 +194,7 @@ impl NatsConsumer {
             let stream_name = self.stream_name.clone();
             let dedup = self.dedup.clone();
             let handler_timeout = self.handler_timeout;
+            let backoff = backoff.clone();
 
             tokio::spawn(async move {
                 let _permit = permit;
@@ -205,8 +222,14 @@ impl NatsConsumer {
                             if let Err(e) = msg.ack_with(AckKind::Term).await {
                                 tracing::error!(consumer = %consumer_name, error = %e, "Failed to terminate bad message");
                             }
-                        } else if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
-                            tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak bad message after DLQ publish failure");
+                        } else {
+                            let delivered = msg.info().map(|info| info.delivered).unwrap_or(0);
+                            if let Err(e) = msg
+                                .ack_with(AckKind::Nak(nak_delay(&backoff, delivered)))
+                                .await
+                            {
+                                tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak bad message after DLQ publish failure");
+                            }
                         }
                         return;
                     }
@@ -304,13 +327,18 @@ impl NatsConsumer {
                                 if let Err(e) = msg.ack_with(AckKind::Term).await {
                                     tracing::error!(consumer = %consumer_name, error = %e, "Failed to terminate message");
                                 }
-                            } else if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
+                            } else if let Err(e) = msg
+                                .ack_with(AckKind::Nak(nak_delay(&backoff, delivered)))
+                                .await
+                            {
                                 tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak message after DLQ publish failure");
                             }
                         } else {
                             tracing::warn!(consumer = %consumer_name, error = %e, delivered, "Job failed");
-                            // Nak with None delay - NATS uses the backoff config automatically
-                            if let Err(e) = msg.ack_with(AckKind::Nak(None)).await {
+                            if let Err(e) = msg
+                                .ack_with(AckKind::Nak(nak_delay(&backoff, delivered)))
+                                .await
+                            {
                                 tracing::error!(consumer = %consumer_name, error = %e, "Failed to nak message");
                             }
                         }
@@ -376,6 +404,15 @@ fn panic_message(payload: Box<dyn Any + Send>) -> String {
     }
 }
 
+/// Retry delay for a failed delivery: the backoff step for this delivery count,
+/// saturating at the last step. `delivered` is 1-based (JetStream counts the
+/// current delivery). Returns `None` (server-default immediate redelivery) only
+/// for an empty backoff list.
+fn nak_delay(backoff: &[Duration], delivered: i64) -> Option<Duration> {
+    let idx = (delivered.max(1) as usize - 1).min(backoff.len().checked_sub(1)?);
+    Some(backoff[idx])
+}
+
 fn dedup_key(consumer_name: &str, seq: u64) -> String {
     format!("worker_dedup:{consumer_name}:{seq}")
 }
@@ -396,5 +433,22 @@ async fn dedup_mark_processed(redis: &CacheClient, consumer_name: &str, seq: u64
         .await
     {
         tracing::warn!(consumer = %consumer_name, seq, error = %e, "Failed to set dedup marker");
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn nak_delay_follows_backoff_and_saturates() {
+        let backoff = default_backoff();
+        assert_eq!(nak_delay(&backoff, 1), Some(Duration::from_secs(1)));
+        assert_eq!(nak_delay(&backoff, 3), Some(Duration::from_secs(4)));
+        assert_eq!(nak_delay(&backoff, 5), Some(Duration::from_secs(16)));
+        // Past the last step, and a defensive delivered=0, clamp instead of panicking.
+        assert_eq!(nak_delay(&backoff, 99), Some(Duration::from_secs(16)));
+        assert_eq!(nak_delay(&backoff, 0), Some(Duration::from_secs(1)));
+        assert_eq!(nak_delay(&[], 1), None);
     }
 }

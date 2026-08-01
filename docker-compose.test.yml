@@ -53,6 +53,11 @@ services:
   nats:
     image: nats:2.12.4-alpine
     command: ["--jetstream", "--store_dir=/data", "-m", "8222"]
+    ports:
+      # Host port 54222 (not 4222) for the same reason as Postgres above: the dev
+      # stack's NATS already owns 4222, and the worker_consumer regression tests
+      # connect to this disposable JetStream directly.
+      - "54222:4222"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8222/healthz"]
       interval: 5s
