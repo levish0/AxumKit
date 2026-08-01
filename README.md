@@ -43,7 +43,7 @@ cargo run -p worker   # worker (separate terminal)
 ```
 
 Swagger UI at `http://localhost:8000/docs` (debug builds).
-Full guides live in the [documentation site](https://axumkit.pages.dev/).
+Full guides live in the [documentation site](https://axumkit.levish.workers.dev/).
 
 ## Project Structure
 
