@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.1] - 2026-08-01
+
+### Fixed
+
+- **Transactional emails no longer go out 2-4x: the consumer's `backoff` config was silently overriding `ack_wait`** — every `NatsConsumer` set both `ack_wait: 30s` and `backoff: [1s, 2s, 4s, 8s, 16s]` on its JetStream pull consumer, on the assumption that the backoff only paced Nak'd retries. JetStream actually treats a configured backoff schedule as the per-delivery ack timeout, so the effective ack wait was **1 second** — and the in-progress-ack heartbeat, timed at `ACK_WAIT/2 = 15s`, never fired in time to matter. Any handler slower than 1s (an SMTP send takes 2-4s) had its message redelivered at +1s/+3s/+7s *while the original was still running*; the redelivered copy passed the Redis dedup check because the marker is only written after the handler succeeds, so both copies ran to completion. Verification and password-reset emails visibly arrived 2-4 times (worker logs show duplicate job entries exactly 1.00s apart with zero `Job failed` lines — no failures anywhere, just premature redelivery), and every *non*-idempotent consumer without dedup was silently double-processing the same way. The fix removes `backoff` from the consumer config (restoring `ack_wait`'s 30s + heartbeat protection for in-flight messages) and carries the same exponential schedule on each failure Nak instead (`AckKind::Nak(Some(delay))`, delay picked by delivery count, clamped at the last step); the DLQ-publish-failure Naks get the same delay, and `max_deliver` still derives from the schedule length. Existing durable consumers are updated in place on worker boot (`create_consumer` is create-or-update, and `backoff` is a server-updatable field), so no manual migration.
+- Regression tests drive the real consumer against the test stack's NATS in `crates/e2e/tests/worker_consumer.rs` — a 3s-slow successful handler must run exactly once (fails with 3 runs before the fix), and a failing handler must still be redelivered on the Nak schedule — plus a unit test pinning the `nak_delay` clamp behavior. `docker-compose.test.yml` now publishes NATS on host port 54222 (shifted like Postgres' 55432, so the dev stack's 4222 is not shadowed) since these tests connect to JetStream directly.
+
 ## [0.20.0] - 2026-07-18
 
 Breaking: group members are users only (fresh migration set — reset the database;
