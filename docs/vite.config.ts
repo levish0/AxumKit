@@ -18,13 +18,7 @@ export default defineConfig({
 					return true;
 				}
 			},
-			adapter: adapter({
-				routes: {
-					// The pagefind index is written into the output dir after the
-					// adapter runs — serve it as static assets, not through the worker.
-					exclude: ['<all>', '/pagefind/*']
-				}
-			}),
+			adapter: adapter(),
 			preprocess: lilyPadPreprocess(),
 			extensions: ['.svelte', '.md'],
 			alias: {
