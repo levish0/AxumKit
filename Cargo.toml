@@ -4,7 +4,7 @@ members = ["crates/*", "xtask"]
 
 [workspace.package]
 version = "0.20.2"
-authors = ["Levi Laine <shiueo.csh@gmail.com>"]
+authors = ["Levi Laine <levi.laine.me@gmail.com>"]
 repository = "https://github.com/levish0/AxumKit"
 license = "MIT"
 edition = "2024"
