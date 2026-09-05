@@ -2,8 +2,8 @@ use errors::errors::{Errors, ServiceResult};
 use rand::RngExt;
 use totp_rs::{Algorithm, Secret, TOTP};
 
-/// Constant value for issuer.
-pub const ISSUER: &str = "Sevenwiki";
+/// Issuer displayed by authenticator apps when enrolling an account.
+pub const ISSUER: &str = "AxumKit";
 /// Constant value for backup code count.
 pub const BACKUP_CODE_COUNT: usize = 10;
 /// Constant value for backup code length.

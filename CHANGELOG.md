@@ -209,8 +209,8 @@ Breaking: database configuration is now a single URL.
 
 ## [0.11.0] - 2026-07-05
 
-Security-hardening release. A batch of auth/security features ported from the downstream
-`V7` app, aligned with OWASP Top 10:2025 and ASVS 5.0.
+Security-hardening release. A batch of authentication and security improvements,
+aligned with OWASP Top 10:2025 and ASVS 5.0.
 
 ### Added
 
