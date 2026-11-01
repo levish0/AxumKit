@@ -3,6 +3,10 @@
 Record durable implementation decisions and validation evidence using [TEMPLATE.md](TEMPLATE.md).
 This index is updated when a milestone is complete.
 
+- [2026-11-02 — AxumKit retirement](2026-11-02-axumkit-retirement.md):
+  one-time Hirune source snapshot, forwarding README, preserved legacy history,
+  and retired repository automation.
+
 - [2026-10-31 — Dependency compatibility](2026-10-31-dependency-compatibility.md):
   MiniJinja 3 feature and context migration, separate Sentry span/error layers,
   and telemetry filtering regressions.
