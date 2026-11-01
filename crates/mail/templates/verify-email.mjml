@@ -1,0 +1,13 @@
+<mjml>
+  <mj-head><mj-attributes><mj-all font-family="Arial, sans-serif" /><mj-text font-size="16px" color="#243047" line-height="1.6" /></mj-attributes></mj-head>
+  <mj-body background-color="#f3f5f8">
+    <mj-section padding="40px 20px" background-color="#ffffff"><mj-column>
+      <mj-text font-size="14px" color="#596579">{{ application_name }}</mj-text>
+      <mj-text font-size="26px" font-weight="700">Verify your email</mj-text>
+      <mj-text>Confirm this email address to finish creating your account.</mj-text>
+      <mj-button background-color="#2755c4" border-radius="6px" href="{{ action_url }}">Verify email</mj-button>
+      <mj-text>This link expires in 30 minutes and can be used once.</mj-text>
+      <mj-text font-size="13px" color="#596579">If you did not create this account, you can ignore this message.</mj-text>
+    </mj-column></mj-section>
+  </mj-body>
+</mjml>

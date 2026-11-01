@@ -1,0 +1,116 @@
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: bootstrap
+      POSTGRES_PASSWORD: ${VERIFICATION_BOOTSTRAP_PASSWORD}
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U bootstrap -d postgres]
+      interval: 1s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - database:/var/lib/postgresql
+  verifier:
+    image: ${VERIFICATION_IMAGE}
+    profiles: [tools]
+    environment:
+      PG_BOOTSTRAP_PASSWORD: ${VERIFICATION_BOOTSTRAP_PASSWORD}
+      PG_SCHEMA_OWNER_PASSWORD: ${VERIFICATION_SCHEMA_OWNER_PASSWORD}
+      PG_RUNTIME_PASSWORD: ${VERIFICATION_RUNTIME_PASSWORD}
+      PG_MAINTENANCE_PASSWORD: ${VERIFICATION_MAINTENANCE_PASSWORD}
+    volumes:
+      - certificates:/certificates
+      - certificate_authorities:/certificate-authorities
+      - verification_state:/state
+  migration:
+    image: ${PRODUCTION_IMAGE}
+    profiles: [tools]
+    entrypoint: [migration]
+    environment:
+      MIGRATION_DATABASE_URL: postgresql://schema_owner:${VERIFICATION_SCHEMA_OWNER_PASSWORD}@postgres/kit
+    read_only: true
+  api:
+    image: ${PRODUCTION_IMAGE}
+    env_file: ${VERIFICATION_APP_ENV}
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    volumes:
+      - certificate_authorities:/certificates:ro
+    ports:
+      - "127.0.0.1::8443"
+  worker:
+    image: ${PRODUCTION_IMAGE}
+    entrypoint: [worker]
+    env_file: ${VERIFICATION_APP_ENV}
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    volumes:
+      - certificate_authorities:/certificates:ro
+  worker-untrusted:
+    image: ${PRODUCTION_IMAGE}
+    profiles: [tools]
+    entrypoint: [worker]
+    env_file: ${VERIFICATION_APP_ENV}
+    environment:
+      SMTP_CA_CERTIFICATE: ""
+    read_only: true
+  worker-hostname:
+    image: ${PRODUCTION_IMAGE}
+    profiles: [tools]
+    entrypoint: [worker]
+    env_file: ${VERIFICATION_APP_ENV}
+    environment:
+      SMTP_HOST: mailpit-unmatched
+    read_only: true
+    volumes:
+      - certificate_authorities:/certificates:ro
+  maintenance:
+    image: ${PRODUCTION_IMAGE}
+    profiles: [tools]
+    entrypoint: [manage, cleanup]
+    env_file: ${VERIFICATION_APP_ENV}
+    environment:
+      DATABASE_URL: postgresql://maintenance:${VERIFICATION_MAINTENANCE_PASSWORD}@postgres/kit
+    read_only: true
+    volumes:
+      - certificate_authorities:/certificates:ro
+  maintenance-worker:
+    image: ${PRODUCTION_IMAGE}
+    profiles: [tools]
+    entrypoint: [maintenance]
+    env_file: ${VERIFICATION_APP_ENV}
+    environment:
+      DATABASE_URL: postgresql://maintenance:${VERIFICATION_MAINTENANCE_PASSWORD}@postgres/kit
+    read_only: true
+    volumes:
+      - certificate_authorities:/certificates:ro
+  proxy:
+    image: caddy:2.11.7-alpine
+    network_mode: service:api
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/certificates:ro
+    depends_on: [api]
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    environment:
+      MP_SMTP_TLS_CERT: /certificates/server.crt
+      MP_SMTP_TLS_KEY: /certificates/server.key
+      MP_SMTP_REQUIRE_STARTTLS: "true"
+      MP_SMTP_DISABLE_RDNS: "true"
+    volumes:
+      - certificates:/certificates:ro
+    depends_on: [postgres]
+    networks:
+      default:
+        aliases: [mailpit-unmatched]
+volumes:
+  database:
+  certificates:
+  certificate_authorities:
+  verification_state:
+networks:
+  default:
+    internal: true

@@ -1,87 +1,119 @@
+[package]
+name = "hirune-axum-kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+publish = false
+
+[lib]
+name = "kit"
+
 [workspace]
 resolver = "3"
 members = ["crates/*", "xtask"]
 
 [workspace.package]
-version = "0.20.2"
-authors = ["Levi Laine <levi.laine.me@gmail.com>"]
-repository = "https://github.com/levish0/AxumKit"
-license = "MIT"
+authors = ["Levi Laine"]
+version = "0.1.0"
 edition = "2024"
-rust-version = "1.97.0"
-
-[workspace.lints.clippy]
-too_many_arguments = "allow"
-module_inception = "allow"
+license = "Apache-2.0"
+rust-version = "1.98"
 
 [workspace.dependencies]
 # Internal crates
+application = { path = "crates/application" }
 auth-core = { path = "crates/auth-core" }
-config = { path = "crates/config" }
-constants = { path = "crates/constants" }
-dto = { path = "crates/dto" }
-entity = { path = "crates/entity" }
-errors = { path = "crates/errors" }
-job_queue = { path = "crates/job_queue" }
-notification_repository = { path = "crates/notification_repository" }
-search_index = { path = "crates/search_index" }
-worker = { path = "crates/worker" }
-server = { path = "crates/server" }
-storage = { path = "crates/storage" }
+jobs = { path = "crates/jobs" }
+mail = { path = "crates/mail" }
+migration = { path = "crates/migration" }
+test-support = { path = "crates/test-support" }
 
 # External dependencies
-tokio = { version = "1.53.0", features = ["full"] }
-axum = { version = "0.8.9", features = ["multipart", "macros"] }
-axum-extra = { version = "0.12.6", features = ["typed-header", "query"] }
-tower = { version = "0.5.3", features = ["timeout", "limit", "buffer"] }
-tower-http = { version = "0.7.0", features = ["cors", "auth", "trace", "request-id"] }
-tower-cookies = "0.11.0"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.150"
-serde_with = "3.21.0"
-ipnetwork = "0.21.1"
-sea-orm = { version = "2.0.0-rc.43", features = ["postgres-array", "sqlx-postgres", "runtime-tokio-native-tls", "with-ipnetwork"] }
-redis = { version = "1.4.1", features = ["tokio-comp", "tokio-native-tls-comp", "connection-manager"] }
-tokio-cron-scheduler = "0.15.1"
-argon2 = "0.5.3"
-aes-gcm = "0.11.0"
-subtle = "2.6.1"
-oauth2 = { version = "5.0.0"}
-oauth2-reqwest = "0.1.0-alpha.3"
-totp-rs = { version = "5.7.2", features = ["qr"] }
-cookie = "0.18.1"
-aws-sdk-s3 = "1.138.1"
-aws-config = { version = "1.9.0", features = ["behavior-version-latest"] }
-meilisearch-sdk = { version = "0.33.0" }
-utoipa = { version = "5.5.0", features = ["axum_extras", "openapi_extensions", "time", "uuid", "chrono"] }
-utoipa-swagger-ui = { version = "9.0.2", features = ["axum", "debug-embed"] }
-validator = { version = "0.20.0", features = ["derive"] }
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["json", "env-filter"] }
-tracing-appender = "0.2.5"
-reqwest = { version = "0.13.4", features = ["json", "multipart"] }
-anyhow = "1.0.103"
+anyhow = "1.0.104"
+thiserror = "2.0.21"
+tokio = { version = "1.54.1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "process", "fs", "io-util"] }
+tokio-util = { version = "0.7.20", features = ["rt", "io"] }
+axum = { version = "0.8.9", features = ["macros"] }
+axum-test = "21.1.0"
+tower = { version = "0.5.3", features = ["limit", "timeout", "util"] }
+tower-http = { version = "0.7.1", features = ["cors", "request-id", "limit"] }
+sea-orm = { version = "2.0.4", default-features = false, features = ["macros", "sqlx-postgres", "runtime-tokio-rustls", "with-chrono", "with-uuid", "with-json"] }
+sea-orm-migration = { version = "2.0.4", default-features = false, features = ["sqlx-postgres", "runtime-tokio-rustls"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+uuid = { version = "1.29.0", features = ["v7", "v4", "serde"] }
 chrono = { version = "0.4.45", features = ["serde"] }
-chrono-tz = "0.10.4"
-uuid = { version = "1.24.0", features = ["v7", "v4"] }
-dotenvy = "0.15.7"
-rand = "0.10.2"
-hex = "0.4.3"
-base64 = "0.22.1"
-blake3 = "1.8.5"
-png = "0.18.1"
-zstd = "0.13.3"
-lettre = { version = "0.11.22", features = ["tokio1-native-tls"] }
-mrml = "6.0.1"
-minijinja = { version = "2.21.0", features = ["loader"] }
-futures = "0.3.32"
-async-nats = "0.49.1"
-tokio-stream = { version = "0.1.18", features = ["sync"] }
-sitemap-rs = "0.4.0"
 url = "2.5.8"
-urlencoding = "2.1.3"
-unicode-general-category = "1.1.0"
-jsonwebtoken = "10.4.0"
+base64 = "0.23.1"
+rand = "0.10.3"
+blake3 = "1.8.7"
+aes-gcm = "0.11.1"
+subtle = "2.6.1"
+argon2 = "0.6.0"
+totp-rs = { version = "6.0.0", features = ["otpauth"] }
+openidconnect = "4.0.1"
+cedar-policy = "4.14.0"
+lettre = { version = "0.11.23", default-features = false, features = ["builder", "smtp-transport", "pool", "hostname", "tokio1-rustls-tls"] }
+mrml = "6.0.1"
+minijinja = "3.0.5"
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+sentry = { version = "0.49.5", default-features = false, features = ["reqwest", "rustls", "tracing", "tower-http", "tower-axum-matched-path"] }
+utoipa = { version = "6.0.0", features = ["axum_extras", "chrono", "uuid"] }
+cookie = "0.18.2"
+reqwest = { version = "0.13.5", features = ["json", "query", "stream"] }
+gcp_auth = "0.12.7"
+tempfile = "3.27.0"
+aws-sdk-s3 = { version = "1.157.0", default-features = false, features = ["rt-tokio", "rustls", "default-https-client"] }
+bytes = "1.12.1"
+futures-util = "0.3.34"
+percent-encoding = "2.3.2"
+validator = { version = "0.21.0", features = ["derive"] }
+
+[dependencies]
+auth-core.workspace = true
+validator.workspace = true
+application.workspace = true
+jobs.workspace = true
+mail.workspace = true
+migration.workspace = true
+anyhow.workspace = true
+tokio.workspace = true
+tokio-util.workspace = true
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+sea-orm.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uuid.workspace = true
+chrono.workspace = true
+url.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+sentry.workspace = true
+utoipa.workspace = true
+cookie.workspace = true
+bytes.workspace = true
+futures-util.workspace = true
+percent-encoding.workspace = true
+
+[dev-dependencies]
+sea-orm = { workspace = true, features = ["entity-registry"] }
+aws-sdk-s3.workspace = true
+sentry = { workspace = true, features = ["test"] }
+test-support.workspace = true
+axum-test.workspace = true
+reqwest.workspace = true
+totp-rs.workspace = true
+tempfile.workspace = true
+openidconnect.workspace = true
 
 [profile.dev]
-opt-level = 1
+debug = 1
+
+[profile.release]
+lto = "thin"
+strip = "debuginfo"

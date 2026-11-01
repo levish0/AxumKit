@@ -1,0 +1,16 @@
+# Explicit local/test override. Production uses compose.yaml without build settings.
+x-database-build: &database-build
+  build:
+    context: ../..
+    dockerfile: compose/production/postgres/Dockerfile
+    secrets: [proxy_ca]
+
+services:
+  postgres: *database-build
+  backup-scheduler: *database-build
+  restore: *database-build
+  recovery-check: *database-build
+
+secrets:
+  proxy_ca:
+    file: ${DATA_BUILD_CA_FILE:-../production/postgres/empty-ca.pem}

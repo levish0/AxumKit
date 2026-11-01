@@ -1,0 +1,21 @@
+{
+	admin off
+	auto_https off
+}
+
+https://api:8443 {
+	tls /certificates/server.crt /certificates/server.key
+
+	handle /verification/invalid-client-ip-login {
+		rewrite * /api/v1/auth/login
+		reverse_proxy 127.0.0.1:3000 {
+			header_up CF-Connecting-IP invalid
+		}
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:3000 {
+			header_up CF-Connecting-IP {http.request.remote.host}
+		}
+	}
+}

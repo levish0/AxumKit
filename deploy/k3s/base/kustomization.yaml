@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - workloads.yaml
+  - gateway.yaml
+  - edge-valkey.yaml
+  - tunnel.yaml
+  - migration.yaml
+  - migration-check.yaml
+  - maintenance.yaml
+  - network-policies.yaml
+  - disruption-budgets.yaml
+configMapGenerator:
+  - name: hirune-apisix
+    files:
+      - config.yaml=apisix/config.yaml
+      - apisix.yaml=apisix/apisix.yaml
+      - hirune_edge.lua=apisix/hirune_edge.lua
+  - name: hirune-edge-valkey
+    files: [valkey.conf=edge-valkey.conf]

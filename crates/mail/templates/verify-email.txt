@@ -1,0 +1,9 @@
+{{ application_name }}
+
+Verify your email
+
+Confirm this email address to finish creating your account:
+{{ action_url }}
+
+This link expires in 30 minutes and can be used once.
+If you did not create this account, you can ignore this message.

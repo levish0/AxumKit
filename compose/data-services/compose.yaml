@@ -1,0 +1,99 @@
+name: ${DATA_PROJECT_NAME:?Set DATA_PROJECT_NAME}
+
+x-database: &database
+  image: ${POSTGRES_IMAGE:?Set POSTGRES_IMAGE to a published version tag or digest}
+  env_file:
+    - ../../.envs/.${DEPLOY_ENV:?Select dev or prod}/data-services/postgres.env
+    - ../../.envs/.${DEPLOY_ENV}/data-services/pgbackrest.env
+  networks: [data]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+services:
+  postgres:
+    <<: *database
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=db archive-push %p
+      - -c
+      - archive_timeout=60
+      - -c
+      - max_connections=100
+    ports:
+      - "${DATA_BIND_ADDRESS:?Select a private node address}:${POSTGRES_PORT:?Set POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - postgres_socket:/var/run/postgresql
+    shm_size: 256mb
+    mem_limit: 2g
+    stop_grace_period: 60s
+    healthcheck:
+      # The entrypoint's temporary initialization server accepts Unix sockets only.
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U postgres -d postgres']
+      interval: 2s
+      timeout: 5s
+      retries: 60
+  backup-scheduler:
+    <<: *database
+    user: postgres
+    env_file: ["../../.envs/.${DEPLOY_ENV}/data-services/pgbackrest.env"]
+    entrypoint: [python3, -u, /usr/local/bin/backup_scheduler.py]
+    environment:
+      BACKUP_HOUR_UTC: ${BACKUP_HOUR_UTC:-3}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    volumes:
+      - postgres_data:/var/lib/postgresql:ro
+      - postgres_socket:/var/run/postgresql
+    depends_on:
+      postgres: {condition: service_healthy}
+  meilisearch:
+    image: getmeili/meilisearch:v1.55.0
+    env_file: ["../../.envs/.${DEPLOY_ENV}/data-services/meilisearch.env"]
+    restart: unless-stopped
+    ports:
+      - "${DATA_BIND_ADDRESS}:${MEILISEARCH_PORT:?Set MEILISEARCH_PORT}:7700"
+    volumes: [meilisearch_data:/meili_data]
+    networks: [data]
+    mem_limit: 2g
+    healthcheck:
+      test: [CMD-SHELL, 'curl --fail --silent http://localhost:7700/health > /dev/null']
+      interval: 2s
+      timeout: 5s
+      retries: 60
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  restore:
+    <<: *database
+    profiles: [recovery]
+    env_file: ["../../.envs/.${DEPLOY_ENV}/data-services/pgbackrest.env"]
+    entrypoint: [/usr/local/bin/hirune-restore]
+    volumes: [recovery_data:/var/lib/postgresql]
+  recovery-check:
+    <<: *database
+    profiles: [recovery]
+    env_file: ["../../.envs/.${DEPLOY_ENV}/data-services/pgbackrest.env"]
+    command: [postgres, -c, archive_mode=off, -c, listen_addresses=, -c, unix_socket_directories=/tmp]
+    volumes: [recovery_data:/var/lib/postgresql]
+
+networks:
+  data: {}
+volumes:
+  postgres_data:
+    name: ${POSTGRES_DATA_VOLUME:?Set POSTGRES_DATA_VOLUME}
+  postgres_socket: {}
+  meilisearch_data: {}
+  recovery_data:
+    name: ${DATA_RESTORE_VOLUME:-hirune-unused-recovery-volume}
+    external: true

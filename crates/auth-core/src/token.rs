@@ -3,8 +3,8 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use rand::RngExt;
 
-/// Generate a cryptographically secure token (32 bytes = 256 bits),
-/// returned URL-safe Base64 encoded (43 chars).
+/// Generate a cryptographically secure token from 32 random bytes (256 bits).
+/// Return it as 43 URL-safe Base64 characters.
 pub fn generate_secure_token() -> String {
     let token_bytes: [u8; 32] = rand::rng().random();
     URL_SAFE_NO_PAD.encode(token_bytes)
@@ -16,14 +16,7 @@ pub fn generate_secure_token_with_length(byte_length: usize) -> String {
     URL_SAFE_NO_PAD.encode(&token_bytes)
 }
 
-/// Hash a high-entropy token for storage/lookup so the raw token never lives at
-/// rest (e.g. as a Redis key or index value). A store leak then yields only
-/// hashes, which cannot be replayed against the endpoints.
-///
-/// The raw token is 256-bit CSPRNG output, so a fast cryptographic hash is the
-/// right tool — there is nothing to brute-force, so a slow/salted password hash
-/// (Argon2) would only add cost for no benefit. Returns a 64-char blake3 hex
-/// digest. OWASP Forgot Password Cheat Sheet: store reset tokens hashed.
+/// Hash a random high-entropy token for lookup without storing its bearer value.
 pub fn hash_token(token: &str) -> String {
     blake3::hash(token.as_bytes()).to_hex().to_string()
 }

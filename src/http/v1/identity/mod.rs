@@ -1,0 +1,25 @@
+pub(in crate::http::v1) mod begin_totp;
+pub(in crate::http::v1) mod change_password;
+pub(in crate::http::v1) mod complete_mfa;
+pub(in crate::http::v1) mod confirm_totp;
+pub(in crate::http::v1) mod contracts;
+pub(in crate::http::v1) mod deactivate_account;
+pub(in crate::http::v1) mod disable_totp;
+pub(in crate::http::v1) mod get_account;
+pub(in crate::http::v1) mod list_sessions;
+pub(in crate::http::v1) mod login;
+pub(in crate::http::v1) mod oidc;
+pub(in crate::http::v1) mod regenerate_recovery_codes;
+pub(in crate::http::v1) mod request_reset;
+pub(in crate::http::v1) mod request_verification;
+pub(in crate::http::v1) mod reset_password;
+pub(in crate::http::v1) mod revoke_all_sessions;
+pub(in crate::http::v1) mod revoke_session;
+pub(in crate::http::v1) mod rotate_session;
+mod routes;
+mod session_responses;
+pub(in crate::http::v1) mod set_initial_password;
+pub(in crate::http::v1) mod signup;
+pub(in crate::http::v1) mod verify_email;
+
+pub(super) use routes::routes;

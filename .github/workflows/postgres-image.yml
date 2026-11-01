@@ -1,0 +1,54 @@
+name: PostgreSQL image
+on:
+  push:
+    tags: ["postgres-v*"]
+  # Manual runs verify the candidate without publishing it.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: postgres-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate PostgreSQL release tag
+        if: github.event_name == 'push'
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^postgres-v[0-9][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo 'Use postgres-v followed by a version that starts with a digit.' >&2
+            exit 1
+          fi
+      - name: Build PostgreSQL candidate
+        run: |
+          docker build --file compose/production/postgres/Dockerfile \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --tag hirune-postgres-pgbackrest:candidate .
+      - name: Build application migration image
+        run: docker build --file compose/production/app/Dockerfile --tag hirune-kit:postgres-verification .
+      - name: Verify the PostgreSQL candidate and physical recovery
+        run: python3 -u compose/data-services/verify.py
+        env:
+          DATA_TEST_APP_IMAGE: hirune-kit:postgres-verification
+          DATA_TEST_POSTGRES_IMAGE: hirune-postgres-pgbackrest:candidate
+      - name: Publish the verified candidate
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/postgres-v')
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-postgres:${GITHUB_REF_NAME#postgres-v}"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker tag hirune-postgres-pgbackrest:candidate "$image"
+          docker push "$image"
+          reference="$(docker image inspect "$image" --format '{{index .RepoDigests 0}}')"
+          printf 'POSTGRES_IMAGE=%s\n' "$reference" >> "$GITHUB_STEP_SUMMARY"

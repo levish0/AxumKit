@@ -1,0 +1,20 @@
+[package]
+name = "test-support"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+migration.workspace = true
+application.workspace = true
+auth-core.workspace = true
+sea-orm.workspace = true
+tokio.workspace = true
+uuid.workspace = true
+url.workspace = true
+anyhow.workspace = true
+base64.workspace = true
+chrono.workspace = true
+jobs.workspace = true
+reqwest.workspace = true

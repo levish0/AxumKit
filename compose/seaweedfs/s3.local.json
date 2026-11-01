@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "kit-local",
+      "credentials": [
+        {
+          "accessKey": "kit-local-access",
+          "secretKey": "kit-local-development-secret-only"
+        }
+      ],
+      "actions": ["Read", "Write", "List", "Tagging", "Admin"]
+    }
+  ]
+}

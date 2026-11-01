@@ -1,0 +1,11 @@
+- op: replace
+  path: /spec/template/spec/topologySpreadConstraints
+  value:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+      matchLabelKeys: [pod-template-hash]
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/part-of: hirune-kit
+          app.kubernetes.io/component: api

@@ -1,0 +1,18 @@
+[package]
+name = "mail"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+lettre.workspace = true
+mrml.workspace = true
+minijinja.workspace = true
+serde.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

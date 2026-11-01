@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-edge-valkey
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: edge-counter
+spec:
+  replicas: 1
+  # Two independent stores behind one Service would split the shared allowance.
+  strategy: {type: Recreate}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: edge-counter
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: edge-counter
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: valkey
+          image: valkey/valkey:9.1.2-alpine
+          command: [valkey-server, /configuration/valkey.conf]
+          ports: [{name: valkey, containerPort: 6379}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: "1", memory: 256Mi}
+          startupProbe:
+            exec: {command: [valkey-cli, ping]}
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            exec: {command: [valkey-cli, ping]}
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            exec: {command: [valkey-cli, ping]}
+            periodSeconds: 10
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: configuration
+              mountPath: /configuration
+              readOnly: true
+      volumes:
+        - name: configuration
+          configMap: {name: hirune-edge-valkey}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hirune-edge-valkey
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: edge-counter
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: edge-counter
+  ports: [{name: valkey, port: 6379, targetPort: valkey}]

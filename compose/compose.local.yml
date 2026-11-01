@@ -1,0 +1,58 @@
+name: hirune-axum-kit
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: kit
+      POSTGRES_PASSWORD: local-development-only
+      POSTGRES_DB: kit
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-54329}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kit -d kit"]
+      interval: 1s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - postgres_data:/var/lib/postgresql
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "127.0.0.1:${SMTP_PORT:-10259}:1025"
+      - "127.0.0.1:${MAILPIT_PORT:-8029}:8025"
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.48
+    profiles: [files]
+    command: [server, -s3, -dir=/data, -ip=seaweedfs, -volume.max=20, -master.volumeSizeLimitMB=100, -s3.config=/etc/seaweedfs/s3.json]
+    ports:
+      - "127.0.0.1:${S3_PORT:-8339}:8333"
+    volumes:
+      - seaweedfs_data:/data
+      - ./seaweedfs/s3.local.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -O /dev/null http://seaweedfs:9333/cluster/status && wget -q -O /dev/null http://seaweedfs:8888/"]
+      interval: 2s
+      timeout: 5s
+      retries: 45
+  meilisearch:
+    image: getmeili/meilisearch:v1.55.0
+    profiles: [search]
+    environment:
+      MEILI_ENV: development
+      MEILI_MASTER_KEY: kit-local-meilisearch-key-development-only
+      MEILI_NO_ANALYTICS: "true"
+    ports:
+      - "127.0.0.1:${MEILISEARCH_PORT:-7709}:7700"
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: [CMD-SHELL, "curl --fail --silent http://localhost:7700/health > /dev/null"]
+      interval: 2s
+      timeout: 5s
+      retries: 45
+
+volumes:
+  postgres_data:
+  seaweedfs_data:
+  meilisearch_data:

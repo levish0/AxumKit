@@ -1,0 +1,105 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-apisix
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: gateway
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: gateway
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: gateway
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: gateway
+      containers:
+        - name: apisix
+          image: apache/apisix:3.19.0-debian
+          env:
+            - name: EDGE_RATE_LIMIT_REQUESTS
+              valueFrom:
+                configMapKeyRef: {name: hirune-edge-settings, key: EDGE_RATE_LIMIT_REQUESTS}
+            - name: ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef: {name: hirune-settings, key: ALLOWED_ORIGINS}
+            - name: INTERNAL_PROXY_SECRET
+              valueFrom:
+                secretKeyRef: {name: hirune-app-secrets, key: INTERNAL_PROXY_SECRET, optional: true}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef: {fieldPath: metadata.namespace}
+          ports: [{name: http, containerPort: 9080}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            seccompProfile: {type: RuntimeDefault}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          startupProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /health/gateway, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 10
+          lifecycle:
+            preStop:
+              exec: {command: [sh, -c, sleep 5]}
+          volumeMounts:
+            - name: maintenance
+              mountPath: /run/hirune-maintenance
+              readOnly: true
+            - name: configuration
+              mountPath: /usr/local/apisix/conf/hirune_edge.lua
+              subPath: hirune_edge.lua
+              readOnly: true
+            - name: configuration
+              mountPath: /usr/local/apisix/conf/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: configuration
+              mountPath: /usr/local/apisix/conf/apisix.yaml
+              subPath: apisix.yaml
+              readOnly: true
+      volumes:
+        - name: maintenance
+          configMap: {name: hirune-gateway-maintenance}
+        - name: configuration
+          configMap: {name: hirune-apisix}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hirune-apisix
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: gateway
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: gateway
+  ports: [{name: http, port: 9080, targetPort: http}]
