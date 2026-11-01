@@ -58,7 +58,7 @@ services:
     depends_on:
       postgres: {condition: service_healthy}
   meilisearch:
-    image: getmeili/meilisearch:v1.55.0
+    image: getmeili/meilisearch:v1.56.0
     env_file: ["../../.envs/.${DEPLOY_ENV}/data-services/meilisearch.env"]
     restart: unless-stopped
     ports:
