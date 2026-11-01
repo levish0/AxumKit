@@ -1,0 +1,309 @@
+{
+  "": {
+    "entityTypes": {
+      "User": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "active": {
+              "type": "Boolean"
+            },
+            "verified": {
+              "type": "Boolean"
+            },
+            "administrator": {
+              "type": "Boolean"
+            }
+          }
+        }
+      },
+      "Resource": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "owner": {
+              "type": "Entity",
+              "name": "User"
+            }
+          }
+        }
+      },
+      "Post": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "owner": {
+              "type": "Entity",
+              "name": "User"
+            },
+            "organization_owner": {
+              "type": "Entity",
+              "name": "User"
+            },
+            "organization_id": {
+              "type": "String"
+            },
+            "published": {
+              "type": "Boolean"
+            },
+            "deleted": {
+              "type": "Boolean"
+            }
+          }
+        }
+      },
+      "Comment": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "owner": {
+              "type": "Entity",
+              "name": "User"
+            },
+            "post_owner": {
+              "type": "Entity",
+              "name": "User"
+            },
+            "organization_owner": {
+              "type": "Entity",
+              "name": "User"
+            },
+            "parent_published": {
+              "type": "Boolean"
+            },
+            "deleted": {
+              "type": "Boolean"
+            }
+          }
+        }
+      },
+      "ApiClient": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "active": {
+              "type": "Boolean"
+            },
+            "organization_id": {
+              "type": "String"
+            }
+          }
+        }
+      }
+    },
+    "actions": {
+      "read_account": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "manage_account": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "read_organization": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "manage_organization": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "administer_account": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Resource"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "create_post": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "read_post": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "edit_post": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "delete_post": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "create_comment": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "delete_comment": {
+        "appliesTo": {
+          "principalTypes": [
+            "User"
+          ],
+          "resourceTypes": [
+            "Comment"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {
+              "organization_member": {
+                "type": "Boolean"
+              }
+            }
+          }
+        }
+      },
+      "read_external_post": {
+        "appliesTo": {
+          "principalTypes": [
+            "ApiClient"
+          ],
+          "resourceTypes": [
+            "Post"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      }
+    }
+  }
+}

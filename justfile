@@ -1,97 +1,88 @@
+set dotenv-load := true
+set dotenv-path := ".envs/.local/app.env"
 set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
-export COMPOSE_FILE := "docker-compose.dev.yml"
-
-# Infrastructure services from docker-compose.dev.yml (stateful, no app containers)
-infra := "postgres pgdog redis-session redis-cache redis-lock nats meilisearch"
-
-# Default command to list all available commands.
 default:
     @just --list
 
-# Set up local development infrastructure and run migrations using the root .env.
-dev: up-infra migrate
-    @echo "Development environment ready."
-    @echo "  cargo run -p server"
-    @echo "  cargo run -p worker"
+# Generate local secrets without replacing existing settings.
+init:
+    cargo xtask init
 
-# Build docker images (e.g., `just build` or `just build <service>`)
-build *args:
-    docker compose build {{args}}
+infra-up:
+    docker compose -f compose/compose.local.yml up -d --wait
 
-# Start infrastructure containers (postgres, pgdog, redis, nats, meilisearch)
-up-infra:
-    docker compose up -d {{infra}}
+infra-down:
+    docker compose -f compose/compose.local.yml --profile files --profile search down
 
-# Start the full stack including server/worker containers
-up:
-    docker compose up -d --build --remove-orphans
+infra-up-files:
+    docker compose -f compose/compose.local.yml --profile files --profile search up -d --wait
 
-# Stop and remove containers (volumes are preserved)
-down:
-    docker compose down
-
-# Remove containers and their volumes
-prune *args:
-    docker compose down -v {{args}}
-
-# Show container status
-status:
-    docker compose ps -a
-
-# View container logs (e.g. `just logs postgres`)
-logs *args:
-    docker compose logs -f {{args}}
-
-# Run database migrations
 migrate:
-    cargo run -p migration
+    cargo run --locked --package migration
 
-# Drop everything and re-run all migrations
-migrate-fresh:
-    cargo run -p migration fresh
+api:
+    cargo run --locked --bin api
 
-# Show migration status
-migrate-status:
-    cargo run -p migration status
+worker:
+    cargo run --locked --bin worker
 
-# Export merged OpenAPI schema to swagger.json
-openapi:
-    cargo xtask openapi
+maintenance:
+    cargo run --locked --bin maintenance
 
-# Format all code
+manage *arguments:
+    cargo run --locked --bin manage -- {{arguments}}
+
 fmt:
     cargo fmt --all
 
-# Run all CI checks locally (fmt, clippy, tests, openapi drift)
-# e2e is excluded here: it needs the full docker stack (see `just e2e`).
 check:
-    cargo fmt --all --check
-    cargo clippy --all-targets -- -D warnings
-    cargo test --workspace --exclude e2e
+    cargo xtask check
+
+test-db:
+    cargo xtask test-db
+
+# PostgreSQL queue diagnostics; JOB_LOAD_PROFILE=extended increases the workload.
+test-job-load:
+    cargo xtask test-job-load
+
+test-api:
+    cargo xtask test-api
+
+test-process:
+    cargo xtask test-process
+
+test-files:
+    cargo xtask test-files
+
+test-content:
+    cargo xtask test-content
+
+test-deployment:
+    cargo xtask test-deployment
+
+test-production:
+    cargo xtask test-production
+
+test-data-services:
+    cargo xtask test-data-services
+
+# Requires a release image in K3S_TEST_IMAGE, Docker, k3d, and kubectl.
+test-k3s:
+    cargo xtask test-k3s
+
+deploy-k3s environment mode="auto":
+    just --justfile deploy/justfile up {{quote(environment)}} {{quote(mode)}}
+
+load-test:
+    cargo xtask load-test
+
+# Optional host-process diagnostic. Deployed acceptance uses test-k3s/load-test.
+load-test-local:
+    cargo xtask load-test-local
+
+openapi:
     cargo xtask openapi
-    git diff --exit-code swagger.json
 
-# Run unit/integration tests (e.g. `just test some_test`). Excludes the e2e crate.
-test *args:
-    cargo test --workspace --exclude e2e {{args}}
-
-# Run end-to-end tests against the full disposable docker stack.
-# Brings the stack up (waiting for healthchecks), runs the e2e crate, then tears it down.
-# Parallelism is capped (default 4) so concurrent tests don't saturate the shared stack's
-# DB connection pool; override with e.g. `just e2e 8`.
-e2e threads="4":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    docker compose -f docker-compose.test.yml up -d --build --wait
-    # Capture the suite's exit code so teardown always runs, but still surface a
-    # failure: a bare `-cargo test` (ignore-error) made `just e2e` exit 0 even when
-    # the suite was red, so CI / the pre-release checklist got a false green.
-    status=0
-    cargo test -p e2e -- --test-threads={{threads}} || status=$?
-    docker compose -f docker-compose.test.yml down -v
-    exit $status
-
-# Build and push GHCR Docker images (e.g. `just publish 0.8.0 --latest`)
-publish tag *args:
-    cargo xtask docker-publish --tag {{tag}} {{args}}
+template-check:
+    cargo xtask template-check

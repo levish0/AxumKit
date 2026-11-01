@@ -1,0 +1,52 @@
+routes:
+  - id: hirune-gateway-health
+    uri: /health/gateway
+    methods: [GET, HEAD]
+    plugins:
+      serverless-pre-function:
+        phase: rewrite
+        functions:
+          - return require("hirune_edge").gateway_health
+  - id: hirune-health
+    uris: [/health/live, /health/ready]
+    methods: [GET, HEAD]
+    upstream_id: hirune-backend
+  - id: hirune-api
+    uri: /*
+    plugins:
+      serverless-pre-function:
+        phase: rewrite
+        functions:
+          - return require("hirune_edge").rewrite
+      serverless-post-function:
+        phase: header_filter
+        functions:
+          - return require("hirune_edge").header_filter
+      exit-transformer:
+        functions:
+          - return require("hirune_edge").transform(...)
+      limit-count:
+        count: ${{EDGE_RATE_LIMIT_REQUESTS}}
+        time_window: 60
+        key: hirune_edge_client_ip
+        key_type: var
+        group: hirune-edge-ip-v1
+        policy: redis
+        redis_host: hirune-edge-valkey.${{POD_NAMESPACE}}.svc.cluster.local
+        redis_port: 6379
+        redis_timeout: 200
+        allow_degradation: true
+        show_limit_quota_header: false
+        rejected_code: 429
+    upstream_id: hirune-backend
+upstreams:
+  - id: hirune-backend
+    type: roundrobin
+    nodes:
+      hirune-api.${{POD_NAMESPACE}}.svc.cluster.local:3000: 1
+    retries: 0
+    timeout:
+      connect: 5
+      send: 330
+      read: 330
+#END

@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Paths apply after copying this directory to .envs/.dev/k3s.
+namespace: hirune-dev
+resources:
+  - ../../../deploy/k3s/base
+images:
+  - name: hirune-kit
+    newName: registry.example.com/your-project/hirune-kit
+    newTag: 0.1.0
+configMapGenerator:
+  - name: hirune-edge-settings
+    envs: [gateway.env]
+  - name: hirune-settings
+    envs: [app.env]
+secretGenerator:
+  - name: hirune-app-secrets
+    envs: [secrets.env]
+  - name: hirune-runtime-database
+    envs: [runtime.env]
+  - name: hirune-maintenance-database
+    envs: [maintenance.env]
+  - name: hirune-migration-database
+    envs: [migration.env]
+  - name: hirune-tunnel
+    envs: [tunnel.env]

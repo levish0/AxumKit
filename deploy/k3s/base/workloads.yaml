@@ -1,0 +1,200 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-api
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: api
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: api
+      containers:
+        - name: api
+          image: hirune-kit
+          command: [api]
+          ports: [{name: http, containerPort: 3000}]
+          envFrom:
+            - configMapRef: {name: hirune-settings}
+            - secretRef: {name: hirune-app-secrets}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: hirune-runtime-database, key: DATABASE_URL}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {cpu: "2", memory: 1Gi}
+          startupProbe:
+            httpGet: {path: /health/live, port: http}
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /health/ready, port: http}
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 3
+          # TCP liveness stays independent of HTTP backpressure and database health.
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec: {command: [sh, -c, sleep 5]}
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {medium: Memory, sizeLimit: 512Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hirune-api
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: api
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: api
+  ports: [{name: http, port: 3000, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-worker
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: worker
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: worker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: worker
+          image: hirune-kit
+          command: [worker]
+          envFrom:
+            - configMapRef: {name: hirune-settings}
+            - secretRef: {name: hirune-app-secrets}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: hirune-runtime-database, key: DATABASE_URL}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 250m, memory: 256Mi}
+            limits: {cpu: "2", memory: 1Gi}
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {medium: Memory, sizeLimit: 512Mi}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-maintenance
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: maintenance
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: maintenance
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: maintenance
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: maintenance
+          image: hirune-kit
+          command: [maintenance]
+          envFrom:
+            - configMapRef: {name: hirune-settings}
+            - secretRef: {name: hirune-app-secrets}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: hirune-maintenance-database, key: DATABASE_URL}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {medium: Memory, sizeLimit: 64Mi}

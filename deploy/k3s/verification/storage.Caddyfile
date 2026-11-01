@@ -1,0 +1,31 @@
+{
+	admin off
+	auto_https off
+	persist_config off
+	log default {
+		exclude http.log.access http.log.error
+	}
+	servers {
+		timeouts {
+			read_header 5s
+			read_body 30s
+			write 45s
+		}
+	}
+}
+
+:8081 {
+	header X-Content-Type-Options nosniff
+	header Referrer-Policy no-referrer
+	request_body {
+		max_size 100MB
+	}
+	reverse_proxy seaweedfs:8333 {
+		# S3 signatures include the original authority and its non-default port.
+		header_up Host {http.request.hostport}
+		transport http {
+			dial_timeout 5s
+			response_header_timeout 30s
+		}
+	}
+}

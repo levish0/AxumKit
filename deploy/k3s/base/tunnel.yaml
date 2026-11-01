@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hirune-cloudflared
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: tunnel
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: tunnel
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: tunnel
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile: {type: RuntimeDefault}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: tunnel
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2026.10.1
+          args: [tunnel, --no-autoupdate, --loglevel, info, --metrics, "0.0.0.0:2000", run]
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef: {name: hirune-tunnel, key: TUNNEL_TOKEN}
+          ports: [{name: metrics, containerPort: 2000}]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: "1", memory: 256Mi}
+          startupProbe:
+            tcpSocket: {port: metrics}
+            periodSeconds: 2
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: {path: /ready, port: metrics}
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: {path: /metrics, port: metrics}
+            periodSeconds: 10
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {sizeLimit: 16Mi}

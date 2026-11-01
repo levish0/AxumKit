@@ -1,0 +1,62 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hirune-private-ingress
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hirune-tunnel-to-gateway
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: gateway
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: tunnel
+      ports: [{protocol: TCP, port: 9080}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hirune-gateway-to-api
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: api
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: gateway
+      ports: [{protocol: TCP, port: 3000}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hirune-gateway-to-edge-counter
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: hirune-kit
+      app.kubernetes.io/component: edge-counter
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/part-of: hirune-kit
+              app.kubernetes.io/component: gateway
+      ports: [{protocol: TCP, port: 6379}]

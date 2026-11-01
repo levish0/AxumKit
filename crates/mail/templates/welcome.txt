@@ -1,0 +1,8 @@
+{{ application_name }}
+
+Welcome
+
+Your email is verified and your account is ready.
+Welcome to {{ application_name }}.
+
+Open the application: {{ action_url }}

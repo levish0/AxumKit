@@ -1,109 +1,68 @@
-# AxumKit deployment commands. Run from THIS directory: `cd deploy && just <recipe> <env>`.
-# <env> = dev | production  (picks deploy/<env>.env + .envs/.<env>/).
-#
-#   cd deploy
-#   just up dev                  # infra + app
-#   just ps dev
-#   just logs dev server
-#   just pull production && just up production
-#   just down dev                # stop (keep volumes);  `just down dev -v` to wipe
-#
-# COMPOSE_PROJECT_NAME / ports / image tag come from deploy/<env>.env, so prod and dev
-# stay isolated even on the same host. (Migrations run automatically via the one-shot
-# `migration` service on `up`.)
+set working-directory := ".."
+set dotenv-load := false
+set positional-arguments := true
+set windows-shell := ["sh", "-cu"]
 
-set windows-shell := ["powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
-
-_core := "-f docker-compose.infra.yml -f docker-compose.app.yml"
-
-# List recipes.
 default:
-    @just --list
+    @just --justfile deploy/justfile --list
 
-# Start infra + app. --build (re)builds the local postgres+pgbackrest image; GHCR images
-# have no build section so they're untouched.
-up env:
-    docker compose --env-file {{env}}.env {{_core}} up -d --build
+# Render and validate one environment without displaying secrets or contacting its cluster.
+check environment:
+    cargo xtask deploy-k3s check "$1"
 
-# Stop a stack. `just down dev -v` to remove volumes.
-down env *args:
-    docker compose --env-file {{env}}.env {{_core}} down {{args}}
+# Auto: pending migrations use maintenance and drain; other releases roll.
+up environment mode="auto":
+    cargo xtask deploy-k3s up "$1" "$2"
 
-# Container status.
-ps env:
-    docker compose --env-file {{env}}.env {{_core}} ps
+# Stop runtime Pods and keep namespace, settings, secrets, and external data.
+down environment:
+    cargo xtask deploy-k3s down "$1"
 
-# Pull new images. --ignore-buildable skips the locally-built postgres+pgbackrest image
-# (it's not in any registry, so pulling it would fail with "denied / does not exist").
-pull env:
-    docker compose --env-file {{env}}.env {{_core}} pull --ignore-buildable
+# Recovery override. Normal deployments control gateway maintenance automatically.
+maintenance environment action="status":
+    cargo xtask deploy-k3s maintenance "$1" "$2"
 
-# Follow logs, optionally for one service — `just logs dev server`.
-logs env *args:
-    docker compose --env-file {{env}}.env {{_core}} logs -f {{args}}
+status environment:
+    cargo xtask deploy-k3s status "$1"
 
-# Raw compose passthrough — `just compose dev restart server`.
-compose env *args:
-    docker compose --env-file {{env}}.env {{_core}} {{args}}
+logs environment deployment="hirune-api":
+    cargo xtask deploy-k3s logs "$1" "$2"
 
-# --- pgBackRest (Postgres backups -> R2). Run from deploy/.  <env> = dev | production ---
+manage environment +arguments:
+    cargo xtask deploy-k3s manage "$@"
 
-# Initialize the pgBackRest stanza on R2. Run ONCE, right after the first `up` (until then
-# WAL archiving fails and WAL piles up in pg_wal).
-pgbackrest-init env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-create
+cleanup environment:
+    cargo xtask deploy-k3s cleanup "$1"
 
-# Wipe the repo stanza and recreate it. Use after rebuilding the DB (e.g. `down -v`), which
-# changes the cluster system id and triggers pgbackrest error [028]. DESTROYS all backups
-# in the repo for this stanza. Run `pgbackrest-check` after to verify.
-pgbackrest-stanza-reset env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stop
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-delete --force
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db start
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db stanza-create
+# Run on the selected data host. Application deployments remain Kubernetes operations.
+data-services-check environment:
+    cargo xtask data-services check "$1"
 
-# Run a backup. type = full | diff | incr (default incr). Schedule these via host crontab —
-# e.g. weekly `full`, daily `diff`. See README.md.
-pgbackrest-backup env type="incr":
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db --type={{type}} backup
+data-services-up environment:
+    cargo xtask data-services up "$1"
 
-# Verify the stanza + repo + archiving are healthy.
-pgbackrest-check env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db check
+data-services-down environment:
+    cargo xtask data-services down "$1"
 
-# List backup sets (timestamps, sizes, retention) in the repo.
-pgbackrest-info env:
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db info
+data-services-status environment:
+    cargo xtask data-services status "$1"
 
-# Restore the DB from the repo (disaster recovery). STOPS postgres, restores into the data
-# volume with --delta, then starts it (postgres replays archived WAL on start). DESTRUCTIVE
-# — overwrites the current cluster. Default = latest backup + all WAL. For PITR pass a target
-# (use 'T' to avoid spaces) and --target-action=promote so it resumes writes after the target:
-#   just pgbackrest-restore dev --type=time --target=2026-06-28T12:00:00+00 --target-action=promote
-pgbackrest-restore env *args:
-    docker compose --env-file {{env}}.env {{_core}} stop postgres
-    docker compose --env-file {{env}}.env {{_core}} run --rm --no-deps -u postgres postgres pgbackrest --stanza=db --delta {{args}} restore
-    docker compose --env-file {{env}}.env {{_core}} start postgres
+data-services-logs environment service="postgres":
+    cargo xtask data-services logs "$1" "$2"
 
-# Raw pgbackrest passthrough — `just pgbackrest dev expire`, `just pgbackrest dev "--set=... restore"`.
-pgbackrest env *args:
-    docker compose --env-file {{env}}.env {{_core}} exec -T -u postgres postgres pgbackrest --stanza=db {{args}}
+backup environment type="incr":
+    cargo xtask data-services backup "$1" "$2"
 
-# Install/refresh this user's backup schedule in the host crontab (no sudo): weekly full
-# (Sun 03:00) + daily diff (Mon-Sat 03:00). Idempotent — re-run to update; only touches
-# this env's lines. Server-only (needs bash + crontab). Logs to ~/pgbackrest-cron.log.
-pgbackrest-cron-install env:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    j="$(command -v just)"; d="{{justfile_directory()}}"
-    full="0 3 * * 0 cd $d && $j pgbackrest-backup {{env}} full >> \$HOME/pgbackrest-cron.log 2>&1"
-    diff="0 3 * * 1-6 cd $d && $j pgbackrest-backup {{env}} diff >> \$HOME/pgbackrest-cron.log 2>&1"
-    ( crontab -l 2>/dev/null | grep -vF "pgbackrest-backup {{env}} " || true; echo "$full"; echo "$diff" ) | crontab -
-    echo "Installed pgbackrest cron for {{env}}:"; crontab -l | grep -F "pgbackrest-backup {{env}} "
+backup-check environment:
+    cargo xtask data-services backup-check "$1"
 
-# Remove this user's pgBackRest backup cron lines for the given env.
-pgbackrest-cron-uninstall env:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    ( crontab -l 2>/dev/null | grep -vF "pgbackrest-backup {{env}} " || true ) | crontab -
-    echo "Removed pgbackrest cron for {{env}}."
+backup-info environment:
+    cargo xtask data-services backup-info "$1"
+
+# Restore to a new volume. This does not replace the live database.
+restore environment label target="":
+    if [ -n "$3" ]; then cargo xtask data-services restore "$1" "$2" "$3"; else cargo xtask data-services restore "$1" "$2"; fi
+
+# Continue WAL validation in a retained recovery volume, without restoring files again.
+restore-resume environment label:
+    cargo xtask data-services restore-resume "$1" "$2"

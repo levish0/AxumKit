@@ -1,12 +1,6 @@
 //! Keyed hashing with domain separation (blake3).
 
-/// Compute a keyed blake3 hash of `input`, hex-encoded (64 chars).
-///
-/// `key_material` is any secret bytes (a configured key); `context` is a stable
-/// domain-separation string **owned by the caller** — never a generic constant baked into this
-/// crate — so the same key can back multiple independent hashes. Suitable for hashing
-/// short secrets (e.g. one-time backup codes) where the input is high-entropy: a keyed fast hash
-/// makes the digest unforgeable without the key while staying cheap to verify.
+/// Returns a keyed digest under a caller-owned domain. Use Argon2id for passwords.
 pub fn hash_hex(key_material: &[u8], context: &str, input: &[u8]) -> String {
     let key = blake3::derive_key(context, key_material);
     let mut hasher = blake3::Hasher::new_keyed(&key);

@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hirune-migration-check
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: migration-check
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 240
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: migration-check
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: migration-check
+          image: hirune-kit
+          command: [migration, --check-pending]
+          env:
+            - name: MIGRATION_DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: hirune-migration-database, key: MIGRATION_DATABASE_URL}
+            - name: MIGRATION_REPORT_PATH
+              value: /tmp/migration-report.json
+          terminationMessagePath: /tmp/migration-report.json
+          terminationMessagePolicy: File
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {sizeLimit: 64Mi}

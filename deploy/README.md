@@ -1,196 +1,202 @@
-# AxumKit Deploy Bundle
+# Deployment
 
-Server deploys do not need the full source tree when using GHCR images. Keep these
-paths together under one deploy root, for example `/opt/axumkit`.
+`deploy/justfile` deploys application processes to Kubernetes. Separate `data-*`
+commands manage optional self-hosted data services with Docker Compose. It does
+not install k3s. Image build files live in `compose/`. Root `just infra-up` starts
+only local development dependencies with Compose.
 
-**Parametrized for two environments** (production + dev) from one set of compose files.
-A per-env compose env-file (`deploy/<env>.env`, committed — no secrets) selects what
-differs: `DEPLOY_ENV` (which `.envs/.<env>/` to load), `COMPOSE_PROJECT_NAME` (isolates
-containers/volumes/networks — prod and dev can run on the **same host**), `APP_VERSION`
-(image tag), `APISIX_HOST_PORT` (host port).
+The production path is Cloudflare Tunnel → private APISIX → API Service → API
+Pods. The baseline has two API, two APISIX, and two cloudflared replicas.
+One environment-specific Cloudflare Tunnel accepts both cloudflared connectors.
+API scaling does not create tunnels. APISIX uses the same generated routing
+configuration on both Pods. PostgreSQL owns sessions, login limits, API usage,
+and jobs. APISIX replicas share one Valkey instance per environment for a separate
+broad IP limit. No forward-auth service is used.
 
-```text
-/opt/axumkit/
-  .envs/
-    .production/   # prod secrets — gitignored
-    .dev/          # dev secrets  — gitignored
-      postgres.env pgbackrest.env r2.env server.env worker.env
-      media-processor.env meilisearch.env
+PostgreSQL, SMTP, optional S3 storage, and optional search are external services.
+The production manifests do not install PostgreSQL or allocate a database PVC.
+Provision persistent storage, database grants, backups, and recovery separately.
+A managed PostgreSQL service uses the same connection settings. For one Linux
+machine, the [data profile](data-services/README.md) runs PostgreSQL, Meilisearch, and a
+pgBackRest scheduler beside k3s. Its data volumes and off-host backups have a
+separate lifecycle from application rollout.
 
-  compose/
-    production/    # apisix/ pgdog/ pgbackrest/ configs — SHARED by both envs
-      apisix/{config.yaml,apisix.yaml}
-      pgdog/{pgdog.toml,users.toml}
-      pgbackrest/pgbackrest.conf
+## Environments and commands
 
-  deploy/
-    production.env  dev.env          # compose vars (committed)
-    docker-compose.infra.yml
-    docker-compose.app.yml
-    postgres/Dockerfile              # postgres:18-alpine + pgbackrest
-    justfile  README.md
-```
+Publish the application with a `v<workspace-version>` Git tag, such as `v0.1.0`.
+The CI workflow checks that the tag matches `Cargo.toml`. It runs the normal
+checks and production, backup/recovery, and two-node Kubernetes acceptance before
+publishing the tested application image as `ghcr.io/<owner>/<repository>:0.1.0`.
+The publication job loads the tested image and checks its identity; it does not
+rebuild it. Branch, pull-request, and manual runs do not publish images.
 
-The `compose/production/` configs are env-agnostic (Docker service names + container
-ports only) and **shared** by both envs — both use the same DB credentials but separate
-Postgres instances (isolated volumes). Don't move them to a per-env folder.
+Copy the `APPLICATION_IMAGE=...@sha256:...` reference from the workflow summary
+into the selected overlay. Use `newName` for the registry path and `digest` for
+the `sha256:...` value; remove `newTag` when selecting a digest. The image package
+must be readable by the cluster. New GHCR packages start private; configure their
+access or visibility separately. Publishing an image does not deploy it.
+PostgreSQL uses its independent [`postgres-v*` release](data-services/README.md#publish-and-select-the-postgresql-image).
 
-Required paths on the host: `deploy/`, `compose/production/`, and the env's
-`.envs/.<env>/`. `.envs/.<env>/` is gitignored — copy it out-of-band (start from
-`.envs/.example/`).
+Copy `.envs/.example/dev/` to ignored `.envs/.dev/` and
+`.envs/.example/prod/` to ignored `.envs/.prod/`. Each `k3s/` directory contains:
 
-## Start
+- `target.env`: an explicit Kubernetes context and namespace.
+- `kustomization.yaml`: the namespace, application image, and optional patches.
+- `app.env`: public runtime settings.
+- `gateway.env`: `EDGE_RATE_LIMIT_REQUESTS` per IP per 60 seconds, shared by gateways.
+- `secrets.env`: encryption keys, authentication settings, and provider secrets.
+- `runtime.env`, `maintenance.env`, `migration.env`: separate database roles.
+- `tunnel.env`: that environment's Cloudflare Tunnel token.
 
-The short way — `deploy/justfile` (run from inside `deploy/`):
+Use separate databases, encryption/rate-limit keys, origins, and tunnels for dev
+and prod. Each namespace also has its own disposable Valkey. Both hosted environments use `APP_ENV=production` for HTTPS security.
+The deployment name `dev` does not disable production security rules.
 
-```bash
-cd /opt/axumkit/deploy
-just up dev                  # infra + app  (or: just up production)
-just ps dev
-just logs dev server
-just pull production && just up production    # update
-just down dev                # stop (keep volumes);  `just down dev -v` to wipe
-```
+Set `KUBE_CONTEXT` to an existing context from your kubeconfig. Set
+`KUBE_NAMESPACE` to match the overlay's `namespace`. Dev defaults to `hirune-dev`;
+prod defaults to `hirune-prod`. Contexts can select separate clusters or the same
+cluster with separate namespaces. Every operator command validates the rendered
+namespace and supplies both context and namespace explicitly. It does not follow
+the kubeconfig's current context. These settings select targets; Kubernetes RBAC
+must enforce operator permissions.
 
-The long way (what those wrap):
+Set an immutable image tag or digest in each overlay. Replace credential
+placeholders. Kubernetes generator env files use raw values: JSON has no outer
+single quotes, and shell variables are not expanded. See the
+[k3s runbook](k3s/README.md) for cluster and Tunnel preparation.
 
-```bash
-cd /opt/axumkit/deploy
-docker compose --env-file dev.env \
-  -f docker-compose.infra.yml -f docker-compose.app.yml up -d --build
-```
+The just recipes use a POSIX shell for argument forwarding. On Windows, use
+Git for Windows `sh`, or invoke the Rust CLI directly, for example
+`cargo xtask deploy-k3s up prod`. Local development recipes retain their normal
+platform shell.
 
-## Backups (pgBackRest → R2)
+Run from this directory:
 
-PostgreSQL backs up with **pgBackRest**. Two things run together:
-
-1. **WAL archiving** — the postgres container pushes every changed WAL segment to the R2
-   repo via `archive_command` (always on). This is what makes point-in-time recovery (PITR)
-   possible.
-2. **Scheduled backups** — `full`/`diff`/`incr` snapshots, run periodically from host crontab.
-
-The repo is a **dedicated R2 backup bucket** (separate from the asset bucket in `r2.env`).
-Credentials/bucket/path live in `.envs/.<env>/pgbackrest.env`; static config (retention,
-compression, stanza) is in `compose/production/pgbackrest/pgbackrest.conf`. Retention is
-`repo1-retention-full=2` (keep the 2 newest full backups + their WAL) — tune it in the conf.
-
-The postgres service is a custom image (`postgres:18-alpine` + pgbackrest, built from
-`deploy/postgres/Dockerfile`); `just up <env>` builds it automatically (`--build`).
-
-**First-time setup (once per `<env>`).** Fill in `pgbackrest.env`, then:
-
-```bash
-cd deploy   # <env> = dev | production
-
-# 0) Fill R2 bucket/endpoint/keys in pgbackrest.env. Note:
-#    - key var names are PGBACKREST_REPO1_S3_KEY / _KEY_SECRET (NOT R2_*)
-#    - endpoint is host-only (no https://, no bucket path)
-#    After editing the file, recreate the container so it reloads the env:
+```sh
+just check dev
 just up dev
-
-# 1) Create the stanza + verify. Until init runs, WAL archiving fails and WAL
-#    piles up in pg_wal.
-just pgbackrest-init dev
-just pgbackrest-check dev        # verify stanza/repo/archiving (WAL round-trip test)
-
-# 2) First full backup (the PITR baseline — at least one is required)
-just pgbackrest-backup dev full
-just pgbackrest-info dev         # list backup sets / sizes / retention in the repo
+just check prod
+just up prod
+just status prod
+just logs prod hirune-api
+just manage prod set-api-client-quota UUID 100 10000
+just cleanup prod
 ```
 
-**Manual backup.** type = `full` | `diff` (since last full) | `incr` (since last backup, default).
+`check` renders and validates locally without displaying Secret values or
+contacting the cluster. `up` defaults to `auto`. A read-only Job checks pending
+migrations with the selected release image before runtime changes. Pending
+migrations, active gateway maintenance, or stopped applications select a planned
+interruption: verify APISIX maintenance, drain applications, migrate, restore
+runtime readiness, then disable maintenance. Other releases roll normally.
+API startup does not run migrations. Use `just up prod drain` to force an offline
+upgrade, including incompatible job or configuration changes without a migration.
+Failures retain maintenance; repeat `just up prod` after correcting the cause.
+`just down prod` stops runtime Pods and preserves
+namespace, settings, Secrets, and external database data. HPAs remain installed
+during down and drain. The helper saves positive replica counts, verifies native
+HPA deactivation at zero, and restores counts after migration success. HPA
+minimums must be positive. No manual HPA removal or restoration is required.
 
-```bash
-just pgbackrest-backup dev full
-just pgbackrest-backup dev diff
-just pgbackrest-info dev
-just compose dev exec redis-session redis-cli BGSAVE   # Redis Session (AOF) — separate
-```
+Root `just deploy-k3s prod` delegates to this same `up` entrypoint. All deployment
+commands require `dev` or `prod`; none defaults to production. Do not run concurrent
+releases. Serialize deployment in your release pipeline.
 
-**Scheduled backups (automatic).** Register the schedule in the host crontab. The just
-recipe is the easy way (weekly full on Sunday 03:00 + daily diff Mon–Sat; idempotent —
-per-env and safe to re-run, no duplicate lines):
+## SMTP trust
 
-```bash
-just pgbackrest-cron-install dev    # install/refresh (no sudo, user crontab)
-crontab -l                         # check
-just pgbackrest-cron-uninstall dev # remove
-```
+Production requires `SMTP_STARTTLS=true`. Publicly trusted SMTP certificates use
+the transport's normal trust store. For a private SMTP CA, set the optional
+`SMTP_CA_CERTIFICATE` to the PEM CA certificate path inside the container, such
+as `/certificates/smtp-ca.crt`. Add a read-only certificate mount to each API,
+worker, manage, and maintenance container that uses this setting. Every application
+bootstrap constructs the mail transport. The base manifests do not add this mount automatically. Application user 10001 must be able to read the
+file. Mount only the public CA certificate. The application does not need its private key.
 
-cron runs with a minimal PATH — if logs show `docker: not found`, add a line
-`PATH=/usr/local/bin:/usr/bin:/bin` at the top of the crontab (`crontab -e`). To add the
-lines by hand instead:
+An empty or omitted setting uses the normal trust store. Startup fails if the
+certificate is unreadable or invalid. A custom certificate requires STARTTLS.
+The transport still verifies the certificate chain and the `SMTP_HOST` hostname
+when you add a CA. Keep production certificates and mounts separate from the
+ephemeral certificates generated by `just test-production`.
 
-```cron
-0 3 * * 0   cd /opt/axumkit/deploy && just pgbackrest-backup production full >> ~/pgbackrest-cron.log 2>&1
-0 3 * * 1-6 cd /opt/axumkit/deploy && just pgbackrest-backup production diff >> ~/pgbackrest-cron.log 2>&1
-```
+## Database roles and maintenance
 
-**DB rebuilt (`down -v`, etc.).** Wiping the data volume changes the cluster system id, so it
-no longer matches the old stanza metadata in the repo and you get `ERROR: [028]`. Reset the
-stanza (this **deletes all repo backups** for that stanza — fine on dev, careful on prod):
+Provision three database roles:
 
-```bash
-just pgbackrest-stanza-reset dev   # stop -> stanza-delete --force -> start -> stanza-create
-just pgbackrest-check dev
-```
+- Migration owns schema changes.
+- Runtime has only the required application privileges and migration-history
+  SELECT. It may insert and read audit events and API usage, but may not update
+  or delete them.
+- Maintenance has the runtime permissions needed for authentication, job, and
+  file cleanup. It may also delete audit events and API usage. It has no schema
+  ownership or DDL permissions.
 
-**Restore (PITR).** The `pgbackrest-restore` recipe does it all: stop postgres → `--delta`
-restore (as the postgres user, into postgres-owned PGDATA) → start. DESTRUCTIVE — overwrites
-the current cluster. The repo lives on R2, so recovery works even if the data volume is wiped.
+Verify the actual database grants during deployment acceptance. Separate
+environment files do not enforce these permissions.
+The optional `MIGRATION_RUNTIME_ROLE` and `MIGRATION_MAINTENANCE_ROLE` settings
+enable post-migration grants for the self-hosted profile. Set both or neither.
+The migration Job must finish this step before runtime rollout. Existing DDL or
+inherited/PUBLIC authority that violates the role contract causes failure.
 
-```bash
-cd deploy   # <env> = dev | production
+API and worker receive the generated runtime database Secret. Ordinary `manage`
+commands execute in an API Pod with that runtime role. Maintenance receives its
+own generated database Secret. `just cleanup prod` executes `manage cleanup` in
+a maintenance Pod with that role. Runtime Pods receive neither migration nor
+maintenance database credentials. Do not broaden runtime permissions to run
+maintenance commands.
 
-# First decide WHICH backup — list what's in the repo (labels, timestamps, WAL ranges):
-just pgbackrest-info dev
+Defaults retain succeeded jobs for 30 days, failed jobs for 90 days, and audit
+events for 180 days. Set `SUCCEEDED_JOB_RETENTION_DAYS`, `FAILED_JOB_RETENTION_DAYS`,
+and `AUDIT_RETENTION_DAYS` in `app.env`; each supports 1 through 36500 days. Deleting
+a failed job removes its attempt history and retry ability. Bounded cleanup may
+need repeated runs to clear a backlog.
 
-# Restore the latest backup + all WAL:
-just pgbackrest-restore dev
-# A specific backup, stopped at its own end (no later WAL) — --set + --type=immediate:
-just pgbackrest-restore dev --set=20260628-120000F --type=immediate
-# Point in time (PITR; 'T' avoids spaces, promote to resume writes after the target).
-# The reachable range is within info's 'wal archive min/max':
-just pgbackrest-restore dev --type=time --target=2026-06-28T12:00:00+00 --target-action=promote
+API admission history defaults to 90 days via `API_USAGE_RETENTION_DAYS` (range
+1 through 36500); each cleanup removes at most 1000 old records. Runtime has
+SELECT and INSERT on `api_usage`, while maintenance additionally has DELETE.
+Neither role may UPDATE or TRUNCATE this table. Retention never resets request
+counters or grants allocation.
 
-just pgbackrest-check dev   # verify after restore
-```
+New organization-owned API clients have zero allocation. An authorized operator
+uses `just manage prod set-api-client-quota <uuid> <per-minute> <per-month>`
+to assign strict fixed-minute and UTC-calendar-month budgets. The owning
+organization can manage scopes and keys but cannot assign itself quota. All keys
+and API instances share PostgreSQL authority; see [API access](../docs/behavior/api-access.md).
+Deploy edge abuse protection separately when exposing a public developer API.
 
-Reading `pgbackrest-info`: `full backup: <label>` is the `--set` value (suffix `F`=full /
-`D`=diff / `I`=incr), `timestamp start/stop` is when it was taken, and `wal archive min/max`
-is the full range you can PITR into. On start postgres replays archived WAL to reach a
-consistent state; without `--target-action=promote` a PITR pauses recovery at the target and
-you must promote it manually.
+The portable `maintenance` executable schedules cleanup followed by search repair
+using the shared job runtime. `just up prod` starts it with API and worker.
+Set `MAINTENANCE_INTERVAL_SECONDS` in `app.env` (default 300, range 1–86400). Multiple
+maintenance replicas must use the same interval. The database deduplicates each
+interval's job. Jobs from different intervals or retries may overlap. Handlers
+tolerate repetition. Kubernetes restarts the process if scheduling or claiming fails.
+No host cron or systemd timer is required. Existing failed maintenance jobs can
+be inspected and retried explicitly with `manage retry-job <uuid>`.
 
-**Common errors**
+Grant global administrator status with
+`just manage prod set-administrator <uuid> true` only after the account is
+active, verified, and enrolled in TOTP. Use `false` to demote it. The command
+invalidates existing credentials and audits a changed role. Restrict operator
+access to management commands; there is no public administrator-management API.
 
-| Symptom | Cause / fix |
-|---|---|
-| `[037] requires option: repo1-s3-key` | Key var named `R2_*` → use `PGBACKREST_REPO1_S3_KEY` / `_KEY_SECRET`, then `just up <env>` to recreate |
-| `[041] ... /tmp/pgbackrest/...: Permission denied` | exec ran as root and the lock dir ownership is stale. The just recipes run as `-u postgres` (already set); clean leftovers with `just compose <env> exec -T postgres rm -rf /tmp/pgbackrest` |
-| `[028] info files ... do not match the database` | DB was rebuilt and the system id changed → `just pgbackrest-stanza-reset <env>` |
-| `[055] stop file does not exist` | `stanza-delete` requires a prior `stop` → the `stanza-reset` recipe handles the order |
-| S3 connection / endpoint error | Endpoint has `https://` or a bucket path → leave the host only |
+Optional file storage uses an externally provisioned private S3-compatible
+SeaweedFS gateway and bucket. The master, filer, volume servers, and gateway admin
+interfaces must stay on private infrastructure. Configure production credentials
+with bucket-limited read/write/list access. Use a separate operator credential for
+provisioning when runtime credentials cannot create buckets or indexes.
+API/worker startup does not create buckets or search indexes.
 
-> Container names derive from `COMPOSE_PROJECT_NAME` (e.g. `axumkit_dev-postgres-1`). To
-> reach a service by name, use `just compose <env> exec <service> ...`.
+Meilisearch is an optional private derived index. Provision the file index using
+`manage initialize-integrations` with appropriate operator permissions, then use
+an index-limited server key. Never send the master/runtime key to browsers.
+The maintenance service registers search repair as well as cleanup; file deletion
+and indexing jobs use the application queue and require a normal worker. Back up
+PostgreSQL and file originals. Rebuild the search index from database metadata when needed.
 
-## Ports
-
-The tunnel/ingress (host-side) points at APISIX. One route per env:
-
-| Env | APISIX (tunnel → ) | Postgres (loopback, SSH tunnel) |
-|-----|--------------------|----------------------------------|
-| production | `127.0.0.1:9090` | `127.0.0.1:15435` |
-| dev        | `127.0.0.1:9080` | `127.0.0.1:15434` |
-
-`server:8000` and `pgdog:6432` are not host-published — they're reached over the compose
-network; use `docker compose ... exec` for debugging. Postgres IS published, but on
-**127.0.0.1 only** (`POSTGRES_HOST_PORT` in `deploy/<env>.env`), so a DB client can reach it
-through an SSH tunnel; never rebind it to `0.0.0.0` (that exposes the DB publicly, and Docker
-bypasses ufw).
-
-> **Security:** the tunnel/ingress must target APISIX, never `server:8000` directly, or
-> the gateway's rate limiting is bypassed. Set a strong `INTERNAL_PROXY_SECRET` in
-> `server.env` (shared with the backend) so APISIX may forward the true client IP via
-> `X-Real-Client-IP`.
+File bytes bypass the API through presigned S3 URLs. Set S3_PUBLIC_ENDPOINT when
+clients cannot reach S3_ENDPOINT. Preserve the signed host, path, and query. Keep
+the bucket private. Provision its CORS rules from ALLOWED_ORIGINS through
+`manage initialize-integrations`. Set `X-Content-Type-Options: nosniff` on the
+storage ingress and omit signed queries from logs and error reports. Enforce a
+maximum total PUT duration no greater than FILE_UPLOAD_GRACE_SECONDS (one hour
+by default). Deleting files retain their quota through that writer horizon.
+See [the file contract](../docs/behavior/files-and-search.md).

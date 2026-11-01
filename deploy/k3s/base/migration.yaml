@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hirune-migration
+  labels:
+    app.kubernetes.io/part-of: hirune-kit
+    app.kubernetes.io/component: migration
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/part-of: hirune-kit
+        app.kubernetes.io/component: migration
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: migration
+          image: hirune-kit
+          command: [migration]
+          env:
+            - name: MIGRATION_DATABASE_URL
+              valueFrom:
+                secretKeyRef: {name: hirune-migration-database, key: MIGRATION_DATABASE_URL}
+            - name: MIGRATION_RUNTIME_ROLE
+              valueFrom:
+                secretKeyRef: {name: hirune-migration-database, key: MIGRATION_RUNTIME_ROLE, optional: true}
+            - name: MIGRATION_MAINTENANCE_ROLE
+              valueFrom:
+                secretKeyRef: {name: hirune-migration-database, key: MIGRATION_MAINTENANCE_ROLE, optional: true}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          volumeMounts: [{name: temporary, mountPath: /tmp}]
+      volumes:
+        - name: temporary
+          emptyDir: {sizeLimit: 64Mi}

@@ -1,9 +1,4 @@
-//! AES-256-GCM encryption-at-rest with a caller-supplied key and domain-separation context.
-//!
-//! Unlike passwords (one-way hashed) or backup codes (keyed hash), some secrets must be
-//! recoverable (e.g. a TOTP seed used to compute verification codes), so they are encrypted rather
-//! than hashed. The 32-byte AES key is derived from arbitrary-length `key_material` plus a
-//! caller-owned `context` string, keeping this primitive free of any application-specific constant.
+//! AES-256-GCM for recoverable secrets, with caller-owned key material and context.
 
 use aes_gcm::aead::{Aead, KeyInit};
 use aes_gcm::{Aes256Gcm, Nonce};
@@ -12,11 +7,10 @@ use base64::engine::general_purpose::STANDARD;
 use rand::RngExt;
 
 const NONCE_LEN: usize = 12;
-/// Ciphertext format version, prefixed to every blob so the key/scheme can be rotated later
-/// without guess-and-decrypt (a stored blob self-describes which scheme produced it).
+/// Reject unknown ciphertext formats before decryption.
 const FORMAT_VERSION: u8 = 1;
 
-/// Errors from the AEAD primitive. Callers map these onto their own error type.
+/// Authenticated-encryption errors. Callers map these to their own error type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AeadError {
     Encrypt,
@@ -26,7 +20,7 @@ pub enum AeadError {
 }
 
 fn cipher(key_material: &[u8], context: &str) -> Aes256Gcm {
-    // Derive a fixed 32-byte AES key from arbitrary-length key material + context.
+    // Derive a 32-byte AES key from the key material and context.
     let key = blake3::derive_key(context, key_material);
     Aes256Gcm::new_from_slice(&key).expect("derive_key always yields 32 bytes")
 }
@@ -47,7 +41,7 @@ pub fn encrypt(key_material: &[u8], context: &str, plaintext: &[u8]) -> Result<S
     Ok(STANDARD.encode(combined))
 }
 
-/// Decrypts a blob produced by [`encrypt`] with the same key material + context.
+/// Decrypts a blob from [`encrypt`] using the same key material and context.
 pub fn decrypt(key_material: &[u8], context: &str, stored: &str) -> Result<Vec<u8>, AeadError> {
     let combined = STANDARD.decode(stored).map_err(|_| AeadError::Malformed)?;
     // Layout: version(1) ‖ nonce(NONCE_LEN) ‖ ciphertext.

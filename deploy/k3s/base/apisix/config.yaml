@@ -1,0 +1,18 @@
+apisix:
+  node_listen: 9080
+  enable_admin: false
+  extra_lua_path: /usr/local/apisix/conf/?.lua;
+plugins:
+  - serverless-pre-function
+  - serverless-post-function
+  - exit-transformer
+  - limit-count
+stream_plugins: []
+deployment:
+  role: data_plane
+  role_data_plane:
+    config_provider: yaml
+nginx_config:
+  envs: [POD_NAMESPACE, INTERNAL_PROXY_SECRET, ALLOWED_ORIGINS, EDGE_RATE_LIMIT_REQUESTS]
+  http:
+    client_max_body_size: 128m
